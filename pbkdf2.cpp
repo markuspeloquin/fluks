@@ -10,7 +10,7 @@ namespace {
 inline void	pbkdf2_f(enum hash_type, const uint8_t *, uint32_t,
 		    const uint8_t[SZ_SALT], uint32_t, uint32_t, uint8_t *);
 
-// function F() of part 3 of the PBKDF2 definition in PKCS5-2.0, and
+// function F() of part 3 of the PBKDF2 definition in PKCS #5 v2.0, and
 // described in pbkdf2() below
 inline void
 pbkdf2_f(enum hash_type type, const uint8_t *in, uint32_t sz_in,
@@ -45,7 +45,7 @@ pbkdf2_f(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 
 }} // end anonymous namespace
 
-// Password-Based Key Derivation Function, version 2
+// Password-Based Key Derivation Function, version 2 (from PKCS #5 v2.0)
 void
 luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
     const uint8_t salt[SZ_SALT], uint32_t iterations, uint8_t *derived_key,
