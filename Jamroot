@@ -1,0 +1,3 @@
+using gcc ;
+lib ssl ;
+exe luksri : af.cpp hash.cpp luks.cpp luksri.cpp pbkdf2.cpp ssl.cpp util.cpp ssl ;
