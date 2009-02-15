@@ -49,7 +49,6 @@ luks::add_password(struct header *luks, const std::string &password)
 	// TODO pw_crypt = encrypt(hdr->cipher_name, hdr->cipher_mode,
 	//	pw_digest, split_key, sizeof(split_key));
 
-	// TODO write_to_disk(pw_crypt, avail->off_km, sizeof(pw_crypt));
 	avail->active = KEY_ENABLED;
 
 	// TODO write_to_disk(avail);
@@ -59,13 +58,18 @@ void
 luks::initialize(struct header *luks, size_t sz_key,
     const std::string &cipher_name, const std::string &cipher_mode,
     const std::string &hash_spec, uint32_t mk_iter, size_t stripes)
+	throw (Bad_spec)
 {
 	struct phdr1 *hdr = luks->hdr.get();
 
-	assert(cipher_name.size() + 1 < SZ_CIPHER_NAME);
-	assert(cipher_mode.size() + 1 < SZ_CIPHER_MODE);
-	assert(hash_spec.size() + 1 < SZ_HASH_SPEC);
-	// TODO validate specs?
+	if (cipher_name.size() + 1 >= SZ_CIPHER_NAME)
+		throw Bad_spec("cipher name too long");
+	if (cipher_mode.size() + 1 >= SZ_CIPHER_MODE)
+		throw Bad_spec("cipher mode too long");
+	if (hash_spec.size() + 1 >= SZ_HASH_SPEC)
+		throw Bad_spec("hash spec too long");
+	if (0/* unrecognized? */)
+		throw Bad_spec("you little...");
 
 	luks->master_key.reset(new uint8_t[sz_key]);
 	RAND_bytes(luks->master_key.get(), hdr->sz_key);

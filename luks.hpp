@@ -4,6 +4,7 @@
 #include <stdint.h> // no cstdint yet
 
 #include <cstddef>
+#include <exception>
 #include <string>
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -88,9 +89,22 @@ inline void	endian_switch(struct phdr1 *, bool process_keys);
 inline void	endian_switch(struct key *);
 
 
+struct Bad_spec : std::exception {
+	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
+	{	_msg += msg; }
+	~Bad_spec() throw () {}
+
+	const char *what() throw ()
+	{	return _msg.c_str(); }
+
+	std::string _msg;
+};
+
+
 void	add_password(struct header *, const std::string &);
 void	initialize(struct header *, uint32_t, const std::string &,
-	    const std::string &, const std::string &, uint32_t, size_t);
+	    const std::string &, const std::string &, uint32_t, size_t)
+	throw (Bad_spec);
 void	read_key(struct header *, const std::string &);
 void	revoke_password(struct header *, size_t);
 
