@@ -10,12 +10,10 @@
 
 namespace {
 
-void	compute_d(const uint8_t *, size_t, unsigned,
-		    enum luks::hash_type, uint8_t *);
-void	hash1(const uint8_t *, size_t, enum luks::hash_type,
-		    uint8_t *);
-void	hash2(const uint8_t *, size_t, enum luks::hash_type,
-		    uint8_t *);
+void	compute_d(const uint8_t *, size_t, unsigned, enum luks::hash_type,
+	    uint8_t *);
+void	hash1(const uint8_t *, size_t, enum luks::hash_type, uint8_t *);
+void	hash2(const uint8_t *, size_t, enum luks::hash_type, uint8_t *);
 
 // compute the last d_i value
 void
@@ -149,7 +147,8 @@ luks::af_split(const uint8_t *in, size_t sz, size_t stripes,
     enum hash_type type, uint8_t *out)
 {
 	uint8_t d[sz];
-	RAND_bytes(out, sz * (stripes - 1));
+	if (!RAND_bytes(out, sz * (stripes - 1)))
+		throw Ssl_error();
 
 	// d_0 = 0
 	// d_k = H( d_{k-1} ^ s_k )

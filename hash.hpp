@@ -19,7 +19,7 @@
 
 namespace luks {
 
-struct Hash_error : std::exception {
+struct Hash_error : virtual std::exception {
 };
 
 enum hash_type	    hash_type(const std::string &);
@@ -58,22 +58,9 @@ struct Hmac_function {
 	virtual size_t length() const = 0;
 };
 
-struct Ssl_hash_error : Hash_error {
-	Ssl_hash_error()
-	{
-		// for size, see ERR_error_string(3)
-		char ssl_err_buf[120];
-		ssl_load_errors();
-		_msg = "OpenSSL error: ";
-		_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
-	}
-
+struct Ssl_hash_error : Hash_error, Ssl_error {
+	Ssl_hash_error() {}
 	~Ssl_hash_error() throw() {}
-
-	const char *what() throw()
-	{	return _msg.c_str(); }
-
-	std::string _msg;
 };
 
 // thankfully, all SSL functions have the same interface

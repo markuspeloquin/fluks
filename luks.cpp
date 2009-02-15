@@ -35,7 +35,8 @@ luks::add_password(struct header *luks, const std::string &password)
 	// avail.iterations = PBKDF2_iterations_per_second *
 	//	intented_password_checking_time
 
-	RAND_bytes(avail->salt, SZ_SALT);
+	if (!RAND_bytes(avail->salt, SZ_SALT))
+		throw Ssl_error();
 	af_split(luks->master_key.get(), hdr->sz_key, avail->stripes,
 	    luks->hash_type, split_key);
 
@@ -72,7 +73,8 @@ luks::initialize(struct header *luks, size_t sz_key,
 		throw Bad_spec("you little...");
 
 	luks->master_key.reset(new uint8_t[sz_key]);
-	RAND_bytes(luks->master_key.get(), hdr->sz_key);
+	if (!RAND_bytes(luks->master_key.get(), hdr->sz_key))
+		throw Ssl_error();
 
 	memcpy(hdr->magic, MAGIC, sizeof(MAGIC));
 	hdr->version = 1;
@@ -80,7 +82,8 @@ luks::initialize(struct header *luks, size_t sz_key,
 	memcpy(hdr->cipher_mode, cipher_mode.c_str(), cipher_mode.size() + 1);
 	memcpy(hdr->hash_spec, hash_spec.c_str(), cipher_mode.size() + 1);
 	hdr->sz_key = sz_key;
-	RAND_bytes(hdr->mk_salt, SZ_SALT);
+	if (!RAND_bytes(hdr->mk_salt, SZ_SALT))
+		throw Ssl_error();
 	hdr->mk_iterations = mk_iter;
 
 	pbkdf2(luks->hash_type, luks->master_key.get(), sz_key, hdr->mk_salt,
