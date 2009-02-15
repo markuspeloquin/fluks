@@ -58,8 +58,8 @@ struct Hmac_function {
 	virtual size_t length() const = 0;
 };
 
-struct SSL_hash_error : Hash_error {
-	SSL_hash_error()
+struct Ssl_hash_error : Hash_error {
+	Ssl_hash_error()
 	{
 		// for size, see ERR_error_string(3)
 		char ssl_err_buf[120];
@@ -68,7 +68,7 @@ struct SSL_hash_error : Hash_error {
 		_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
 	}
 
-	~SSL_hash_error() throw() {}
+	~Ssl_hash_error() throw() {}
 
 	const char *what() throw()
 	{	return _msg.c_str(); }
@@ -91,18 +91,18 @@ public:
 	void init() throw (Hash_error)
 	{
 		_valid = false;
-		if (!Init(&_ctx)) throw SSL_hash_error();
+		if (!Init(&_ctx)) throw Ssl_hash_error();
 		_valid = true;
 	}
 	void add(const uint8_t *buf, size_t sz) throw (Hash_error)
 	{
 		if (!_valid) return;
-		if (!Update(&_ctx, buf, sz)) throw SSL_hash_error();
+		if (!Update(&_ctx, buf, sz)) throw Ssl_hash_error();
 	}
 	void end(uint8_t *buf) throw (Hash_error)
 	{
 		if (!_valid) return;
-		if (!Final(buf, &_ctx)) throw SSL_hash_error();
+		if (!Final(buf, &_ctx)) throw Ssl_hash_error();
 		_valid = false;
 	}
 	size_t length() const
