@@ -89,19 +89,31 @@ inline void	endian_switch(struct phdr1 *, bool process_keys);
 inline void	endian_switch(struct key *);
 
 
+struct Slots_full : std::exception {
+	~Slots_full() throw() {}
+
+	const char *what() const throw ()
+	{	return "All key slots are used."; }
+};
+
+
 struct Bad_spec : std::exception {
 	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
-	{	_msg += msg; }
+	{
+		_msg += msg;
+		_msg += '.';
+	}
 	~Bad_spec() throw () {}
 
-	const char *what() throw ()
+	const char *what() const throw ()
 	{	return _msg.c_str(); }
 
 	std::string _msg;
 };
 
 
-void	add_password(struct header *, const std::string &);
+void	add_password(struct header *, const std::string &)
+	throw (Slots_full);
 void	initialize(struct header *, uint32_t, const std::string &,
 	    const std::string &, const std::string &, uint32_t, size_t)
 	throw (Bad_spec);

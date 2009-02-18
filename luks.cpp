@@ -12,6 +12,7 @@
 
 void
 luks::add_password(struct header *luks, const std::string &password)
+	throw (Slots_full)
 {
 	struct phdr1 *hdr = luks->hdr.get();
 	struct key *avail = 0;
@@ -24,10 +25,7 @@ luks::add_password(struct header *luks, const std::string &password)
 			avail = hdr->keys + i;
 			break;
 		}
-	if (!avail) {
-		// oh shit (TODO)
-		exit(666);
-	}
+	if (!avail) throw Slots_full();
 
 	uint8_t split_key[hdr->sz_key * avail->stripes];
 
