@@ -5,13 +5,13 @@
 enum luks::hash_type
 luks::hash_type(const std::string &name)
 {
-	if (name == "md5") return HT_MD5;
-	if (name == "ripemd160") return HT_RIPEMD160;
+	if (name == "md5")	return HT_MD5;
+	if (name == "rmd160")	return HT_RMD160;
 	if (name == "sha" || name == "sha1") return HT_SHA1;
-	if (name == "sha224") return HT_SHA224;
-	if (name == "sha256") return HT_SHA256;
-	if (name == "sha384") return HT_SHA384;
-	if (name == "sha512") return HT_SHA512;
+	if (name == "sha224")	return HT_SHA224;
+	if (name == "sha256")	return HT_SHA256;
+	if (name == "sha384")	return HT_SHA384;
+	if (name == "sha512")	return HT_SHA512;
 	return HT_UNDEFINED;
 }
 
@@ -20,7 +20,7 @@ luks::hash_name(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:	return "md5";
-	case HT_RIPEMD160:	return "ripemd160";
+	case HT_RMD160:	return "rmd160";
 	case HT_SHA1:	return "sha1";
 	case HT_SHA224:	return "sha224";
 	case HT_SHA256:	return "sha256";
@@ -36,7 +36,7 @@ luks::hash_size(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:	return MD5_DIGEST_LENGTH;
-	case HT_RIPEMD160:	return RIPEMD160_DIGEST_LENGTH;
+	case HT_RMD160:	return RMD160_DIGEST_LENGTH;
 	case HT_SHA1:	return SHA_DIGEST_LENGTH;
 	case HT_SHA224:	return SHA224_DIGEST_LENGTH;
 	case HT_SHA256:	return SHA256_DIGEST_LENGTH;
@@ -53,8 +53,8 @@ luks::Hash_function::create(enum hash_type type)
 	switch (type) {
 	case HT_MD5:
 		return std::tr1::shared_ptr<Hash_function>(new Hash_md5);
-	case HT_RIPEMD160:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_ripemd160);
+	case HT_RMD160:
+		return std::tr1::shared_ptr<Hash_function>(new Hash_rmd160);
 	case HT_SHA1:
 		return std::tr1::shared_ptr<Hash_function>(new Hash_sha1);
 	case HT_SHA224:
@@ -77,8 +77,8 @@ luks::Hmac_function::create(enum hash_type type)
 	switch (type) {
 	case HT_MD5:
 		return std::tr1::shared_ptr<Hmac_function>(new Hmac_md5);
-	case HT_RIPEMD160:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_ripemd160);
+	case HT_RMD160:
+		return std::tr1::shared_ptr<Hmac_function>(new Hmac_rmd160);
 	case HT_SHA1:
 		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha1);
 	case HT_SHA224:

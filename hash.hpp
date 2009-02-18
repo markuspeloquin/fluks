@@ -153,7 +153,7 @@ typedef Hash_ssl<
 typedef Hash_ssl<
     RIPEMD160_CTX, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
     RIPEMD160_DIGEST_LENGTH>
-    Hash_ripemd160;
+    Hash_rmd160;
 
 // SHA family of hashes
 typedef Hash_ssl<
