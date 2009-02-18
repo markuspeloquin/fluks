@@ -56,7 +56,7 @@ luks::add_password(struct header *luks, const std::string &password)
 void
 luks::initialize(struct header *luks, size_t sz_key,
     const std::string &cipher_name, const std::string &cipher_mode,
-    const std::string &hash_spec, uint32_t mk_iter, size_t stripes)
+    const std::string &hash_spec, uint32_t mk_iter, uint32_t stripes)
 	throw (Bad_spec)
 {
 	struct phdr1 *hdr = luks->hdr.get();
@@ -105,8 +105,8 @@ luks::initialize(struct header *luks, size_t sz_key,
 	//TODO write_to_disk(hdr)
 }
 
-void
-luks::read_key(struct header *luks, const std::string &password)
+bool
+luks::read_key(struct header *luks, const std::string &passwd, int8_t hint)
 {
 	struct phdr1 *hdr = luks->hdr.get();
 
@@ -115,7 +115,20 @@ luks::read_key(struct header *luks, const std::string &password)
 	uint8_t key_digest[hash_size(luks->hash_type)];
 	struct key *key;
 
-	for (size_t i = 0; i < NUM_KEYS; i++) {
+	if (luks->master_key)
+		return false;
+
+	size_t i;
+	size_t max;
+	if (hint < 0) {
+		i = hint;
+		max = hint + 1;
+	} else {
+		i = 0;
+		max = NUM_KEYS;
+	}
+
+	for (; i < max; i++) {
 		key = hdr->keys + i;
 
 		uint8_t key_crypt[hdr->sz_key * key->stripes];
@@ -123,8 +136,8 @@ luks::read_key(struct header *luks, const std::string &password)
 
 		// password => pw_digest
 		pbkdf2(luks->hash_type,
-		    reinterpret_cast<const uint8_t *>(password.c_str()),
-		    password.size(), key->salt, key->iterations, pw_digest,
+		    reinterpret_cast<const uint8_t *>(passwd.c_str()),
+		    passwd.size(), key->salt, key->iterations, pw_digest,
 		    sizeof(pw_digest));
 
 		// disk => key_crypt
@@ -146,18 +159,17 @@ luks::read_key(struct header *luks, const std::string &password)
 
 		if (std::equal(pw_digest, key_digest + sizeof(key_digest),
 		    hdr->mk_digest)) {
-			if (!luks->master_key) {
-				luks->master_key.reset(
-				    new uint8_t[hdr->sz_key]);
-				memcpy(luks->master_key.get(), key_merged,
-				    sizeof(key_merged));
-			}
+			luks->master_key.reset(new uint8_t[hdr->sz_key]);
+			memcpy(luks->master_key.get(), key_merged,
+			    sizeof(key_merged));
+			return true;
 		}
 	}
+	return false;
 }
 
 void
-luks::revoke_password(struct header *luks, size_t which)
+luks::revoke_password(struct header *luks, uint8_t which)
 {
 	phdr1 *hdr = luks->hdr.get();
 	key *key = hdr->keys + which;

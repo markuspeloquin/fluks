@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <exception>
 #include <string>
+#include <vector>
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -111,14 +112,54 @@ struct Bad_spec : std::exception {
 	std::string _msg;
 };
 
+class Luks_header {
+public:
+	// create a new header
+	Luks_header(uint32_t sz_key, const std::string &cipher_name,
+	    const std::string &cipher_mode, const std::string &hash_spec,
+	    uint32_t mk_iterations, uint32_t stripes)
+		throw (Bad_spec);
+
+	// read from disk
+	Luks_header(off_t);
+
+	~Luks_header();
+
+	/** Decrypt the private key.
+	 *
+	 * @param hint	if non-negative, only this index will be tested
+	 * @return	true if the key was decrypted; false if the key
+	 *		was already decrypted or if the key couldn't be
+	 *		decrypted
+	 **/
+	bool read_key(const std::string &passwd, int8_t hint=-1);
+
+	void add_passwd(const std::string &)
+		throw (Slots_full);
+
+	void revoke_slot(uint8_t which);
+
+private:
+	Luks_header(const Luks_header &l) {}
+	void operator=(const Luks_header &l) {}
+
+	boost::scoped_ptr<struct phdr1>	_hdr;
+	boost::scoped_array<uint8_t>	_master_key;
+	enum hash_type			_hash_type;
+
+	std::vector<bool>		_key_mach_end;
+	bool				_hdr_mach_end;
+};
 
 void	add_password(struct header *, const std::string &)
 	throw (Slots_full);
-void	initialize(struct header *, uint32_t, const std::string &,
-	    const std::string &, const std::string &, uint32_t, size_t)
+void	initialize(struct header *, uint32_t sz_key,
+	    const std::string &cipher_name, const std::string &cipher_mode,
+	    const std::string &hash_spec, uint32_t mk_iterations,
+	    uint32_t stripes)
 	throw (Bad_spec);
-void	read_key(struct header *, const std::string &);
-void	revoke_password(struct header *, size_t);
+bool	read_key(struct header *, const std::string &, int8_t hunt=-1);
+void	revoke_password(struct header *, uint8_t which);
 
 }
 
