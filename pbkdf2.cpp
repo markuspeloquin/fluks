@@ -65,8 +65,10 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 	//	(number of blocks, including final partial block)
 	// r = dkLen - (l - 1) * hLen
 	//	(bytes in final partial block)
-	uint32_t blocks = (sz_key + sz_hash - 1) / sz_hash;
-	uint32_t partial = sz_key - (blocks - 1) * sz_hash;
+	//
+	// I define blocks and partial differently.
+	uint32_t blocks = sz_key / sz_hash;
+	uint32_t partial = sz_key % sz_hash;
 
 	// 3.
 	// (note that I start indices at 0 instead of 1)
@@ -88,7 +90,15 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 
 	// 4.
 	// Concatenate all T_i.  The first dkLen bytes is the derived key.
+	// Iterate over all but the partial block
 	for (uint32_t i = 0; i < blocks; i++)
 		pbkdf2_f(type, in, sz_in, salt, iterations, i,
 		    derived_key + i * sz_hash);
+
+	if (partial) {
+		uint8_t buf_partial[sz_hash];
+		pbkdf2_f(type, in, sz_in, salt, iterations, blocks,
+		    buf_partial);
+		memcpy(derived_key + blocks * sz_hash, buf_partial, partial);
+	}
 }
