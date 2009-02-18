@@ -226,7 +226,7 @@ private:
 
 typedef Hmac_ssl<EVP_md5, MD5_DIGEST_LENGTH>		Hmac_md5;
 typedef Hmac_ssl<EVP_ripemd160, RIPEMD160_DIGEST_LENGTH>
-							Hmac_ripemd160;
+							Hmac_rmd160;
 typedef Hmac_ssl<EVP_sha1, SHA_DIGEST_LENGTH>		Hmac_sha1;
 typedef Hmac_ssl<EVP_sha224, SHA224_DIGEST_LENGTH>	Hmac_sha224;
 typedef Hmac_ssl<EVP_sha256, SHA256_DIGEST_LENGTH>	Hmac_sha256;

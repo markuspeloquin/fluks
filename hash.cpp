@@ -6,8 +6,10 @@ enum luks::hash_type
 luks::hash_type(const std::string &name)
 {
 	if (name == "md5")	return HT_MD5;
-	if (name == "rmd160")	return HT_RMD160;
-	if (name == "sha" || name == "sha1") return HT_SHA1;
+	if (name == "rmd160" || name == "ripemd160")
+				return HT_RMD160;
+	if (name == "sha" || name == "sha1")
+				return HT_SHA1;
 	if (name == "sha224")	return HT_SHA224;
 	if (name == "sha256")	return HT_SHA256;
 	if (name == "sha384")	return HT_SHA384;
@@ -36,7 +38,7 @@ luks::hash_size(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:	return MD5_DIGEST_LENGTH;
-	case HT_RMD160:	return RMD160_DIGEST_LENGTH;
+	case HT_RMD160:	return RIPEMD160_DIGEST_LENGTH;
 	case HT_SHA1:	return SHA_DIGEST_LENGTH;
 	case HT_SHA224:	return SHA224_DIGEST_LENGTH;
 	case HT_SHA256:	return SHA256_DIGEST_LENGTH;

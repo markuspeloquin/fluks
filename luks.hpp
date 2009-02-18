@@ -66,7 +66,7 @@ struct phdr1 {
 
 enum hash_type {
 	HT_MD5,
-	HT_RIPEMD160,
+	HT_RMD160,
 	HT_SHA1,
 	HT_SHA224,
 	HT_SHA256,
