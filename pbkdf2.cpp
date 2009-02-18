@@ -50,7 +50,6 @@ void
 luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
     const uint8_t salt[SZ_SALT], uint32_t iterations, uint8_t *derived_key,
     uint32_t sz_key)
-	throw (std::length_error)
 {
 	uint32_t sz_hash = hash_size(type);
 
@@ -85,8 +84,7 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 	// T_i defined on i=[0,l):
 	//	F(P, S, c, i)
 	//
-	// ... now compute all T_i, though this gets combined with (4) in
-	// the code
+	// I combine this step with (4).
 
 	// 4.
 	// Concatenate all T_i.  The first dkLen bytes is the derived key.
