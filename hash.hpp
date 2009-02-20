@@ -24,40 +24,135 @@ struct Hash_error : virtual std::exception {
 
 enum hash_type	    hash_type(const std::string &);
 std::string	    hash_name(enum hash_type);
-size_t		    hash_size(enum hash_type);
+
+/** Get the size of a hash's digest.
+ *
+ * \param type	    The hash algorithm.
+ * \return	    The size of the hash's digest in bytes.
+ */
+size_t		    hash_size(enum hash_type type);
 
 struct Hash_function {
 
+	/**
+	 * Create a hash function, in an abstract sense, given a hash spec.
+	 *
+	 * \param name	The hash spec.
+	 * \return	A hash function pointer, <code>nullptr</code> for
+	 *	unrecognized specs.
+	 * \see create(type)
+	 */
 	static std::tr1::shared_ptr<Hash_function>
 	create(const std::string &name)
 	{	return create(hash_type(name)); }
 
+	/**
+	 * Create a hash function, in an abstract sense, given a hash type.
+	 *
+	 * \param type	The hash algorithm.
+	 * \return	A hash function pointer.
+	 */
 	static std::tr1::shared_ptr<Hash_function>
 	create(enum hash_type type);
 
 	virtual ~Hash_function() throw () {}
+
+	/**
+	 * Call this to set or reset the hashing function's context.  It must
+	 * be called at the start of each hash computation (i.e. each
+	 * sequence of calls to add()).
+	 *
+	 * \throw Hash_error	The hashing function has some error.  This
+	 *	shouldn't happen.
+	 */
 	virtual void init() throw (Hash_error) = 0;
-	virtual void add(const uint8_t *, size_t) throw (Hash_error) = 0;
-	virtual void end(uint8_t *) throw (Hash_error) = 0;
+
+	/** Pipe data into the hash computation.
+	 *
+	 * \param buf	Bytes to add.
+	 * \param sz	Number of bytes in <code>buf</code>.
+	 *
+	 * \throw Hash_error	The hashing function has some error.  This
+	 *	shouldn't happen.
+	 */
+	virtual void add(const uint8_t *buf, size_t sz) throw (Hash_error) = 0;
+
+	/** End the hashing sequence and return the result.
+	 *
+	 * \param[out] buf	Output buffer, assumed to be large enough.
+	 * \see length()
+	 */
+	virtual void end(uint8_t *buf) throw (Hash_error) = 0;
+
+	/** Get the size of the digest.
+	 *
+	 * \return	The size in bytes.
+	 */
 	virtual size_t length() const = 0;
 };
 
 struct Hmac_function {
 
+	/**
+	 * Create an HMAC function, in an abstract sense, given a hash spec.
+	 *
+	 * \param name	The hash spec.
+	 * \return	An HMAC function pointer, <code>nullptr</code> for
+	 *	unrecognized specs.
+	 * \see create(type)
+	 */
 	static std::tr1::shared_ptr<Hmac_function>
 	create(const std::string &name)
 	{	return create(hash_type(name)); }
 
+	/**
+	 * Create an HMAC function, in an abstract sense, given a hash type.
+	 *
+	 * \param type	The hash algorithm.
+	 * \return	An HMAC function pointer.
+	 */
 	static std::tr1::shared_ptr<Hmac_function>
 	create(enum hash_type type);
 
 	virtual ~Hmac_function() throw () {}
-	virtual void init(const uint8_t *, size_t) throw () = 0;
+
+	/**
+	 * Call this to set or reset the HMAC function's context.  It must
+	 * be called at the start of each HMAC computation (i.e. each
+	 * sequence of calls to add()).
+	 *
+	 * \param key	The HMAC key.
+	 * \param sz	The size of <code>key</code> in bytes.
+	 */
+	virtual void init(const uint8_t *key, size_t sz) throw () = 0;
+
+	/** Pipe data into the HMAC computation.
+	 *
+	 * \param buf	Bytes to add.
+	 * \param sz	Number of bytes in <code>buf</code>.
+	 */
 	virtual void add(const uint8_t *, size_t) throw () = 0;
-	virtual void end(uint8_t *, unsigned) throw (std::length_error) = 0;
+
+	/** End the hashing sequence and return the result.
+	 *
+	 * \param[out] buf	Output buffer.
+	 * \param[in] sz	The size of the output buffer, should be at
+	 *	least as large as length().
+	 * \see length()
+	 * \throw std::length_error	The output buffer was not large
+	 *	enough.
+	 */
+	virtual void end(uint8_t *buf, unsigned sz)
+		throw (std::length_error) = 0;
+
+	/** Get the size of the digest.
+	 *
+	 * \return	The size in bytes.
+	 */
 	virtual size_t length() const = 0;
 };
 
+/** An SSL hashing error. */
 struct Ssl_hash_error : Hash_error, Ssl_error {
 	Ssl_hash_error() {}
 	~Ssl_hash_error() throw() {}
@@ -97,49 +192,6 @@ public:
 
 private:
 	CTX _ctx;
-	bool _valid;
-};
-
-template <
-    const EVP_MD *(*EVP_hashfn)(),
-    size_t SIZE>
-class Hash_ssl_hmac : public Hash_function {
-public:
-	Hash_ssl_hmac() : _valid(false)
-	{
-		HMAC_CTX_init(&_ctx);
-		_evp = EVP_hashfn();
-	}
-
-	~Hash_ssl_hmac() throw ()
-	{
-		HMAC_CTX_cleanup(&_ctx);
-	}
-
-	void init(const uint8_t *key, size_t sz_key) throw ()
-	{
-		HMAC_Init_ex(&_ctx, key, sz_key, _evp, 0);
-		_valid = true;
-	}
-	void add(const uint8_t *buf, size_t sz) throw ()
-	{
-		if (!_valid) return;
-		HMAC_Update(&_ctx, buf, sz);
-	}
-	void end(uint8_t *buf) throw ()
-	{
-		if (!_valid) return;
-
-		unsigned len = SIZE;
-		HMAC_Final(&_ctx, buf, &len);
-		_valid = false;
-	}
-	size_t length() const
-	{	return SIZE; }
-
-private:
-	HMAC_CTX _ctx;
-	const EVP_MD *_evp;
 	bool _valid;
 };
 

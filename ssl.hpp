@@ -19,6 +19,7 @@ inline void ssl_load_errors()
 	}
 }
 
+/** An SSL error wrapping exception type. */
 struct Ssl_error : virtual std::exception {
 	Ssl_error()
 	{

@@ -65,6 +65,8 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
     const uint8_t salt[SZ_SALT], uint32_t iterations, uint8_t *derived_key,
     uint32_t sz_key)
 {
+	if (type == HT_UNDEFINED) return;
+
 	uint32_t sz_hash = hash_size(type);
 
 	// 1.

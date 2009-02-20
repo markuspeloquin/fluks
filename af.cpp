@@ -140,12 +140,14 @@ hash2(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 	}
 }
 
-} // end unnamed namespace
+} // end anonymous namespace
 
 void
 luks::af_split(const uint8_t *in, size_t sz, size_t stripes,
     enum hash_type type, uint8_t *out)
 {
+	if (type == HT_UNDEFINED) return;
+
 	uint8_t d[sz];
 	if (!RAND_bytes(out, sz * (stripes - 1)))
 		throw Ssl_error();
@@ -161,6 +163,8 @@ void
 luks::af_merge(const uint8_t *in, size_t sz, size_t stripes,
     enum hash_type type, uint8_t *out)
 {
+	if (type == HT_UNDEFINED) return;
+
 	uint8_t d[sz];
 
 	// d_0 = 0
