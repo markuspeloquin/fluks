@@ -1,0 +1,13 @@
+Header include order:
+ - Alphabetize within subgroups
+ - Group 1
+   - sys/types.h (as needed)
+   - kernel, sys (e.g. linux/if.h, sys/stat.h)
+   - networking headers
+ - Group 2
+   - headers directly in /usr/include (e.g. string.h, unistd.h, stdint.h)
+ - Group 3
+   - C++ headers
+   - Boost headers
+ - Group 4
+   - Headers for external libraries (e.g. OpenSSL), grouped by library
