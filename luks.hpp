@@ -40,16 +40,13 @@ const size_t	NUM_STRIPES = 4000;
 struct key {
 // annotated with hex offsets
 	/**
-	 * One of {\link KEY_ENABLED\endlink, \link KEY_DISABLED\endlink} */
+	 * One of { \link KEY_ENABLED\endlink, \link KEY_DISABLED\endlink }
+	 */
 /*00*/	uint32_t	active;
-	/** PBKDF2 iterations */
-/*04*/	uint32_t	iterations;
-	/** PBKDF2 salt */
-/*08*/	uint8_t		salt[SZ_SALT];
-	/** Sector of %key material */
-/*28*/	uint32_t	off_km;
-	/** Anti-forensic stripe count */
-/*2c*/	uint32_t	stripes;
+/*04*/	uint32_t	iterations;	/**< PBKDF2 iterations */
+/*08*/	uint8_t		salt[SZ_SALT];	/**< PBKDF2 salt */
+/*28*/	uint32_t	off_km;		/**< Sector of %key material */
+/*2c*/	uint32_t	stripes;	/**< Anti-forensic stripe count */
 // 30 (48 bytes)
 };
 
@@ -62,12 +59,10 @@ struct phdr1 {
 /*00*/	uint8_t		magic[sizeof(MAGIC)];
 /*06*/	uint16_t	version;
 /*08*/	char		cipher_name[SZ_CIPHER_NAME];
-/*28*/	char		cipher_mode[SZ_CIPHER_MODE];
+/*28*/	char		block_mode[SZ_CIPHER_MODE];
 /*48*/	char		hash_spec[SZ_HASH_SPEC];
-	/** Start sector of bulk data */
-/*68*/	uint32_t	off_payload;
-	/** Count of private key bytes */
-/*6c*/	uint32_t	sz_key;
+/*68*/	uint32_t	off_payload;	/**< Start sector of bulk data */
+/*6c*/	uint32_t	sz_key;		/**< Count of private key bytes */
 /*70*/	uint8_t		mk_digest[SZ_MK_DIGEST];
 /*84*/	uint8_t		mk_salt[SZ_SALT];
 /*a4*/	uint32_t	mk_iterations;
@@ -77,19 +72,56 @@ struct phdr1 {
 };
 
 
-/** Hash types supported by <em>fluks</em> */
+/** Ciphers supported by <em>fluks</em> */
+enum cipher_type {
+	CT_AES128,
+	CT_AES192,
+	CT_AES256,
+	CT_TWOFISH,
+	CT_UNDEFINED
+};
+
+/** Cipher block modes supported by <em>fluks</em> */
+enum block_mode {
+	BM_CBC, /**< Cipher Block Chaining */
+	BM_CBC_ESSIV_SHA1,
+	BM_CBC_ESSIV_SHA224,
+	BM_CBC_ESSIV_SHA256,
+	BM_CBC_ESSIV_SHA384,
+	BM_CBC_ESSIV_SHA512,
+	BM_CTR, /**< Counter */
+	/** Cipher Text Stealing
+	 *
+	 * Described in RFC 2040, Section 8 */
+	BM_CTS,
+	BM_PCBC, /**< Propogating Cipher Block Chaining */
+	BM_UNDEFINED
+};
+
+/** Hash types supported by <em>fluks</em>
+ *
+ * Tiger is optimized for 64-bit architectures.  Tiger/{128,160}
+ * are just truncated versions of Tiger/192.
+ *
+ * Along with SHA-{1,256,384,512} and RMD-{128,160}, WHIRLPOOL is included
+ * in ISO/IEC's list of recommended hash functions (10118-3), and is
+ * also recommended by NESSIE.  WHIRLPOOL-{256,384} are just
+ * truncated versions.
+ */
 enum hash_type {
-	HT_MD5,
-	/**
-	 * Also known as RIPEMD-160, the RACE Integrity Primitives
-	 * Evaluation Message Digest.
-	 */
-	HT_RMD160,
+	HT_MD5,	/**< (you probably should not use this) */
+	HT_RMD160,	/**< Possibly better knows as RIPEMD-160 */
 	HT_SHA1,
 	HT_SHA224,
 	HT_SHA256,
 	HT_SHA384,
 	HT_SHA512,
+	HT_TIGER128,
+	HT_TIGER160,
+	HT_TIGER192,
+	HT_WHIRLPOOL256,
+	HT_WHIRLPOOL384,
+	HT_WHIRLPOOL512,
 	HT_UNDEFINED
 };
 

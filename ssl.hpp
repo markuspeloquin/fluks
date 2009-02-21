@@ -23,7 +23,8 @@ inline void ssl_load_errors()
 struct Ssl_error : virtual std::exception {
 	Ssl_error()
 	{
-		// for size, see ERR_error_string(3)
+		// '120' comes from ERR_error_string(3); seems like an
+		// oversight on their part
 		char ssl_err_buf[120];
 		ssl_load_errors();
 		_msg = "OpenSSL error: ";

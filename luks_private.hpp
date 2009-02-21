@@ -21,7 +21,8 @@ inline void
 luks::endian_switch(struct phdr1 *h, bool process_keys)
 {
 #if __BYTE_ORDER == __BIG_ENDIAN
-	// don't bother with the rest
+	// don't bother with the rest of the function, though the preprocessor
+	// and the inlining compiler would eliminate most of it anyway
 	return;
 #else
 	endian_switch(h->version);
@@ -38,7 +39,6 @@ inline void
 luks::endian_switch(struct key *k)
 {
 #if __BYTE_ORDER == __BIG_ENDIAN
-	// don't bother with the rest
 	return;
 #else
 	endian_switch(k->active);
