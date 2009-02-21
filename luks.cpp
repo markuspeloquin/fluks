@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cassert>
-#include <cstdlib>
 #include <string>
 
 #include <openssl/rand.h>
@@ -34,12 +33,12 @@ luks::Luks_header::Luks_header(uint32_t sz_key,
 	if (!RAND_bytes(_master_key.get(), _hdr->sz_key))
 		throw Ssl_error();
 
-	memcpy(_hdr->magic, MAGIC, sizeof(MAGIC));
+	std::copy(MAGIC, MAGIC + sizeof(MAGIC),_hdr->magic);
 	_hdr->version = 1;
 
-	memcpy(_hdr->cipher_name, cipher_name.c_str(), cipher_name.size() + 1);
-	memcpy(_hdr->block_mode, block_mode.c_str(), block_mode.size() + 1);
-	memcpy(_hdr->hash_spec, hash_spec.c_str(), hash_spec.size() + 1);
+	std::copy(cipher_name.begin(), cipher_name.end(), _hdr->cipher_name);
+	std::copy(block_mode.begin(), block_mode.end(), _hdr->block_mode);
+	std::copy(hash_spec.begin(), hash_spec.end(), _hdr->hash_spec);
 
 	_hdr->sz_key = sz_key;
 	if (!RAND_bytes(_hdr->mk_salt, SZ_SALT))
@@ -129,8 +128,8 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 		if (std::equal(pw_digest, key_digest + sizeof(key_digest),
 		    _hdr->mk_digest)) {
 			_master_key.reset(new uint8_t[_hdr->sz_key]);
-			memcpy(_master_key.get(), key_merged,
-			    sizeof(key_merged));
+			std::copy(key_merged, key_merged + sizeof(key_merged),
+			    _master_key.get());
 			return true;
 		}
 	}

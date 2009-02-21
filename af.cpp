@@ -1,6 +1,6 @@
 #include <arpa/inet.h>
 
-#include <cstring>
+#include <algorithm>
 
 #include <openssl/rand.h>
 
@@ -93,7 +93,7 @@ hash1(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 		hashfn->add(in, left);
 		hashfn->end(full);
 
-		memcpy(out, full, left);
+		std::copy(full, full + left, out);
 	}
 }
 
@@ -136,7 +136,7 @@ hash2(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 		hashfn->add(in, sz);
 		hashfn->end(full);
 
-		memcpy(out, full, left);
+		std::copy(full, full + left, out);
 	}
 }
 

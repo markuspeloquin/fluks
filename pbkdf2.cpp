@@ -1,4 +1,4 @@
-#include <cstdlib>
+#include <algorithm>
 
 #include "hash.hpp"
 #include "pbkdf2.hpp"
@@ -45,7 +45,7 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 	hmacfn->add(reinterpret_cast<uint8_t *>(&index), 4);
 	hmacfn->end(u, sizeof(u));
 
-	memcpy(result, u, sizeof(u));
+	std::copy(u, u + sizeof(u), result);
 
 	for (uint32_t i = 1; i < iterations; i++) {
 		// compute U_i
@@ -105,6 +105,7 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 		uint8_t buf_partial[sz_hash];
 		pbkdf2_f(hmacfn.get(), in, sz_in, salt, iterations, blocks,
 		    buf_partial);
-		memcpy(derived_key + blocks * sz_hash, buf_partial, partial);
+		std::copy(buf_partial, buf_partial + partial,
+		    derived_key + blocks * sz_hash);
 	}
 }
