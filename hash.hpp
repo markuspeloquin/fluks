@@ -18,6 +18,7 @@
 
 #include "luks.hpp"
 #include "ssl.hpp"
+#include "tiger.hpp"
 
 namespace luks {
 
@@ -237,42 +238,33 @@ typedef Hash_ssl<
 template <size_t BITS>
 class Hash_tiger : public Hash_function {
 	Hash_tiger(unsigned passes=3) :
-		_buf(),
 		_passes(passes)
 	{}
 	~Hash_tiger() throw () {}
 
 	void init() throw ()
 	{
-		_buf.pubsync();
+		tiger_init(&_ctx, _passes);
 	}
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{
-		_buf.sputn(buf, sz);
+		tiger_update(&_ctx, buf, sz);
 	}
 	void end(uint8_t *buf) throw ()
 	{
-		if (!_buf.in_avail()) return;
-
-		uint8_t copy[_buf.in_avail()];
-		_buf.sgetn(copy, sizeof(copy));
 		if (BITS < 192) {
-			// assume BITS = 0 mod 8
-			uint8_t digest[192 / 8];
-			tiger_impl(copy, sizeof(copy), _passes,
-			    reinterpret_cast<uint64_t *>(buf));
-			memcpy(buf, digest, BITS / 8);
-		} else {
-			// assume BITS is 192
-			tiger_impl(copy, sizeof(copy), _passes,
-			    reinterpret_cast<uint64_t *>(buf));
-		}
+			// truncate output
+			uint8_t buf2[192/8];
+			tiger_end(&_ctx, buf2);
+			std::copy(buf2, buf2 + BITS/8, buf);
+		} else
+			tiger_end(&_ctx, buf);
 	}
 	size_t length() const
-	{	return BITS / 8; }
+	{	return BITS/8; }
 
 private:
-	std::streambuf	_buf;
+	tiger_ctx	_ctx;
 	unsigned	_passes;
 };
 
@@ -335,8 +327,8 @@ typedef Hmac_ssl<EVP_sha512, SHA512_DIGEST_LENGTH>	Hmac_sha512;
 template <size_t BITS>
 class Hmac_tiger : public Hmac_function {
 public:
-	Hmac_ssl() {}
-	~Hmac_ssl() throw () {}
+	Hmac_tiger() {}
+	~Hmac_tiger() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw()
 	{

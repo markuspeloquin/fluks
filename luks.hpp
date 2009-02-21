@@ -160,7 +160,7 @@ public:
 	 *
 	 * \param sz_key	The byte length of the master key.
 	 * \param cipher_name	Cipher to encrypt with (e.g. twofish, aes).
-	 * \param cipher_mode	Cipher mode (e.g. cbc-plain, cbc-essiv:sha384).
+	 * \param block_mode	Cipher mode (e.g. cbc-plain, cbc-essiv:sha384).
 	 * \param hash_spec	Hash to use for the master key hash and the
 	 *	password (the hash is the key for the master key).
 	 * \param mk_iterations	The iterations to use in the PBKDF2 algorithm,
@@ -170,7 +170,7 @@ public:
 	 * \throw Bad_spec	One of the cipher/hash specs is invalid.
 	 */
 	Luks_header(uint32_t sz_key, const std::string &cipher_name,
-	    const std::string &cipher_mode, const std::string &hash_spec,
+	    const std::string &block_mode, const std::string &hash_spec,
 	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES)
 		throw (Bad_spec);
 

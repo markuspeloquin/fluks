@@ -11,7 +11,7 @@
 #include "pbkdf2.hpp"
 
 luks::Luks_header::Luks_header(uint32_t sz_key,
-    const std::string &cipher_name, const std::string &cipher_mode,
+    const std::string &cipher_name, const std::string &block_mode,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
 	throw (Bad_spec) :
 	_hdr(new struct phdr1),
@@ -22,8 +22,8 @@ luks::Luks_header::Luks_header(uint32_t sz_key,
 {
 	if (cipher_name.size() + 1 >= SZ_CIPHER_NAME)
 		throw Bad_spec("cipher name too long");
-	if (cipher_mode.size() + 1 >= SZ_CIPHER_MODE)
-		throw Bad_spec("cipher mode too long");
+	if (block_mode.size() + 1 >= SZ_CIPHER_MODE)
+		throw Bad_spec("block mode too long");
 	if (hash_spec.size() + 1 >= SZ_HASH_SPEC)
 		throw Bad_spec("hash spec too long");
 	if (0/* unrecognized? */)
@@ -38,8 +38,8 @@ luks::Luks_header::Luks_header(uint32_t sz_key,
 	_hdr->version = 1;
 
 	memcpy(_hdr->cipher_name, cipher_name.c_str(), cipher_name.size() + 1);
-	memcpy(_hdr->cipher_mode, cipher_mode.c_str(), cipher_mode.size() + 1);
-	memcpy(_hdr->hash_spec, hash_spec.c_str(), cipher_mode.size() + 1);
+	memcpy(_hdr->block_mode, block_mode.c_str(), block_mode.size() + 1);
+	memcpy(_hdr->hash_spec, hash_spec.c_str(), hash_spec.size() + 1);
 
 	_hdr->sz_key = sz_key;
 	if (!RAND_bytes(_hdr->mk_salt, SZ_SALT))
