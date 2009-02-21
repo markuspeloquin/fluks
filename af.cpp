@@ -37,7 +37,7 @@ compute_d(const uint8_t *s, size_t sz, unsigned stripes,
 		d_even = d;
 	}
 
-	memset(d_even, 0, sz);
+	std::fill(d_even, d_even + sz, 0);
 
 	for (size_t i = 1; i < stripes - 1; i++) {
 		// d_odd ^= i'th stripe
