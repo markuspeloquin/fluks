@@ -7,7 +7,7 @@
 
 extern uint64_t table[4 * 256];
 
-/* This is the official definition of round */
+// This is the official definition of 'round'
 inline void
 round(uint64_t &a, uint64_t &b, uint64_t &c, uint64_t x, uint8_t mul)
 {
@@ -36,8 +36,8 @@ round(uint64_t &a, uint64_t &b, uint64_t &c, uint64_t x, uint8_t mul)
 inline void
 tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 {
-	/* 'register' probably gets ignored by the compiler, but it's a
-	 * hint from the original C89 macro-powered source */
+	// 'register' probably gets ignored by the compiler, but it's a
+	// hint from the original C89 macro-powered source
 	register uint64_t a, b, c, tmpa;
 	uint64_t aa, bb, cc;
 	register uint64_t x0, x1, x2, x3, x4, x5, x6, x7;
@@ -56,7 +56,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 	x6 = str[6];
 	x7 = str[7];
 
-	/* begin old 'compress' macro */
+	// begin old 'compress' macro
 
 	aa = a;
 	bb = b;
@@ -64,7 +64,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 
 	for (pass_no = 0; pass_no < passes; pass_no++) {
 		if (pass_no) {
-			/* old macro 'key_schedule' */
+			// old macro 'key_schedule'
 			x0 -= x7 ^ 0xA5A5A5A5A5A5A5A5LL;
 			x1 ^= x0;
 			x2 += x1;
@@ -83,7 +83,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 			x7 -= x6 ^ 0x0123456789ABCDEFLL;
 		}
 
-		/* old macro 'pass' */
+		// old macro 'pass'
 		register uint8_t mul =
 		    pass_no == 0 ? 5 :
 		    pass_no == 1 ? 7 : 9;
@@ -102,12 +102,12 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 		b = tmpa;
 	}
 
-	/* feed forward */
+	// old macro 'feed forward'
 	a ^= aa;
 	b -= bb;
 	c += cc;
 
-	/* end old 'compress' macro */
+	// end old 'compress' macro
 
 	state[0] = a;
 	state[1] = b;
@@ -182,7 +182,7 @@ luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 }
 
 void
-luks::tiger_end(struct tiger_ctx *ctx, uint8_t *res)
+luks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 {
 	uint8_t temp[64];
 	size_t i;
@@ -223,8 +223,9 @@ luks::tiger_end(struct tiger_ctx *ctx, uint8_t *res)
 	std::copy(ctx->res, ctx->res + 3, reinterpret_cast<uint64_t *>(res));
 }
 
-/* perhaps a greater genius can swap this out with a init(), update(), end()
- * implementation */
+// the original implementation of tiger(), with my annotations and coding
+// style inflicted upon it
+#if 0
 void
 luks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
     uint64_t res[3])
@@ -291,3 +292,4 @@ luks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
 	reinterpret_cast<uint64_t *>(temp + 56)[0] = length << 3;
 	tiger_compress(reinterpret_cast<uint64_t *>(temp), passes, res);
 }
+#endif

@@ -254,7 +254,7 @@ class Hash_tiger : public Hash_function {
 	{
 		if (BITS < 192) {
 			// truncate output
-			uint8_t buf2[192/8];
+			uint8_t buf2[TIGER_SZ_DIGEST];
 			tiger_end(&_ctx, buf2);
 			std::copy(buf2, buf2 + BITS/8, buf);
 		} else
