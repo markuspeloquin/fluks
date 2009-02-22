@@ -67,32 +67,14 @@ luks::Hash_function::create(enum hash_type type)
 		return std::tr1::shared_ptr<Hash_function>(new Hash_sha384);
 	case HT_SHA512:
 		return std::tr1::shared_ptr<Hash_function>(new Hash_sha512);
+	case HT_TIGER128:
+		return std::tr1::shared_ptr<Hash_function>(new Hash_tiger128);
+	case HT_TIGER160:
+		return std::tr1::shared_ptr<Hash_function>(new Hash_tiger160);
+	case HT_TIGER192:
+		return std::tr1::shared_ptr<Hash_function>(new Hash_tiger192);
 	default:
 		assert(0);
 		return std::tr1::shared_ptr<Hash_function>();
-	}
-}
-
-std::tr1::shared_ptr<luks::Hmac_function>
-luks::Hmac_function::create(enum hash_type type)
-{
-	switch (type) {
-	case HT_MD5:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_md5);
-	case HT_RMD160:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_rmd160);
-	case HT_SHA1:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha1);
-	case HT_SHA224:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha224);
-	case HT_SHA256:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha256);
-	case HT_SHA384:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha384);
-	case HT_SHA512:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha512);
-	default:
-		assert(0);
-		return std::tr1::shared_ptr<Hmac_function>();
 	}
 }

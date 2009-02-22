@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "hash.hpp"
+#include "hmac.hpp"
 #include "pbkdf2.hpp"
 #include "util.hpp"
 
@@ -43,7 +43,7 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 	hmacfn->init(passwd, sz_passwd);
 	hmacfn->add(salt, SZ_SALT);
 	hmacfn->add(reinterpret_cast<uint8_t *>(&index), 4);
-	hmacfn->end(u, sizeof(u));
+	hmacfn->end(u);
 
 	std::copy(u, u + sizeof(u), result);
 
@@ -51,7 +51,7 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 		// compute U_i
 		hmacfn->init(passwd, sz_passwd);
 		hmacfn->add(u, sizeof(u));
-		hmacfn->end(u, sizeof(u));
+		hmacfn->end(u);
 
 		xor_bufs(u, result, sizeof(u), result);
 	}
