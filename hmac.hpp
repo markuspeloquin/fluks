@@ -43,8 +43,8 @@ struct Hmac_function {
 	 * be called at the start of each HMAC computation (i.e. each
 	 * sequence of calls to add()).
 	 *
-	 * \param key	The HMAC key.
-	 * \param sz	The size of <code>key</code> in bytes.
+	 * \param key	The HMAC %key.
+	 * \param sz	The size of <code>%key</code> in bytes.
 	 */
 	virtual void init(const uint8_t *key, size_t sz)
 		throw (std::length_error) = 0;

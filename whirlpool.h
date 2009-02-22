@@ -18,8 +18,6 @@ const size_t WHIRLPOOL_SZ_BLOCK = 64;
 
 #else 
 /* C */
-#	define WHIRLPOOL256_SZ_DIGEST	32
-#	define WHIRLPOOL384_SZ_DIGEST	48
 #	define WHIRLPOOL_SZ_DIGEST	64
 #	define WHIRLPOOL_SZ_BLOCK	64
 #endif
