@@ -131,22 +131,22 @@ luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 {
 	ctx->length += sz;
 
-	if (ctx->sz + sz < 64) {
+	if (ctx->sz + sz < TIGER_SZ_BLOCK) {
 		// buffer won't fill
 		std::copy(buf, buf + sz, ctx->buf + ctx->sz);
 		ctx->sz += sz;
 		return;
 	}
 
-	uint8_t temp[64];
+	uint8_t temp[TIGER_SZ_BLOCK];
 
 	// if data remaining in ctx
 	if (ctx->sz) {
-		size_t bytes = 64 - ctx->sz;
+		size_t bytes = TIGER_SZ_BLOCK - ctx->sz;
 		std::copy(buf, buf + bytes, ctx->buf + ctx->sz);
 #if BYTE_ORDER == BIG_ENDIAN
 		// switch each 64bit word from big- to little-endian
-		for (size_t i = 0; i < 64; i++)
+		for (size_t i = 0; i < TIGER_SZ_BLOCK ; i++)
 			temp[i ^ 7] = ctx->buf[i];
 		tiger_compress(reinterpret_cast<uint64_t *>(temp),
 		    ctx->passes, ctx->res);
@@ -162,17 +162,17 @@ luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	// I suppose it's possible to see if buf is at an acceptable offset
 	// for 64bit integers, but I don't know what's really involved in
 	// that; instead, I'll have to copy all the bytes
-	while (sz > 64) {
+	while (sz > TIGER_SZ_BLOCK) {
 #if BYTE_ORDER == BIG_ENDIAN
-		for (size_t i = 0; i < 64; i++)
+		for (size_t i = 0; i < TIGER_SZ_BLOCK; i++)
 			temp[i ^ 7] = ctx->buf[i];
 #else
-		std::copy(buf, buf + 64, temp);
+		std::copy(buf, buf + TIGER_SZ_BLOCK, temp);
 #endif
 		tiger_compress(reinterpret_cast<uint64_t *>(temp),
 		    ctx->passes, ctx->res);
-		sz -= 64;
-		buf += 64;
+		sz -= TIGER_SZ_BLOCK;
+		buf += TIGER_SZ_BLOCK;
 	}
 
 	if (sz)
@@ -184,7 +184,7 @@ luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 void
 luks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 {
-	uint8_t temp[64];
+	uint8_t temp[TIGER_SZ_BLOCK];
 	size_t i;
 
 	// (switch endian if necessary;) copy into the context buffer 0x01,
@@ -206,7 +206,7 @@ luks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	// buffer with zeros and compress the block
 	if (i > 56) {
 		// I really doubt this loop does anything
-		while (i < 64) temp[i++] = 0;
+		while (i < TIGER_SZ_BLOCK) temp[i++] = 0;
 		tiger_compress(reinterpret_cast<uint64_t *>(temp),
 		    ctx->passes, ctx->res);
 		i = 0;
@@ -230,7 +230,7 @@ void
 luks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
     uint64_t res[3])
 {
-	uint8_t			temp[64];
+	uint8_t			temp[TIGER_SZ_BLOCK];
 	register uint64_t	i;
 	register uint64_t	j;
 	register const uint64_t *str =
@@ -245,10 +245,10 @@ luks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
 	// words, pure magic
 
 	// once for each whole 64-byte block, compress on next 64 bytes
-	for (i = length; i >= 64; i -= 64) {
+	for (i = length; i >= TIGER_SZ_BLOCK; i -= TIGER_SZ_BLOCK) {
 #if BYTE_ORDER == BIG_ENDIAN
 		// switch endian to little, 8 bytes at a time
-		for (j = 0; j < 64; j++)
+		for (j = 0; j < TIGER_SZ_BLOCK; j++)
 			temp[j ^ 7] =
 			    reinterpret_cast<const uint8_t *>(str)[j];
 		tiger_compress(reinterpret_cast<uint64_t *>(temp),
@@ -280,7 +280,7 @@ luks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
 	// buffer with zeros and compress the block
 	if (j > 56) {
 		// I really doubt this loop does anything
-		while (j < 64) temp[j++] = 0;
+		while (j < TIGER_SZ_BLOCK) temp[j++] = 0;
 		tiger_compress(reinterpret_cast<uint64_t *>(temp), passes, res);
 		j = 0;
 	}

@@ -149,12 +149,20 @@ private:
 };
 
 
-/** Tiger hash function template */
-template <size_t SIZE>
+/** Tiger hash function */
 class Hash_tiger : public Hash_function {
 public:
-	Hash_tiger(unsigned passes=3) :
-		_passes(passes)
+	/** Create a Tiger hash object
+	 *
+	 * \param sz_digest	The size of the digest in bytes.  Must be one
+	 *	of { \link TIGER128_SZ_DIGEST\endlink,
+	 *	\link TIGER160_SZ_DIGEST\endlink,
+	 *	\link TIGER_SZ_DIGEST\endlink }.
+	 * \param passes	The number of passes to take in the Tiger
+	 *	compression function.  Minumum value is 3.
+	 */
+	Hash_tiger(size_t sz_digest, unsigned passes=3) :
+		_passes(passes < 3 ? 3 : passes)
 	{}
 	~Hash_tiger() throw () {}
 
