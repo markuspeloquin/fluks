@@ -48,7 +48,7 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 	// [^-]* - [^-*] - [^:]*
 	// [^-]* - [^-*] - [^:]* : .*
 	boost::regex expr(
-	    "([^-]+)  (?: - ([^-]+) )?  (?: - ([^:]+) )?  (?: : (.+)  )?",
+	    "([^-]+)  (?: - ([^-]+) )?  (?: - ([^:]+) )?  (?: : (.+) )?",
 	    boost::regex_constants::normal |
 	    boost::regex_constants::mod_x); // ignore space
 

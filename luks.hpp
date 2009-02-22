@@ -4,12 +4,12 @@
 #include <stdint.h> // no cstdint yet
 
 #include <cstddef>
-#include <exception>
 #include <string>
 #include <vector>
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "errors.hpp"
 #include "os.hpp"
 
 namespace luks {
@@ -131,28 +131,6 @@ enum hash_type {
 // switch to/from BE
 inline void	endian_switch(struct phdr1 *, bool process_keys);
 inline void	endian_switch(struct key *);
-
-
-struct Slots_full : std::exception {
-	~Slots_full() throw() {}
-
-	const char *what() const throw ()
-	{	return "All key slots are used."; }
-};
-
-
-struct Bad_spec : std::exception {
-	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
-	{
-		_msg += msg;
-	}
-	~Bad_spec() throw () {}
-
-	const char *what() const throw ()
-	{	return _msg.c_str(); }
-
-	std::string _msg;
-};
 
 
 /** A LUKS header. */

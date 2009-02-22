@@ -33,6 +33,26 @@ private:
 	bool _good;
 };
 
+
+/** Checks if a cipher spec is supported by the kernel.
+ *
+ * \param cipher	The name of the cipher (e.g. aes, twofish).
+ * \param chainmode	The block chain mode (e.g. cbc, ecb).
+ * \param ivopts	IV option (e.g. plain, essiv).
+ * \param ivmode	IV mode (i.e. a hash spec for cbc-essiv).
+ * \return	Whether or not the cipher spec is supported.
+ */
+bool	cipher_spec_supported(const std::string &cipher,
+	    const std::string &chainmode, const std::string &ivopts,
+	    const std::string &ivmode);
+
+/** Checks if a hash spec is supported by the kernel.
+ *
+ * \param hash	The hash spec (e.g. sha256, rmd160).
+ * \return	Whether or not the hash spec is supported.
+ */
+bool	hash_spec_supported(const std::string &hash);
+
 }
 
 #endif

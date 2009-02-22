@@ -6,6 +6,7 @@
 #include <openssl/rand.h>
 
 #include "hash.hpp"
+#include "detect.hpp"
 
 char *prog;
 
@@ -35,6 +36,11 @@ main(int argc, char **argv)
 	prog = *argv;
 	if (argc < 2) {
 		usage();
+		return 1;
+	}
+
+	if (!luks::Crypto_detect::good()) {
+		std::cerr << prog << " failed to read /proc/crypto\n";
 		return 1;
 	}
 

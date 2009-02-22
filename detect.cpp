@@ -9,7 +9,9 @@ luks::Crypto_detect::Crypto_detect() :
 	_good(false)
 {
 	std::ifstream file_in("/proc/crypto");
+	// can't throw an exception
 	if (!file_in) return;
+	_good = true;
 
 	boost::regex expr("(.+?)\\s*:\\s(.+)");
 
@@ -44,3 +46,17 @@ luks::Crypto_detect::Crypto_detect() :
 }
 
 luks::Crypto_detect luks::Crypto_detect::_instance;
+
+bool
+luks::cipher_spec_supported(const std::string &cipher,
+    const std::string &chainmode, const std::string &ivopts,
+    const std::string &ivmode)
+{
+	return false;
+}
+
+bool
+luks::hash_spec_supported(const std::string &hash)
+{
+	return false;
+}

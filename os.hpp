@@ -1,24 +1,11 @@
 #ifndef OS_HPP
 #define OS_HPP
 
-#include <exception>
 #include <string>
 
+#include "errors.hpp"
+
 namespace luks {
-
-struct Unix_error : std::exception {
-	/** Create an error associated with <code>errno</code>.
-	 *
-	 * \param _errno	The error number, or 0 to use the current
-	 *	value.
-	 */
-	Unix_error(int _errno=0);
-	~Unix_error() throw () {}
-	const char *what() const throw ()
-	{	return _msg.c_str(); }
-
-	std::string _msg;
-};
 
 /** Get the sector size of a device.
  *

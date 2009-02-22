@@ -5,18 +5,8 @@
 #include <fcntl.h>
 
 #include <cerrno>
-#include <cstring>
-#include <sstream>
 
 #include "os.hpp"
-
-luks::Unix_error::Unix_error(int _errno)
-{
-	if (!_errno) _errno = errno;
-	std::ostringstream out;
-	out << "Unix error (" << _errno << "): " << strerror(_errno);
-	_msg = out.str();
-}
 
 int
 luks::sector_size(const std::string &device) throw (Unix_error)

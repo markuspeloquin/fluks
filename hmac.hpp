@@ -8,6 +8,8 @@
 #include <tr1/memory>
 #include <boost/scoped_array.hpp>
 
+#include <openssl/hmac.h>
+
 #include "hash.hpp"
 #include "luks.hpp"
 

@@ -4,7 +4,6 @@
 #include <stdint.h> // no cstdint yet
 
 #include <cstddef>
-#include <exception>
 #include <stdexcept>
 #include <streambuf>
 #include <string>
@@ -16,15 +15,12 @@
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>
 
+#include "errors.hpp"
 #include "luks.hpp"
-#include "ssl.hpp"
 #include "tiger.hpp"
 #include "whirlpool.h"
 
 namespace luks {
-
-struct Hash_error : virtual std::exception {
-};
 
 enum hash_type	    hash_type(const std::string &);
 std::string	    hash_name(enum hash_type);
@@ -99,13 +95,6 @@ struct Hash_function {
 	 * \return	The size in bytes.
 	 */
 	virtual size_t blocksize() const = 0;
-};
-
-
-/** An SSL hashing error. */
-struct Ssl_hash_error : Hash_error, Ssl_error {
-	Ssl_hash_error() {}
-	~Ssl_hash_error() throw() {}
 };
 
 
