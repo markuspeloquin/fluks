@@ -143,7 +143,6 @@ struct Bad_spec : std::exception {
 	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
 	{
 		_msg += msg;
-		_msg += '.';
 	}
 	~Bad_spec() throw () {}
 
@@ -152,6 +151,7 @@ struct Bad_spec : std::exception {
 
 	std::string _msg;
 };
+
 
 /** A LUKS header. */
 class Luks_header {

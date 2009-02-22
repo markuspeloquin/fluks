@@ -150,7 +150,7 @@ private:
 
 
 /** Tiger hash function template */
-template <size_t BITS>
+template <size_t SIZE>
 class Hash_tiger : public Hash_function {
 public:
 	Hash_tiger(unsigned passes=3) :
@@ -168,18 +168,18 @@ public:
 	}
 	void end(uint8_t *buf) throw ()
 	{
-		if (BITS < 192) {
+		if (SIZE < TIGER_SZ_DIGEST) {
 			// truncate output
 			uint8_t buf2[TIGER_SZ_DIGEST];
 			tiger_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + BITS/8, buf);
+			std::copy(buf2, buf2 + SIZE, buf);
 		} else
 			tiger_end(&_ctx, buf);
 	}
 	size_t length() const
-	{	return BITS/8; }
+	{	return SIZE; }
 	size_t blocksize() const
-	{	return 64; }
+	{	return TIGER_SZ_BLOCK; }
 
 private:
 	tiger_ctx	_ctx;
@@ -215,9 +215,9 @@ typedef Hash_ssl<
     SHA512_CTX, SHA512_Init, SHA512_Update, SHA512_Final,
     SHA512_DIGEST_LENGTH, SHA512_CBLOCK>
     Hash_sha512;
-typedef Hash_tiger<128> Hash_tiger128;
-typedef Hash_tiger<160> Hash_tiger160;
-typedef Hash_tiger<192> Hash_tiger192;
+typedef Hash_tiger<TIGER128_SZ_DIGEST>	Hash_tiger128;
+typedef Hash_tiger<TIGER160_SZ_DIGEST>	Hash_tiger160;
+typedef Hash_tiger<TIGER_SZ_DIGEST>	Hash_tiger192;
 
 }
 

@@ -6,15 +6,16 @@ enum luks::hash_type
 luks::hash_type(const std::string &name)
 {
 	if (name == "md5")	return HT_MD5;
-	if (name == "rmd160" || name == "ripemd160")
-				return HT_RMD160;
-	if (name == "sha" || name == "sha1")
-				return HT_SHA1;
+	if (name == "rmd160" || name == "ripemd160")	return HT_RMD160;
+	if (name == "sha" || name == "sha1")	return HT_SHA1;
 	if (name == "sha224")	return HT_SHA224;
 	if (name == "sha256")	return HT_SHA256;
 	if (name == "sha384")	return HT_SHA384;
 	if (name == "sha512")	return HT_SHA512;
-	return HT_UNDEFINED;
+	if (name == "tiger128")	return HT_TIGER128;
+	if (name == "tiger160")	return HT_TIGER160;
+	if (name == "tiger192")	return HT_TIGER192;
+	else			return HT_UNDEFINED;
 }
 
 std::string
@@ -28,6 +29,9 @@ luks::hash_name(enum hash_type type)
 	case HT_SHA256:	return "sha256";
 	case HT_SHA384:	return "sha384";
 	case HT_SHA512:	return "sha512";
+	case HT_TIGER128:	return "tiger128";
+	case HT_TIGER160:	return "tiger160";
+	case HT_TIGER192:	return "tiger192";
 	default:	assert(0);
 			return "undefined";
 	}
@@ -44,6 +48,9 @@ luks::hash_size(enum hash_type type)
 	case HT_SHA256:	return SHA256_DIGEST_LENGTH;
 	case HT_SHA384:	return SHA384_DIGEST_LENGTH;
 	case HT_SHA512:	return SHA512_DIGEST_LENGTH;
+	case HT_TIGER128:	return TIGER128_SZ_DIGEST;
+	case HT_TIGER160:	return TIGER160_SZ_DIGEST;
+	case HT_TIGER192:	return TIGER_SZ_DIGEST;
 	default:	assert(0);
 			return 0;
 	}

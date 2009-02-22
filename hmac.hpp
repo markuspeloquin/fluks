@@ -80,7 +80,7 @@ struct Hmac_function {
 /** An HMAC function implemented in terms of a Hash_function object */
 class Hmac_impl : public Hmac_function {
 public:
-	/** Create a HMAC object tied to a particular hash function
+	/** Create an HMAC object tied to a particular hash function
 	 *
 	 * \param hashfn	A hash object.
 	 */
