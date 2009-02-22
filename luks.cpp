@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cassert>
+#include <sstream>
 #include <string>
+#include <boost/regex.hpp>
 
 #include <openssl/rand.h>
 
@@ -8,25 +10,81 @@
 #include "hash.hpp"
 #include "luks.hpp"
 #include "pbkdf2.hpp"
+#include "os.hpp"
 
-luks::Luks_header::Luks_header(uint32_t sz_key,
-    const std::string &cipher_name, const std::string &block_mode,
-    const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
-	throw (Bad_spec) :
+namespace luks {
+namespace {
+
+std::string	make_mode(const std::string &, const std::string &,
+		    const std::string &);
+bool		parse_cipher(const std::string &, std::string &,
+		    std::string &, std::string &, std::string &);
+
+// reconstruct the mode string (e.g. 'cbc', 'cbc-essiv', 'cbc-essiv:sha256')
+std::string
+make_mode(const std::string &chainmode, const std::string &ivopts,
+    const std::string &ivmode)
+{
+	std::ostringstream out;
+	if (chainmode.size()) {
+		out << chainmode;
+		if (ivopts.size()) {
+			out << '-' << ivopts;
+			if (ivmode.size())
+				out << ':' << ivmode;
+		}
+	}
+	return out.str();
+}
+
+
+bool
+parse_cipher(const std::string &cipher_spec, std::string &cipher,
+	    std::string &chainmode, std::string &ivopts, std::string &ivmode)
+{
+	// valid patterns:
+	// [^-]*
+	// [^-]* - [^-*]
+	// [^-]* - [^-*] - [^:]*
+	// [^-]* - [^-*] - [^:]* : .*
+	boost::regex expr(
+	    "([^-]+)  (?: - ([^-]+) )?  (?: - ([^:]+) )?  (?: : (.+)  )?",
+	    boost::regex_constants::normal |
+	    boost::regex_constants::mod_x); // ignore space
+
+	boost::smatch matches;
+	if (!boost::regex_match(cipher_spec, matches, expr))
+		return false;
+
+	cipher = matches[0];
+	chainmode = matches[1];
+	ivopts = matches[2];
+	ivmode = matches[3];
+	return true;
+}
+
+} // end anon namespace
+}
+
+luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
+    const std::string &cipher_spec, const std::string &hash_spec,
+    uint32_t mk_iterations, uint32_t stripes)
+	throw (Bad_spec, Unix_error) :
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
 	_hash_type(hash_type(hash_spec)),
 	_key_mach_end(NUM_KEYS, true),
 	_hdr_mach_end(true)
 {
-	if (cipher_name.size() + 1 >= SZ_CIPHER_NAME)
-		throw Bad_spec("cipher name too long");
-	if (block_mode.size() + 1 >= SZ_CIPHER_MODE)
-		throw Bad_spec("block mode too long");
-	if (hash_spec.size() + 1 >= SZ_HASH_SPEC)
-		throw Bad_spec("hash spec too long");
-	if (0/* unrecognized? */)
-		throw Bad_spec("you little...");
+	std::string cipher;
+	std::string chainmode;
+	std::string ivopts;
+	std::string ivmode;
+
+	if (!parse_cipher(cipher_spec, cipher, chainmode, ivopts, ivmode))
+		throw Bad_spec("unrecognized spec format");
+
+	// TODO check if supported
 
 	// values set in the order in 'struct phdr1' structure
 
@@ -36,8 +94,10 @@ luks::Luks_header::Luks_header(uint32_t sz_key,
 	std::copy(MAGIC, MAGIC + sizeof(MAGIC),_hdr->magic);
 	_hdr->version = 1;
 
-	std::copy(cipher_name.begin(), cipher_name.end(), _hdr->cipher_name);
-	std::copy(block_mode.begin(), block_mode.end(), _hdr->block_mode);
+	// copy specs into header
+	std::string mode = make_mode(chainmode, ivopts, ivmode);
+	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);
+	std::copy(mode.begin(), mode.end(), _hdr->block_mode);
 	std::copy(hash_spec.begin(), hash_spec.end(), _hdr->hash_spec);
 
 	_hdr->sz_key = sz_key;
@@ -49,9 +109,9 @@ luks::Luks_header::Luks_header(uint32_t sz_key,
 	pbkdf2(_hash_type, _master_key.get(), sz_key, _hdr->mk_salt,
 	    _hdr->mk_iterations, _hdr->mk_digest, SZ_MK_DIGEST);
 
-	/*TODO (totally fake) */ const uint32_t SECTOR_SIZE = 2048;
-	uint32_t off_base = sizeof(phdr1) / SECTOR_SIZE + 1;
-	uint32_t km_sectors = (stripes * _hdr->sz_key) / SECTOR_SIZE + 1;
+	int sz_sector = sector_size(device);
+	uint32_t off_base = sizeof(phdr1) / sz_sector + 1;
+	uint32_t km_sectors = (stripes * _hdr->sz_key) / sz_sector + 1;
 
 	for (size_t i = 0; i < NUM_KEYS; i++) {
 		_hdr->keys[i].active = KEY_DISABLED;

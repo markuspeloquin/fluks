@@ -10,6 +10,8 @@
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "os.hpp"
+
 namespace luks {
 
 // header/key buffer sizes
@@ -74,12 +76,12 @@ struct phdr1 {
 
 /** Ciphers supported by <em>fluks</em> */
 enum cipher_type {
-	CT_AES128,
-	CT_AES192,
-	CT_AES256,
+	CT_AES,
 	CT_TWOFISH,
+	CT_SERPENT,
 	CT_UNDEFINED
 };
+
 
 /** Cipher block modes supported by <em>fluks</em> */
 enum block_mode {
@@ -158,9 +160,11 @@ class Luks_header {
 public:
 	/** Create a new header
 	 *
+	 * \param device	The pathname of the device.
 	 * \param sz_key	The byte length of the master key.
-	 * \param cipher_name	Cipher to encrypt with (e.g. twofish, aes).
-	 * \param block_mode	Cipher mode (e.g. cbc-plain, cbc-essiv:sha384).
+	 * \param cipher_spec	Cipher to encrypt with.  Format is
+	 *	CIPHER [ - CHAINMODE [ - IV_OPTS [ : IV_MODE ]]], where
+	 *	brackets indicate optional parts and without spaces.
 	 * \param hash_spec	Hash to use for the master key hash and the
 	 *	password (the hash is the key for the master key).
 	 * \param mk_iterations	The iterations to use in the PBKDF2 algorithm,
@@ -169,10 +173,10 @@ public:
 	 *	of the master key before the digest is computed.
 	 * \throw Bad_spec	One of the cipher/hash specs is invalid.
 	 */
-	Luks_header(uint32_t sz_key, const std::string &cipher_name,
-	    const std::string &block_mode, const std::string &hash_spec,
+	Luks_header(const std::string &device, uint32_t sz_key,
+	    const std::string &cipher_spec, const std::string &hash_spec,
 	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES)
-		throw (Bad_spec);
+		throw (Bad_spec, Unix_error);
 
 	/** Read a header from the disk
 	 *
