@@ -47,16 +47,17 @@ luks::Crypto_detect::Crypto_detect() :
 
 luks::Crypto_detect luks::Crypto_detect::_instance;
 
-bool
-luks::cipher_spec_supported(const std::string &cipher,
+void
+luks::cipher_spec_check(const std::string &cipher,
     const std::string &chainmode, const std::string &ivopts,
     const std::string &ivmode)
+	throw (Bad_spec)
 {
-	return false;
+	throw Bad_spec("sucks");
 }
 
-bool
-luks::hash_spec_supported(const std::string &hash)
+void
+luks::hash_spec_check(const std::string &hash) throw (Bad_spec)
 {
-	return false;
+	throw Bad_spec("sucks");
 }

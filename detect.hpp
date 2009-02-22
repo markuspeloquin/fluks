@@ -4,6 +4,8 @@
 #include <set>
 #include <string>
 
+#include "errors.hpp"
+
 namespace luks {
 
 class Crypto_detect {
@@ -42,16 +44,17 @@ private:
  * \param ivmode	IV mode (i.e. a hash spec for cbc-essiv).
  * \return	Whether or not the cipher spec is supported.
  */
-bool	cipher_spec_supported(const std::string &cipher,
+void	cipher_spec_check(const std::string &cipher,
 	    const std::string &chainmode, const std::string &ivopts,
-	    const std::string &ivmode);
+	    const std::string &ivmode)
+	throw (Bad_spec);
 
 /** Checks if a hash spec is supported by the kernel.
  *
  * \param hash	The hash spec (e.g. sha256, rmd160).
  * \return	Whether or not the hash spec is supported.
  */
-bool	hash_spec_supported(const std::string &hash);
+void	hash_spec_check(const std::string &hash) throw (Bad_spec);
 
 }
 
