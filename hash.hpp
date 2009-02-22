@@ -162,7 +162,8 @@ public:
 	 *	compression function.  Minumum value is 3.
 	 */
 	Hash_tiger(size_t sz_digest, unsigned passes=3) :
-		_passes(passes < 3 ? 3 : passes)
+		_passes(passes < 3 ? 3 : passes),
+		_sz(sz_digest)
 	{}
 	~Hash_tiger() throw () {}
 
@@ -176,22 +177,23 @@ public:
 	}
 	void end(uint8_t *buf) throw ()
 	{
-		if (SIZE < TIGER_SZ_DIGEST) {
+		if (_sz < TIGER_SZ_DIGEST) {
 			// truncate output
 			uint8_t buf2[TIGER_SZ_DIGEST];
 			tiger_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + SIZE, buf);
+			std::copy(buf2, buf2 + _sz, buf);
 		} else
 			tiger_end(&_ctx, buf);
 	}
 	size_t length() const
-	{	return SIZE; }
+	{	return _sz; }
 	size_t blocksize() const
 	{	return TIGER_SZ_BLOCK; }
 
 private:
 	tiger_ctx	_ctx;
 	unsigned	_passes;
+	size_t		_sz;
 };
 
 
@@ -223,9 +225,6 @@ typedef Hash_ssl<
     SHA512_CTX, SHA512_Init, SHA512_Update, SHA512_Final,
     SHA512_DIGEST_LENGTH, SHA512_CBLOCK>
     Hash_sha512;
-typedef Hash_tiger<TIGER128_SZ_DIGEST>	Hash_tiger128;
-typedef Hash_tiger<TIGER160_SZ_DIGEST>	Hash_tiger160;
-typedef Hash_tiger<TIGER_SZ_DIGEST>	Hash_tiger192;
 
 }
 

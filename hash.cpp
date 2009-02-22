@@ -75,11 +75,14 @@ luks::Hash_function::create(enum hash_type type)
 	case HT_SHA512:
 		return std::tr1::shared_ptr<Hash_function>(new Hash_sha512);
 	case HT_TIGER128:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_tiger128);
+		return std::tr1::shared_ptr<Hash_function>(
+		    new Hash_tiger(TIGER128_SZ_DIGEST));
 	case HT_TIGER160:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_tiger160);
+		return std::tr1::shared_ptr<Hash_function>(
+		    new Hash_tiger(TIGER160_SZ_DIGEST));
 	case HT_TIGER192:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_tiger192);
+		return std::tr1::shared_ptr<Hash_function>(
+		    new Hash_tiger(TIGER_SZ_DIGEST));
 	default:
 		assert(0);
 		return std::tr1::shared_ptr<Hash_function>();
