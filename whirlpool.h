@@ -4,8 +4,26 @@
 #include <features.h>
 #include <stdint.h>
 
-#define WHIRLPOOL_SZ_DIGEST	64
-#define WHIRLPOOL_SZ_BLOCK	64
+#ifdef __cplusplus
+// C++
+#include <cstddef>
+
+namespace luks {
+
+// because I hate macros
+const size_t WHIRLPOOL256_SZ_DIGEST = 32;
+const size_t WHIRLPOOL384_SZ_DIGEST = 48;
+const size_t WHIRLPOOL_SZ_DIGEST = 64;
+const size_t WHIRLPOOL_SZ_BLOCK = 64;
+
+#else 
+/* C */
+#	define WHIRLPOOL256_SZ_DIGEST	32
+#	define WHIRLPOOL384_SZ_DIGEST	48
+#	define WHIRLPOOL_SZ_DIGEST	64
+#	define WHIRLPOOL_SZ_BLOCK	64
+#endif
+
 
 /* for internal use */
 #define LENGTHBYTES 32
@@ -27,9 +45,6 @@ struct whirlpool_ctx {
 	uint64_t hash[WHIRLPOOL_SZ_DIGEST / sizeof(uint64_t)];
 };
 
-/* it gets redefined in whirlpool.c */
-#undef LENGTHBYTES
-
 __BEGIN_DECLS
 
 void	whirlpool_init(struct whirlpool_ctx *const ctx);
@@ -38,5 +53,12 @@ void	whirlpool_update(struct whirlpool_ctx *const ctx,
 void	whirlpool_end(struct whirlpool_ctx *const ctx, uint8_t *const buf);
 
 __END_DECLS
+
+#ifdef __cplusplus
+} // namespace luks
+#endif
+
+/* it gets redefined in whirlpool.c */
+#undef LENGTHBYTES
 
 #endif

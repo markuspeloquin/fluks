@@ -28,6 +28,15 @@ luks::Hmac_function::create(enum hash_type type)
 	case HT_TIGER192:
 		return std::tr1::shared_ptr<Hmac_function>(
 		    new Hmac_impl(Hash_function::create(HT_TIGER192)));
+	case HT_WHIRLPOOL256:
+		return std::tr1::shared_ptr<Hmac_function>(
+		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL256)));
+	case HT_WHIRLPOOL384:
+		return std::tr1::shared_ptr<Hmac_function>(
+		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL384)));
+	case HT_WHIRLPOOL512:
+		return std::tr1::shared_ptr<Hmac_function>(
+		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL512)));
 	default:
 		assert(0);
 		return std::tr1::shared_ptr<Hmac_function>();

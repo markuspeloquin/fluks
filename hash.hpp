@@ -19,6 +19,7 @@
 #include "luks.hpp"
 #include "ssl.hpp"
 #include "tiger.hpp"
+#include "whirlpool.h"
 
 namespace luks {
 
@@ -192,6 +193,53 @@ public:
 
 private:
 	tiger_ctx	_ctx;
+	unsigned	_passes;
+	size_t		_sz;
+};
+
+
+/** Whirlpool hash function */
+class Hash_whirlpool : public Hash_function {
+public:
+	/** Create a Whirlpool hash object
+	 *
+	 * \param sz_digest	The size of the digest in bytes.  Must be one
+	 *	of { \link TIGER128_SZ_DIGEST\endlink,
+	 *	\link TIGER160_SZ_DIGEST\endlink,
+	 *	\link TIGER_SZ_DIGEST\endlink }.
+	 * \param passes	The number of passes to take in the Tiger
+	 *	compression function.  Minumum value is 3.
+	 */
+	Hash_whirlpool(size_t sz_digest) :
+		_sz(sz_digest)
+	{}
+	~Hash_whirlpool() throw () {}
+
+	void init() throw ()
+	{
+		whirlpool_init(&_ctx);
+	}
+	void add(const uint8_t *buf, size_t sz) throw ()
+	{
+		whirlpool_update(&_ctx, buf, sz);
+	}
+	void end(uint8_t *buf) throw ()
+	{
+		if (_sz < WHIRLPOOL_SZ_DIGEST) {
+			// truncate output
+			uint8_t buf2[WHIRLPOOL_SZ_DIGEST];
+			whirlpool_end(&_ctx, buf2);
+			std::copy(buf2, buf2 + _sz, buf);
+		} else
+			whirlpool_end(&_ctx, buf);
+	}
+	size_t length() const
+	{	return _sz; }
+	size_t blocksize() const
+	{	return WHIRLPOOL_SZ_BLOCK; }
+
+private:
+	whirlpool_ctx	_ctx;
 	unsigned	_passes;
 	size_t		_sz;
 };

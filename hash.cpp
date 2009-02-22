@@ -14,7 +14,7 @@ luks::hash_type(const std::string &name)
 	if (name == "sha512")	return HT_SHA512;
 	if (name == "tiger128")	return HT_TIGER128;
 	if (name == "tiger160")	return HT_TIGER160;
-	if (name == "tiger192")	return HT_TIGER192;
+	if (name == "tiger" || name == "tiger192")	return HT_TIGER192;
 	else			return HT_UNDEFINED;
 }
 
@@ -31,7 +31,7 @@ luks::hash_name(enum hash_type type)
 	case HT_SHA512:	return "sha512";
 	case HT_TIGER128:	return "tiger128";
 	case HT_TIGER160:	return "tiger160";
-	case HT_TIGER192:	return "tiger192";
+	case HT_TIGER192:	return "tiger";
 	default:	assert(0);
 			return "undefined";
 	}
@@ -51,6 +51,9 @@ luks::hash_size(enum hash_type type)
 	case HT_TIGER128:	return TIGER128_SZ_DIGEST;
 	case HT_TIGER160:	return TIGER160_SZ_DIGEST;
 	case HT_TIGER192:	return TIGER_SZ_DIGEST;
+	case HT_WHIRLPOOL256:	return WHIRLPOOL256_SZ_DIGEST;
+	case HT_WHIRLPOOL384:	return WHIRLPOOL384_SZ_DIGEST;
+	case HT_WHIRLPOOL512:	return WHIRLPOOL_SZ_DIGEST;
 	default:	assert(0);
 			return 0;
 	}
@@ -83,6 +86,15 @@ luks::Hash_function::create(enum hash_type type)
 	case HT_TIGER192:
 		return std::tr1::shared_ptr<Hash_function>(
 		    new Hash_tiger(TIGER_SZ_DIGEST));
+	case HT_WHIRLPOOL256:
+		return std::tr1::shared_ptr<Hash_function>(
+		    new Hash_whirlpool(WHIRLPOOL256_SZ_DIGEST));
+	case HT_WHIRLPOOL384:
+		return std::tr1::shared_ptr<Hash_function>(
+		    new Hash_whirlpool(WHIRLPOOL384_SZ_DIGEST));
+	case HT_WHIRLPOOL512:
+		return std::tr1::shared_ptr<Hash_function>(
+		    new Hash_whirlpool(WHIRLPOOL_SZ_DIGEST));
 	default:
 		assert(0);
 		return std::tr1::shared_ptr<Hash_function>();
