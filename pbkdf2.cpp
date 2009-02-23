@@ -66,7 +66,7 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
     const uint8_t salt[SZ_SALT], uint32_t iterations, uint8_t *derived_key,
     uint32_t sz_key, bool benchmark)
 {
-	if (type == HT_UNDEFINED) return;
+	if (type == HT_UNDEFINED) return 0;
 	std::auto_ptr<boost::timer> timer;
 	if (benchmark)
 		timer.reset(new boost::timer);
