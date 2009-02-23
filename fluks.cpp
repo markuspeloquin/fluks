@@ -39,11 +39,6 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if (!luks::Crypto_detect::good()) {
-		std::cerr << prog << " failed to read /proc/crypto\n";
-		return 1;
-	}
-
 	if (!have_urandom()) {
 		time_t now = time(0);
 		std::cerr << "/dev/urandom not found, "

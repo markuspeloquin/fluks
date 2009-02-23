@@ -76,34 +76,40 @@ struct phdr1 {
 
 /** Ciphers supported by <em>fluks</em> */
 enum cipher_type {
+	CT_UNDEFINED = 0,
 	CT_AES,
+	CT_BLOWFISH,
+	CT_DES3,
 	CT_TWOFISH,
-	CT_SERPENT,
-	CT_UNDEFINED
+	CT_SERPENT
 };
 
 
 /** Cipher block modes supported by <em>fluks</em> */
 enum block_mode {
+	BM_UNDEFINED = 0,
 	BM_CBC, /**< Cipher Block Chaining */
-	BM_CBC_ESSIV_SHA1,
-	BM_CBC_ESSIV_SHA224,
-	BM_CBC_ESSIV_SHA256,
-	BM_CBC_ESSIV_SHA384,
-	BM_CBC_ESSIV_SHA512,
 	BM_CTR, /**< Counter */
 	/** Cipher Text Stealing
 	 *
 	 * Described in RFC 2040, Section 8 */
 	BM_CTS,
-	BM_PCBC, /**< Propogating Cipher Block Chaining */
-	BM_UNDEFINED
+	BM_PCBC /**< Propogating Cipher Block Chaining */
 };
+
+
+enum iv_opts {
+	IO_UNDEFINED = 0,
+	IO_PLAIN,
+	IO_ESSIV
+};
+
 
 /** Hash types supported by <em>fluks</em>
  *
- * Tiger is optimized for 64-bit architectures.  Tiger/{128,160}
- * are just truncated versions of Tiger/192.
+ * Tiger is optimized for 64-bit architectures, designed by the same folks
+ * who brought you the Serpent cipher.  Tiger/{128,160} are just truncated
+ * versions of Tiger/192.
  *
  * Along with SHA-{1,256,384,512} and RMD-{128,160}, WHIRLPOOL is included
  * in ISO/IEC's list of recommended hash functions (10118-3), and is
@@ -111,6 +117,7 @@ enum block_mode {
  * truncated versions.
  */
 enum hash_type {
+	HT_UNDEFINED = 0,
 	HT_MD5,	/**< (you probably should not use this) */
 	HT_RMD160,	/**< Possibly better knows as RIPEMD-160 */
 	HT_SHA1,
@@ -123,8 +130,7 @@ enum hash_type {
 	HT_TIGER192,
 	HT_WHIRLPOOL256,
 	HT_WHIRLPOOL384,
-	HT_WHIRLPOOL512,
-	HT_UNDEFINED
+	HT_WHIRLPOOL512
 };
 
 
@@ -158,9 +164,9 @@ public:
 
 	/** Read a header from the disk
 	 *
-	 * \param off		I don't know what to do with this yet.
+	 * \param device	I don't know what to do with this yet.
 	 */
-	Luks_header(off_t off);
+	Luks_header(const std::string &device);
 
 	~Luks_header() {}
 
@@ -177,9 +183,11 @@ public:
 	/** Add a password for the private key
 	 *
 	 * \param passwd	The password to encrypt the key with.
+	 * \param check_time	The time (in microseconds) to check the key
+	 *	for.
 	 * \throw Slots_full	All slots are enabled already.
 	 */
-	void add_passwd(const std::string &passwd)
+	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
 		throw (Slots_full);
 
 	/** Disable a password slot
@@ -194,6 +202,8 @@ public:
 	 */
 	uint8_t *master_key() const
 	{	return _master_key.get(); }
+
+	void save() throw (Unix_error);
 
 private:
 	void ensure_mach_hdr(bool which)
@@ -217,10 +227,19 @@ private:
 	boost::scoped_ptr<struct phdr1>	_hdr;
 	boost::scoped_array<uint8_t>	_master_key;
 	enum hash_type			_hash_type;
+	enum cipher_type		_cipher_type;
+	enum block_mode			_block_mode;
+	enum iv_opts			_iv_opts;
+	enum hash_type			_iv_hash;
 
 	std::vector<bool>		_key_mach_end;
 	bool				_hdr_mach_end;
 };
+
+
+enum block_mode get_block_mode(const std::string &mode);
+enum iv_opts	get_iv_opts(const std::string &ivopts);
+
 
 }
 

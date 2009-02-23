@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <boost/timer.hpp>
 
 #include "hmac.hpp"
 #include "pbkdf2.hpp"
@@ -60,14 +61,17 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 }} // end anonymous namespace
 
 // Password-Based Key Derivation Function, version 2 (from PKCS #5 v2.0)
-void
+uint32_t
 luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
     const uint8_t salt[SZ_SALT], uint32_t iterations, uint8_t *derived_key,
-    uint32_t sz_key)
+    uint32_t sz_key, bool benchmark)
 {
 	if (type == HT_UNDEFINED) return;
+	std::auto_ptr<boost::timer> timer;
+	if (benchmark)
+		timer.reset(new boost::timer);
 
-	uint32_t sz_hash = hash_size(type);
+	uint32_t sz_hash = hash_digest_size(type);
 
 	// 1.
 	// If dkLen > (2^32 - 1) * hLen, stop
@@ -108,4 +112,10 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 		std::copy(buf_partial, buf_partial + partial,
 		    derived_key + blocks * sz_hash);
 	}
+
+	if (benchmark)
+		return static_cast<uint32_t>(timer->elapsed() * 1000000.0);
+
+	// it's magic
+	return 0x6d616765;
 }

@@ -10,7 +10,7 @@
 #include <tr1/memory>
 #include <boost/scoped_array.hpp>
 
-#include <openssl/err.h>
+//#include <openssl/err.h>
 #include <openssl/md5.h>
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>
@@ -22,15 +22,46 @@
 
 namespace luks {
 
-enum hash_type	    hash_type(const std::string &);
-std::string	    hash_name(enum hash_type);
+/** Get the type of a hash given a name.
+ *
+ * \param	The name of the hash algorithm.
+ * \return	The type of the hash or \link HT_UNDEFINED\endlink.
+ */
+enum hash_type	get_hash_type(const std::string &);
+
+/** Get the name of a hash in a format the kernel will recognize.
+ *
+ * \param type	The hash algorithm.
+ * \return	The kernel name of the hash, or "" if the hash does not exist.
+ */
+std::string	hash_name(enum hash_type type);
+
+/** Get the kernel name of the given hash name.
+ *
+ * \param type	The hash algorithm.
+ * \return	The kernel name of the hash, or "" if the hash does not exist.
+ */
+inline std::string	hash_canonize(const std::string &name)
+{
+	enum hash_type t = get_hash_type(name);
+	return t == HT_UNDEFINED ? name : hash_name(t);
+}
 
 /** Get the size of a hash's digest.
  *
- * \param type	    The hash algorithm.
- * \return	    The size of the hash's digest in bytes.
+ * \param type	The hash algorithm.
+ * \return	The size of the hash's digest in bytes, or 0 if the hash
+ *	does not exist.
  */
-size_t		    hash_size(enum hash_type type);
+size_t		hash_digest_size(enum hash_type type);
+
+/** Get the block size of a hash.
+ *
+ * \param type	The hash algorithm.
+ * \return	The block size of the hash in bytes, or 0 if the hash
+ *	does not exist.
+ */
+size_t		hash_block_size(enum hash_type type);
 
 struct Hash_function {
 
@@ -44,7 +75,7 @@ struct Hash_function {
 	 */
 	static std::tr1::shared_ptr<Hash_function>
 	create(const std::string &name)
-	{	return create(hash_type(name)); }
+	{	return create(get_hash_type(name)); }
 
 	/**
 	 * Create a hash function, in an abstract sense, given a hash type.

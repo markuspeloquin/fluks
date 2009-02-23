@@ -27,7 +27,7 @@ struct Hmac_function {
 	 */
 	static std::tr1::shared_ptr<Hmac_function>
 	create(const std::string &name)
-	{	return create(hash_type(name)); }
+	{	return create(get_hash_type(name)); }
 
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash type.

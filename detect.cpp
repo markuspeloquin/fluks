@@ -1,17 +1,50 @@
+#include <stdint.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <boost/regex.hpp>
 
+#include "cipher.hpp"
 #include "detect.hpp"
+#include "hash.hpp"
 
-luks::Crypto_detect::Crypto_detect() :
-	_good(false)
+namespace luks {
+namespace {
+
+struct cipher_stats {
+	uint16_t blocksize;
+	uint16_t key_min;
+	uint16_t key_max;
+	uint16_t key_step;
+};
+
+/** Singleton to parse /proc/crypto for supported ciphers and hashes */
+class Crypto_detect {
+public:
+	static Crypto_detect *instance()
+	{	return &_instance; }
+
+	// detected from /proc/crypto
+	std::set<std::string> ciphers;
+	std::set<std::string> hashes;
+
+private:
+	Crypto_detect();
+	~Crypto_detect() {}
+
+	Crypto_detect(const Crypto_detect &c) {}
+	void operator=(const Crypto_detect &c) {}
+
+	static Crypto_detect _instance;
+
+};
+
+Crypto_detect::Crypto_detect()
 {
 	std::ifstream file_in("/proc/crypto");
 	// can't throw an exception
 	if (!file_in) return;
-	_good = true;
 
 	boost::regex expr("(.+?)\\s*:\\s(.+)");
 
@@ -24,19 +57,18 @@ luks::Crypto_detect::Crypto_detect() :
 		if (line.empty()) {
 			// empty line signifies the end of a crypto
 			// description
-			if (type == "blkcipher")
-				_blk_ciphers.insert(name);
-			else if (type == "givcipher")
-				_iv_ciphers.insert(name);
+			if (type == "cipher")
+				ciphers.insert(name);
 			else if (type == "digest")
-				_hashes.insert(name);
+				hashes.insert(name);
 
 			name = "";
 			type = "";
 		} else {
 			boost::smatch matches;
 			if (!boost::regex_match(line, matches, expr)) {
-				std::cerr << "/proc/crypto match failed: " << line << '\n';
+				std::cerr << "/proc/crypto match failed: "
+				    << line << '\n';
 				continue;
 			}
 			if (matches[1] == "name") name = matches[2];
@@ -45,19 +77,20 @@ luks::Crypto_detect::Crypto_detect() :
 	}
 }
 
-luks::Crypto_detect luks::Crypto_detect::_instance;
+Crypto_detect Crypto_detect::_instance;
 
-void
-luks::cipher_spec_check(const std::string &cipher,
-    const std::string &chainmode, const std::string &ivopts,
-    const std::string &ivmode)
-	throw (Bad_spec)
-{
-	throw Bad_spec("sucks");
+} // end anon namespace
 }
 
-void
-luks::hash_spec_check(const std::string &hash) throw (Bad_spec)
+
+const std::set<std::string> &
+luks::system_ciphers()
 {
-	throw Bad_spec("sucks");
+	return Crypto_detect::instance()->ciphers;
+}
+
+const std::set<std::string> &
+luks::system_hashes()
+{
+	return Crypto_detect::instance()->hashes;
 }

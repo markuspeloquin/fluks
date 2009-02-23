@@ -23,10 +23,14 @@ namespace luks {
  *	'blend'.
  * \param[out] derived_key	The digest.
  * \param[in] sz_key	The size of <code>derived_key</code> in bytes.
+ * \param[in] benchmark	Set to true to benchmark the algorithm.
+ * \return	If <code>benchmark</code> is true, the time spent (in
+ *	microseconds) is returned.  Otherwise you get a magical number.
  */
-void	pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
-	    const uint8_t salt[SZ_SALT], uint32_t iterations,
-	    uint8_t *derived_key, uint32_t sz_key);
+uint32_t	pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
+		    const uint8_t salt[SZ_SALT], uint32_t iterations,
+		    uint8_t *derived_key, uint32_t sz_key,
+		    bool benchmark=false);
 
 }
 
