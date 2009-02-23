@@ -79,6 +79,8 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_key_mach_end(NUM_KEYS, true),
 	_hdr_mach_end(true)
 {
+	// TODO this function is very long, but then it is also very linear
+
 	std::string cipher;
 	std::string chainmode;
 	std::string ivopts;
