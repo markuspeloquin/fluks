@@ -62,11 +62,13 @@ enum table_op {
 
 #define BAD_ALIGN	-1	/**< Alignment of argument was off */
 #define BAD_CIPHER_MODE	-2
-#define BAD_IV_MAT	-3	/**< Invalid IV text */
+#define BAD_CIPHER_STATE	-3
+#define BAD_INPUT_LEN	-4
+#define BAD_IV_MAT	-5	/**< Invalid IV text */
 /** Either a bad size or too many 'subkeys' */
-#define BAD_KEY_INSTANCE	-4
-#define BAD_KEY_MAT 	-5	/**< Key material not of correct length */
-#define BAD_PARAMS	-6	/**< NULL argument usually */
+#define BAD_KEY_INSTANCE	-6
+#define BAD_KEY_MAT 	-7	/**< Key material not of correct length */
+#define BAD_PARAMS	-8	/**< NULL argument usually */
 
 /** Decrypt blocks of data using Twofish
  *

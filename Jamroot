@@ -1,12 +1,14 @@
+DEBUG = -DDEBUG ;
 using gcc
 	: # version
 	: # c++ compile command
-	: <cxxflags>"-std=c++98" <cflags>"-std=c99"
+	: <cxxflags>"-std=c++98 $(DEBUG)" <cflags>"-std=c99 $(DEBUG)"
 	;
 lib boost_regex ;
 lib ssl ;
 exe fluks
 	: af.cpp cipher.cpp detect.cpp errors.cpp fluks.cpp
 	    hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp tiger.cpp
-	    tiger_sboxes.cpp twofish.c util.cpp whirlpool.c boost_regex ssl
+	    tiger_sboxes.cpp twofish.c twofish_debug.c util.cpp
+	    whirlpool.c boost_regex ssl
 	;
