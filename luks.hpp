@@ -41,9 +41,7 @@ const size_t	NUM_STRIPES = 4000;
  */
 struct key {
 // annotated with hex offsets
-	/**
-	 * One of { \link KEY_ENABLED\endlink, \link KEY_DISABLED\endlink }
-	 */
+	/** One of { \link KEY_ENABLED\endlink, \link KEY_DISABLED\endlink } */
 /*00*/	uint32_t	active;
 /*04*/	uint32_t	iterations;	/**< PBKDF2 iterations */
 /*08*/	uint8_t		salt[SZ_SALT];	/**< PBKDF2 salt */
