@@ -35,6 +35,12 @@ Notes:
 #ifdef DEBUG
 #	define CHECK_ALIGN
 #	define CHECK_ARGS
+
+#	define IV_ROUND	-100
+
+const int	debug_compile = 1;
+extern bool	debug;
+void		debug_io(const char *s);
 #endif
 
 bool		tabEnable = false;	/* are we gathering stats? */
@@ -159,6 +165,92 @@ do_table_op(enum table_op op)
 	}
 	return true;
 }
+
+#ifdef DEBUG
+static void
+debug_dump(const void *p, const char *s, int R, uint8_t XOR, bool do_rot,
+    bool show_t, bool need_bswap, uint32_t t0, uint32_t t1)
+{
+	if (!debug) return;
+
+	/* build output here */
+	const size_t	SZ = 512;
+	char		line[SZ];
+	uint32_t	q[4];
+	size_t		n;
+
+	if (R == IV_ROUND)
+		snprintf(line, SZ, "%sIV:    ", s);
+	else
+		snprintf(line, SZ, "%sR[%2d]: ", s, R);
+	for (n = 0; line[n]; n++);
+
+	for (uint8_t i = 0; i < 4; i++) {
+		q[i] = ((const uint32_t *)p)[i ^ XOR];
+		if (need_bswap) q[i] = Bswap(q[i]);
+	}
+
+	snprintf(line + n, SZ - n, "x= %08lX  %08lX  %08lX  %08lX.",
+	    ROR(q[0], do_rot ? R / 2 : 0),
+	    ROL(q[1], do_rot ? R / 2 : 0),
+	    ROR(q[2], do_rot ? (R + 1) / 2 : 0),
+	    ROL(q[3], do_rot ? (R + 1) / 2 : 0));
+	if (retval > 0) left -= retval;
+	while (line[n++]);
+
+	if (show_t) {
+		retval = snprintf(line + n, SZ - n,
+		    "    t0=%08lX. t1=%08lX.", t0, t1);
+	}
+	while (line[n++]);
+
+	snprintf(line + n, SZ - n, "\n");
+	debug_io(line);
+}
+#endif
+
+#ifdef DEBUG
+static void
+debug_dump_key(const struct twofish_key *key)
+{
+	if (!debug) return;
+
+	const size_t	SZ = 512;
+	char		line[SZ];
+	size_t		k64_count = (key->sz_key + 7) / 8;
+	unsigned	subkey_count = ROUND_SUBKEYS + 2 * key->numRounds;
+
+	snprintf(line, left,
+	    ";\n;makeKey:   Input key            -->  S-box key     [%s]\n",
+	    key->direction == DIR_ENCRYPT ? "Encrypt" : "Decrypt");
+	if (retval > 0) left -= retval;
+	debug_io(line);
+
+	/* display in RS format */
+	for (size_t i = 0; i < k64_count; i++) {
+		snprintf(line, SZ,
+		    ";%12s %08lX %08lX  -->  %08lX\n", "",
+		    key->key32[2 * i + 1],
+		    key->key32[2 * i],
+		    key->sboxKeys[k64_count - 1 - i]);
+		debug_io(line);
+	}
+	snprintf(line, SZ, ";%11sSubkeys\n", "");
+	debug_io(line);
+
+	for (size_t i = 0; i < subkey_count / 2; i++) {
+		snprintf(line, SZ, ";%12s %08lX %08lX%s\n", "",
+		    key->subKeys[2 * i], key->subKeys[2 * i + 1],
+		    2 * i == INPUT_WHITEN ?  "   Input whiten" :
+		    2 * i == OUTPUT_WHITEN ? "  Output whiten" :
+		    2 * i == ROUND_SUBKEYS ? "  Round subkeys" : "");
+		debug_io(line);
+	}
+
+	debugIO(";\n");
+}
+#endif
+
 
 static int
 parse_hex_le32(size_t sz, const char *srcTxt, uint32_t *d, char *dstTxt)
@@ -319,7 +411,7 @@ re_key(struct twofish_key *key)
 	}
 
 #ifdef DEBUG //XXX
-	DebugDumpKey(key);
+	debug_dump_key(key);
 #endif
 
 	return true;
@@ -451,9 +543,10 @@ twofish_encrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 	    outBuffer += BLOCK_SIZE) {
 
 #ifdef DEBUG
-		DebugDump(input, "\n", -1, 0, 0, 0, 1);
+		debug_dump(input, "\n", -1, 0, 0, 0, 1, 0, 0);
 		if (cipher->mode == MODE_CBC)
-			DebugDump(cipher->iv32, "", IV_ROUND, 0, 0, 0, 0);
+			debug_dump(cipher->iv32, "", IV_ROUND,
+			    0, 0, 0, 0, 0, 0);
 #endif
 
 		/* copy in the block, add whitening */
@@ -465,7 +558,7 @@ twofish_encrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 		}
 
 #ifdef DEBUG //XXX
-		DebugDump(x, "", 0, 0, 0, 0, 0);
+		debug_dump(x, "", 0, 0, 0, 0, 0, 0, 0);
 #endif
 
 		/* main Twofish encryption loop */
@@ -484,7 +577,7 @@ twofish_encrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 			x[2]  = ROR(x[2],1);
 
 #ifdef DEBUG //XXX
-			DebugDump(x, "", r + 1, 2 * (r & 1), 1, 1, 0);
+			debug_dump(x, "", r + 1, 2 * (r & 1), 1, 1, 0, 0, 0);
 #endif
 
 			/* make format compatible with optimized code */
@@ -510,9 +603,9 @@ twofish_encrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 	}
 
 #ifdef DEBUG
-	DebugDump(outBuffer, "", rounds + 1, 0, 0, 0, 1);
+	debug_dump(outBuffer, "", rounds + 1, 0, 0, 0, 1, 0, 0);
 	if (cipher->mode == MODE_CBC)
-		DebugDump(cipher->iv32, "", IV_ROUND, 0, 0, 0, 0);
+		debug_dump(cipher->iv32, "", IV_ROUND, 0, 0, 0, 0, 0, 0);
 #endif
 
 	assert(!(num_bits & 7));
@@ -583,7 +676,7 @@ twofish_decrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 	    outBuffer += BLOCK_SIZE) {
 
 #ifdef DEBUG //XXX
-		DebugDump(input, "\n", rounds + 1, 0, 0, 0, 1);
+		debug_dump(input, "\n", rounds + 1, 0, 0, 0, 1, 0, 0);
 #endif
 
 		/* copy in the block, add whitening */
@@ -599,7 +692,7 @@ twofish_decrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 			    key->sboxKeys, key->sz_key);
 
 #ifdef DEBUG //XXX
-			DebugDump(x, "", r + 1, 2 * (r & 1), 0, 1, 0);
+			debug_dump(x, "", r + 1, 2 * (r & 1), 0, 1, 0, 0, 0);
 #endif
 
 			x[2]  = ROL(x[2], 1);
@@ -623,7 +716,7 @@ twofish_decrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 		}
 
 #ifdef DEBUG //XXX
-		DebugDump(x, "", 0, 0, 0, 0, 0);
+		debug_dump(x, "", 0, 0, 0, 0, 0, 0, 0);
 #endif
 
 		for (unsigned i = 0; i < BLOCK_SIZE / 4; i++) {
@@ -638,7 +731,7 @@ twofish_decrypt(struct twofish_cipher *cipher, struct twofish_key *key,
 		}
 
 #ifdef DEBUG //XXX
-		DebugDump(outBuffer, "", -1, 0, 0, 0, 1);
+		debug_dump(outBuffer, "", -1, 0, 0, 0, 1, 0, 0);
 #endif
 	}
 

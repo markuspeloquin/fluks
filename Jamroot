@@ -1,7 +1,7 @@
 using gcc
 	: # version
 	: # c++ compile command
-	: <cxxflags>"-st$(oe)d=c++98" <cflags>"-std=c99"
+	: <cxxflags>"-std=c++98" <cflags>"-std=c99"
 	;
 lib boost_regex ;
 lib ssl ;
