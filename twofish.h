@@ -40,15 +40,10 @@ struct twofish_key {
 
 /* The structure for cipher information */
 struct twofish_cipher {
-	uint8_t  mode;			/* MODE_ECB, MODE_CBC, or MODE_CFB1 */
-#if ALIGN32
-	uint8_t dummyAlign[3];		/* keep 32-bit alignment */
-#endif
-	uint8_t IV[MAX_IV_SIZE];	/* CFB1 iv bytes  (CBC uses iv32) */
-
-	/* Twofish-specific parameters: */
-	uint32_t cipherSig;		/* set to VALID_SIG by cipherInit() */
 	uint32_t iv32[BLOCK_SIZE / 4];	/* CBC IV bytes arranged as dwords */
+	uint8_t IV[MAX_IV_SIZE];	/* CFB1 iv bytes  (CBC uses iv32) */
+	uint8_t  mode;			/* MODE_ECB, MODE_CBC, or MODE_CFB1 */
+	uint32_t cipherSig;		/* set to VALID_SIG by cipherInit() */
 };
 
 /* API to check table usage, for use in ECB_TBL KAT */

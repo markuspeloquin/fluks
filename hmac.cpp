@@ -46,7 +46,7 @@ luks::Hmac_function::create(enum hash_type type)
 void
 luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw (std::length_error)
 {
-	size_t sz_block = blocksize();
+	size_t sz_block = block_size();
 	if (sz > sz_block)
 		throw std::length_error(
 		    "HMAC key length cannot exceed the block size "
@@ -66,16 +66,16 @@ luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw (std::length_error)
 void
 luks::Hmac_impl::end(uint8_t *out) throw()
 {
-	size_t sz_block = blocksize();
+	size_t sz_block = block_size();
 
 	uint8_t key_opad[sz_block];
-	uint8_t mid_digest[length()];
+	uint8_t mid_digest[digest_size()];
 	xor_bufs(_key.get(), _opad.get(), sz_block, key_opad);
 	// get H1 = H( K^ipad . data )
 	_hashfn->end(mid_digest);
 	_hashfn->init();
 	_hashfn->add(key_opad, sz_block);
-	_hashfn->add(mid_digest, length());
+	_hashfn->add(mid_digest, digest_size());
 	// get H( K^opad . H1 )
 	_hashfn->end(out);
 }

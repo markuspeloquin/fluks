@@ -111,7 +111,7 @@ struct Hash_function {
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer, assumed to be large enough.
-	 * \see length()
+	 * \see digest_size()
 	 */
 	virtual void end(uint8_t *buf) throw (Hash_error) = 0;
 
@@ -119,13 +119,13 @@ struct Hash_function {
 	 *
 	 * \return	The size in bytes.
 	 */
-	virtual size_t length() const = 0;
+	virtual size_t digest_size() const = 0;
 
 	/** The size of the blocks.
 	 *
 	 * \return	The size in bytes.
 	 */
-	virtual size_t blocksize() const = 0;
+	virtual size_t block_size() const = 0;
 };
 
 
@@ -159,9 +159,9 @@ public:
 		if (!Final(buf, &_ctx)) throw Ssl_hash_error();
 		_valid = false;
 	}
-	size_t length() const
+	size_t digest_size() const
 	{	return SIZE; }
-	size_t blocksize() const
+	size_t block_size() const
 	{	return BLOCKSIZE; }
 
 private:
@@ -206,9 +206,9 @@ public:
 		} else
 			tiger_end(&_ctx, buf);
 	}
-	size_t length() const
+	size_t digest_size() const
 	{	return _sz; }
-	size_t blocksize() const
+	size_t block_size() const
 	{	return TIGER_SZ_BLOCK; }
 
 private:
@@ -253,9 +253,9 @@ public:
 		} else
 			whirlpool_end(&_ctx, buf);
 	}
-	size_t length() const
+	size_t digest_size() const
 	{	return _sz; }
-	size_t blocksize() const
+	size_t block_size() const
 	{	return WHIRLPOOL_SZ_BLOCK; }
 
 private:

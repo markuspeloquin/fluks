@@ -64,8 +64,8 @@ hash1(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 	    luks::Hash_function::create(type));
 
 	uint32_t	initial;
-	size_t		whole = sz / hashfn->length();
-	size_t		left = sz % hashfn->length();
+	size_t		whole = sz / hashfn->digest_size();
+	size_t		left = sz % hashfn->digest_size();
 
 	for (size_t i = 0; i < whole; i++) {
 		// compute hash of next block; append digest to output 
@@ -74,18 +74,18 @@ hash1(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 		// prefix with an IV (initial value)
 		initial = htonl(i);
 		hashfn->add(reinterpret_cast<uint8_t *>(&initial), 4);
-		hashfn->add(in, hashfn->length());
+		hashfn->add(in, hashfn->digest_size());
 		hashfn->end(out);
 
-		in += hashfn->length();
-		out += hashfn->length();
+		in += hashfn->digest_size();
+		out += hashfn->digest_size();
 	}
 
 	if (left) {
 		// compute hash of rest of data; append first (left) bytes
 		// of hash to output
 
-		uint8_t full[hashfn->length()];
+		uint8_t full[hashfn->digest_size()];
 		hashfn->init();
 		// prefix with an IV (initial value)
 		initial = htonl(whole);
@@ -106,8 +106,8 @@ hash2(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 	    luks::Hash_function::create(type));
 
 	uint32_t	initial;
-	size_t		whole = sz / hashfn->length();
-	size_t		left = sz % hashfn->length();
+	size_t		whole = sz / hashfn->digest_size();
+	size_t		left = sz % hashfn->digest_size();
 
 	for (size_t i = 0; i < whole; i++) {
 		// compute hash of next block; append digest to output 
@@ -120,14 +120,14 @@ hash2(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 		hashfn->add(in, sz);
 		hashfn->end(out);
 
-		out += hashfn->length();
+		out += hashfn->digest_size();
 	}
 
 	if (left) {
 		// compute hash of rest of data; append first (left) bytes
 		// of hash to output
 
-		uint8_t full[hashfn->length()];
+		uint8_t full[hashfn->digest_size()];
 		hashfn->init();
 		// prefix with an IV (initial value)
 		initial = htonl(whole);

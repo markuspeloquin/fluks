@@ -35,7 +35,7 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 	//
 	// I instead use 0-indexing (index: [0,l), j: [0,c)).
 
-	uint8_t u[hmacfn->length()];
+	uint8_t u[hmacfn->digest_size()];
 
 	// switch from 0-indexing to 1-indexing
 	index = htonl(index + 1);

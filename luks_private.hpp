@@ -17,6 +17,30 @@ endian_switch(uint16_t &x)
 
 }
 
+inline uint16_t
+luks::host_little(uint16_t x)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	return (x & 0x00ff) << 8 | (x & 0xff00) >> 8;
+#else
+	return x;
+#endif
+}
+
+inline uint32_t
+luks::host_little(uint32_t x)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	return
+	    (x & 0x000000ff) << 24 |
+	    (x & 0x0000ff00) << 8 |
+	    (x & 0x00ff0000) >> 8 |
+	    (x & 0xff000000) >> 24;
+#else
+	return x;
+#endif
+}
+
 inline void
 luks::endian_switch(struct phdr1 *h, bool process_keys)
 {

@@ -92,14 +92,15 @@ enum block_mode {
 	 *
 	 * Described in RFC 2040, Section 8 */
 	BM_CTS,
+	BM_ECB,
 	BM_PCBC /**< Propogating Cipher Block Chaining */
 };
 
 
-enum iv_opts {
-	IO_UNDEFINED = 0,
-	IO_PLAIN,
-	IO_ESSIV
+enum iv_mode {
+	IM_UNDEFINED = 0,
+	IM_PLAIN,
+	IM_ESSIV
 };
 
 
@@ -131,6 +132,10 @@ enum hash_type {
 	HT_WHIRLPOOL512
 };
 
+
+// switch to/from LE
+inline uint16_t host_little(uint16_t);
+inline uint32_t	host_little(uint32_t);
 
 // switch to/from BE
 inline void	endian_switch(struct phdr1 *, bool process_keys);
@@ -227,7 +232,7 @@ private:
 	enum hash_type			_hash_type;
 	enum cipher_type		_cipher_type;
 	enum block_mode			_block_mode;
-	enum iv_opts			_iv_opts;
+	enum iv_mode			_iv_mode;
 	enum hash_type			_iv_hash;
 
 	std::vector<bool>		_key_mach_end;
@@ -236,7 +241,7 @@ private:
 
 
 enum block_mode get_block_mode(const std::string &mode);
-enum iv_opts	get_iv_opts(const std::string &ivopts);
+enum iv_mode	get_iv_mode(const std::string &name);
 
 
 }

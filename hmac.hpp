@@ -61,7 +61,7 @@ struct Hmac_function {
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer.
-	 * \see length()
+	 * \see digest_size()
 	 */
 	virtual void end(uint8_t *buf) throw () = 0;
 
@@ -69,13 +69,13 @@ struct Hmac_function {
 	 *
 	 * \return	The size in bytes.
 	 */
-	virtual size_t length() const = 0;
+	virtual size_t digest_size() const = 0;
 
 	/** The size of the blocks.
 	 *
 	 * \return	The size in bytes.
 	 */
-	virtual size_t blocksize() const = 0;
+	virtual size_t block_size() const = 0;
 };
 
 
@@ -88,12 +88,12 @@ public:
 	 */
 	Hmac_impl(std::tr1::shared_ptr<Hash_function> hashfn) :
 		_hashfn(hashfn),
-		_ipad(new uint8_t[hashfn->blocksize()]),
-		_key(new uint8_t[hashfn->blocksize()]),
-		_opad(new uint8_t[hashfn->blocksize()])
+		_ipad(new uint8_t[hashfn->block_size()]),
+		_key(new uint8_t[hashfn->block_size()]),
+		_opad(new uint8_t[hashfn->block_size()])
 	{
-		std::fill(_ipad.get(), _ipad.get() + blocksize(), 0x36);
-		std::fill(_ipad.get(), _ipad.get() + blocksize(), 0x5c);
+		std::fill(_ipad.get(), _ipad.get() + block_size(), 0x36);
+		std::fill(_ipad.get(), _ipad.get() + block_size(), 0x5c);
 	}
 
 	~Hmac_impl() throw () {}
@@ -102,10 +102,10 @@ public:
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{	_hashfn->add(buf, sz); }
 	void end(uint8_t *out) throw();
-	size_t length() const
-	{	return _hashfn->length(); }
-	size_t blocksize() const
-	{	return _hashfn->blocksize(); }
+	size_t digest_size() const
+	{	return _hashfn->digest_size(); }
+	size_t block_size() const
+	{	return _hashfn->block_size(); }
 
 private:
 	Hmac_impl(const Hmac_impl &h) {}
@@ -152,13 +152,13 @@ public:
 	void end(uint8_t *out) throw ()
 	{
 		if (!_valid) return;
-		unsigned sz = length();
+		unsigned sz = digest_size();
 		HMAC_Final(&_ctx, out, &sz);
 		_valid = false;
 	}
-	size_t length() const
+	size_t digest_size() const
 	{	return SIZE; }
-	size_t blocksize() const
+	size_t block_size() const
 	{	return BLOCKSIZE; }
 
 private:

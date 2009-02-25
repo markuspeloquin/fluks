@@ -18,6 +18,16 @@ struct Bad_spec : std::exception {
 };
 
 
+struct Crypt_error : std::exception {
+	Crypt_error(const std::string &msg) : _msg("Crypto error:")
+	{	_msg += msg; }
+	~Crypt_error() throw () {}
+	const char *what() const throw ()
+	{	return _msg.c_str(); }
+	std::string _msg;
+};
+
+
 struct Hash_error : virtual std::exception {
 };
 

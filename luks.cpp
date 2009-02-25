@@ -25,16 +25,16 @@ bool		parse_cipher(const std::string &, std::string &,
 
 // reconstruct the mode string (e.g. 'cbc', 'cbc-essiv', 'cbc-essiv:sha256')
 std::string
-make_mode(const std::string &chainmode, const std::string &ivopts,
-    const std::string &ivmode)
+make_mode(const std::string &chainmode, const std::string &ivmode,
+    const std::string &ivhash)
 {
 	std::ostringstream out;
 	if (chainmode.size()) {
 		out << chainmode;
-		if (ivopts.size()) {
-			out << '-' << ivopts;
-			if (ivmode.size())
-				out << ':' << ivmode;
+		if (ivmode.size()) {
+			out << '-' << ivmode;
+			if (ivhash.size())
+				out << ':' << ivhash;
 		}
 	}
 	return out.str();
@@ -43,7 +43,7 @@ make_mode(const std::string &chainmode, const std::string &ivopts,
 
 bool
 parse_cipher(const std::string &cipher_spec, std::string &cipher,
-	    std::string &chainmode, std::string &ivopts, std::string &ivmode)
+	    std::string &chainmode, std::string &ivmode, std::string &ivhash)
 {
 	// valid patterns:
 	// [^-]*
@@ -61,8 +61,8 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 
 	cipher = matches[0];
 	chainmode = matches[1];
-	ivopts = matches[2];
-	ivmode = matches[3];
+	ivmode = matches[2];
+	ivhash = matches[3];
 	return true;
 }
 
@@ -83,33 +83,33 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 
 	std::string cipher;
 	std::string chainmode;
-	std::string ivopts;
 	std::string ivmode;
+	std::string ivhash;
 
 	// first split the cipher spec
-	if (!parse_cipher(cipher_spec, cipher, chainmode, ivopts, ivmode))
+	if (!parse_cipher(cipher_spec, cipher, chainmode, ivmode, ivhash))
 		throw Bad_spec("unrecognized spec format");
 
 	// make the cipher/hash specs malleable
 	_cipher_type = get_cipher_type(cipher);
 	_block_mode = get_block_mode(chainmode);
-	_iv_opts = get_iv_opts(ivopts);
-	_iv_hash = get_hash_type(ivmode);
+	_iv_mode = get_iv_mode(ivmode);
+	_iv_hash = get_hash_type(ivhash);
 
 	// are the specs supported by fluks?
 	if (_cipher_type == CT_UNDEFINED)
 		throw Bad_spec("unrecognized cipher");
 	if (chainmode.size() && _block_mode == BM_UNDEFINED)
 		throw Bad_spec("unrecognized chain mode");
-	if (ivopts.size() &&  _iv_opts == IO_UNDEFINED)
-		throw Bad_spec("unrecognized IV opts");
-	if (ivmode.size() && _iv_hash == HT_UNDEFINED)
+	if (ivmode.size() &&  _iv_mode == IM_UNDEFINED)
 		throw Bad_spec("unrecognized IV mode");
+	if (ivhash.size() && _iv_hash == HT_UNDEFINED)
+		throw Bad_spec("unrecognized IV hash");
 
-	// canonize cipher and IV hash; note that ivmode will remain an
+	// canonize cipher and IV hash; note that ivhash will remain an
 	// empty string if it was empty initially
 	cipher = cipher_name(_cipher_type);
-	ivmode = hash_name(_iv_hash);
+	ivhash = hash_name(_iv_hash);
 
 	// is the cipher spec supported by the system?
 	{
@@ -118,19 +118,19 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 			throw Bad_spec("cipher not supported by system");
 
 		const std::set<std::string> &sys_hash = system_hashes();
-		if (ivmode.size() && !sys_hash.count(ivmode))
-			throw Bad_spec("IV mode not supported by system");
+		if (ivhash.size() && !sys_hash.count(ivhash))
+			throw Bad_spec("IV hash not supported by system");
 	}
 
 	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
 	// XXX only *after* fluks attempts to use them.
 
 	// are the specs compatible?
-	if (_iv_opts == IO_ESSIV && _iv_hash == HT_UNDEFINED)
-		throw Bad_spec("IV opts `essiv' requires an IV mode");
-	if (_iv_opts == IO_PLAIN && _iv_hash != HT_UNDEFINED)
-		throw Bad_spec("IV opts `plain' cannot use an IV mode");
-	if (_iv_opts == IO_ESSIV) {
+	if (_iv_mode == IM_ESSIV && _iv_hash == HT_UNDEFINED)
+		throw Bad_spec("IV opts `essiv' requires an IV hash");
+	if (_iv_mode == IM_PLAIN && _iv_hash != HT_UNDEFINED)
+		throw Bad_spec("IV opts `plain' cannot use an IV hash");
+	if (_iv_mode == IM_ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
 		std::vector<uint16_t> sizes = cipher_key_sizes(_cipher_type);
@@ -159,8 +159,8 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_hdr->version = 1;
 
 	// recreate a canonical cipher spec, canonize the hash spec; note
-	// that cipher and ivmode were already changed
-	std::string mode = make_mode(chainmode, ivopts, ivmode);
+	// that cipher and ivhash were already canonized
+	std::string mode = make_mode(chainmode, ivmode, ivhash);
 	std::string hash = hash_name(_hash_type);
 
 	// copy specs into header
@@ -335,14 +335,15 @@ luks::get_block_mode(const std::string &mode)
 	if (mode == "cbc") return BM_CBC;
 	if (mode == "ctr") return BM_CTR;
 	if (mode == "cts") return BM_CTS;
+	if (mode == "ecb") return BM_ECB;
 	if (mode == "pcbc") return BM_PCBC;
 	return BM_UNDEFINED;
 }
 
-enum luks::iv_opts
-luks::get_iv_opts(const std::string &ivopts)
+enum luks::iv_mode
+luks::get_iv_mode(const std::string &name)
 {
-	if (ivopts == "plain") return IO_PLAIN;
-	if (ivopts == "essiv") return IO_ESSIV;
-	return IO_UNDEFINED;
+	if (name == "plain") return IM_PLAIN;
+	if (name == "essiv") return IM_ESSIV;
+	return IM_UNDEFINED;
 }
