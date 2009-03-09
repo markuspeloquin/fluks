@@ -11,17 +11,17 @@
 
 #include "os.hpp"
 
-int
-luks::sector_size(const std::string &device) throw (Unix_error)
+uint32_t
+luks::num_sectors(int fd) throw (Unix_error)
 {
-	int fd;
-	int sz_sect;
-
-	if ((fd = open(device.c_str(), O_RDONLY)) == -1)
-		throw Unix_error();
-	sz_sect = sector_size(fd);
-	close(fd);
-	return sz_sect;
+	uint64_t sz;
+	int sz_sect = sector_size(fd);
+	if (ioctl(fd, BLKGETSIZE64, &sz) == -1) {
+		int e = errno;
+		close(fd);
+		throw Unix_error(e);
+	}
+	return static_cast<uint32_t>(sz / sz_sect);
 }
 
 int

@@ -1,7 +1,9 @@
 #include <cstdarg>
 #include <cstdio>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
+#include <boost/scoped_array.hpp>
 
 #include "dm.hpp"
 #include "libdevmapper.h"
@@ -18,37 +20,38 @@ struct Dm_task_watch {
 	struct dm_task *_task;
 };
 
-std::string last_error;
+std::string log_output;
 
 extern "C" void dm_logger(int level, const char *file, int line,
     const char *f, ...)
 {
-	static char *buf = 0;
-	static size_t sz = 0;
+	if (level > 3) return;
+
+	const int SZ = 100;
+	boost::scoped_array<char> buf(new char[SZ]);
+	int sz = SZ;
 	va_list ap;
 
-	if (!buf) {
-		buf = new char[80];
-		sz = 80;
-	}
+	log_output += "\n\t";
 
 	for (;;) {
 		va_start(ap, f);
-		int n = vsnprintf(buf, sz, f, ap);
+		int n = vsnprintf(buf.get(), sz, f, ap);
 		va_end(ap);
 
 		if (n >= 0) {
-			if (static_cast<size_t>(n) < sz) {
-				last_error = buf;
+			if (n < sz) {
+				log_output += buf.get();
 				return;
 			}
 
-			delete[] buf;
 			sz = n + 1;
-			buf = new char[sz];
+			buf.reset(new char[sz]);
 		} else {
-			last_error = "vsnprintf() failed; format string: ";
-			last_error += f;
+			log_output += "vsnprintf() failed; ";
+			log_output += file;
+			log_output += ": ";
+			log_output += f;
 			return;
 		}
 	}
@@ -74,13 +77,17 @@ luks::dm_create(const std::string &name, uint64_t start_sector,
 	std::ostringstream param_out;
 	struct dm_task *task;
 
+	dm_setup_log();
+
+	log_output = "";
 	if (!(task = dm_task_create(DM_DEVICE_CREATE)))
-		throw Dm_error(last_error);
+		throw Dm_error(log_output);
 
 	Dm_task_watch task_watch(task);
 
+	log_output = "";
 	if (!dm_task_set_name(task, name.c_str()))
-		throw Dm_error(last_error);
+		throw Dm_error(log_output);
 
 	// format of param argument:
 	//	CIPHER KEY IV_OFFSET DEVICE_PATH OFFSET
@@ -94,14 +101,22 @@ luks::dm_create(const std::string &name, uint64_t start_sector,
 
 	param_out << std::hex << std::setfill('0');
 	for (size_t i = 0; i < sz_key; i++)
-		param_out << std::setw(2) << key[i];
+		param_out << std::setw(2) << (short)key[i];
 	param_out << std::dec << std::setfill(' ');
 
 	// IV_OFFSET = 0
 	param_out << " 0 " << device_path << ' ' << start_sector;
 
+	std::cerr << "dm_task_add_target(task, 0, " << num_sectors
+	    << ", \"crypt\", " << param_out.str() << ");\n";
+
 	// logical start sector: 0
+	log_output = "";
 	if (!dm_task_add_target(task, 0, num_sectors, "crypt",
 	    param_out.str().c_str()))
-		throw Dm_error(last_error);
+		throw Dm_error(log_output);
+
+	log_output = "";
+	if (!dm_task_run(task))
+		throw Dm_error(log_output);
 }

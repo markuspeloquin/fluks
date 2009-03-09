@@ -7,21 +7,29 @@
 
 namespace luks {
 
-/** Get the sector size of a device.
+/** Get the number of sectors in a device
  *
- * \param device	The device pathname.
- * \return	The sector size.
- * \throw Unix_error	If the open() or ioctl() fails (e.g. the device
- *	couldn't be opened).
+ * \param fildes	The device.
+ * \return		The number of sectors.
+ * \throw Unix_error	If the ioctl() fails.
  */
-int	sector_size(const std::string &device) throw (Unix_error);
+uint32_t    num_sectors(int fildes) throw (Unix_error);
+
+/** Get the number of sectors in a device
+ *
+ * \param fildes	The device.
+ * \return		The number of sectors.
+ * \throw Unix_error	If the ioctl() fails.
+ */
+template <class Sys_fstream>
+uint32_t    num_sectors(Sys_fstream &device) throw (Unix_error)
+{	return num_sectors(device.fd()); }
 
 /** Get the sector size of a device.
  *
  * \param fildes	The device.
  * \return		The sector size.
- * \throw Unix_error	If the open() or ioctl() fails (e.g. the device
- *	couldn't be opened).
+ * \throw Unix_error	If the ioctl() fails.
  */
 int	sector_size(int fildes) throw (Unix_error);
 

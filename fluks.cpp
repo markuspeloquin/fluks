@@ -10,6 +10,7 @@
 
 #include "backup.hpp"
 #include "detect.hpp"
+#include "dm.hpp"
 #include "hash.hpp"
 #include "support.hpp"
 
@@ -164,7 +165,8 @@ main(int argc, char **argv)
 
 	po::options_description commands_desc("Commands (at most one)");
 	commands_desc.add_options()
-	    ("create", "create a LUKS partition header")
+	    ("create", po::value<std::string>(),
+		"create a LUKS partition header with the specified name")
 	    ("dump", po::value<std::string>(),
 		"dump the header and key material to a file")
 	    ("help", "show this message")
@@ -177,8 +179,6 @@ main(int argc, char **argv)
 	po::options_description general_desc("General Options");
 	general_desc.add_options()
 	    ("info,i", "print the information in the header (after changes)")
-	    ("name,n", po::value<std::string>(),
-		"[usually required] name of the device-mapper partition")
 	    ("pretend,p", "do not commit the changes to disk")
 	    ;
 
@@ -299,19 +299,6 @@ main(int argc, char **argv)
 	default:;
 	}
 
-	// get partition name
-	std::string part_name;
-	switch (command) {
-	case CREATE:
-		if (var_map["name"].empty()) {
-			std::cerr << "must provide a partition name\n";
-			return 1;
-		}
-		part_name = var_map["name"].as<std::string>();
-		break;
-	default:;
-	}
-
 	// check urandom if needed, seed the random number generator if it
 	// doesn't exist
 	switch (command) {
@@ -342,6 +329,7 @@ main(int argc, char **argv)
 			return 1;
 		}
 
+		std::string name = var_map["create"].as<std::string>();
 		unsigned sz_key = var_map["size"].as<unsigned>();
 		std::string cipher = var_map["cipher"].as<std::string>();
 		std::string hash = var_map["hash"].as<std::string>();
@@ -367,6 +355,13 @@ main(int argc, char **argv)
 
 		// write to disk
 		if (!pretend) {
+			uint32_t num_sect = num_sectors(*device);
+
+			dm_create(name, header->sectors(),
+			    num_sect - header->sectors(),
+			    header->cipher_spec(), header->master_key(),
+			    sz_key, device_path);
+
 			header->save();
 			std::cout << "Header written to disk\n";
 		}

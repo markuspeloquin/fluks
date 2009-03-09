@@ -48,6 +48,7 @@ typedef void (*dm_log_fn) (int level, const char *file, int line,
 __BEGIN_DECLS
 
 void dm_log_init(dm_log_fn fn);
+void dm_log_init_verbose(int level);
 
 struct dm_task;
 
@@ -56,6 +57,7 @@ void	dm_task_destroy(struct dm_task *dmt);
 int	dm_task_set_name(struct dm_task *dmt, const char *name);
 int	dm_task_add_target(struct dm_task *dmt, uint64_t start, uint64_t size,
 	    const char *ttype, const char *params);
+int	dm_task_run(struct dm_task *dmt);
 
 __END_DECLS
 

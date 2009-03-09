@@ -208,7 +208,10 @@ public:
 	const std::string cipher_spec() const
 	{
 		std::string res = _hdr->cipher_name;
-		if (*_hdr->cipher_mode) res += _hdr->cipher_mode;
+		if (*_hdr->cipher_mode) {
+			res += '-';
+			res += _hdr->cipher_mode;
+		}
 		return res;
 	}
 
