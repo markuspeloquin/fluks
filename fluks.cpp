@@ -146,8 +146,11 @@ prompt_passwd(const std::string &msg)
 void
 usage(const boost::program_options::options_description &desc)
 {
-	std::cout << "usage: " << prog << " COMMAND [OPTION ...] DEVICE\n";
-	std::cout << desc;
+	std::cout
+	    << "usage: " << prog << " COMMAND [OPTION ...] [DEVICE]\n\n"
+	    "DEVICE is usually required, except for the --close and\n"
+	    "--list-modes commands\n"
+	    << desc;
 }
 
 } // end unnamed namespace
@@ -165,15 +168,20 @@ main(int argc, char **argv)
 
 	po::options_description commands_desc("Commands (at most one)");
 	commands_desc.add_options()
-	    ("create", po::value<std::string>(),
-		"create a LUKS partition header with the specified name")
+	    ("close", po::value<std::string>(),
+		"removes the mapping for the named device")
+	    ("create", "create a LUKS partition header, writing it to disk")
 	    ("dump", po::value<std::string>(),
 		"dump the header and key material to a file")
 	    ("help", "show this message")
-	    ("list-modes",
-		"prints supported ciphers, block modes, hashes, etc.")
+	    ("list-modes", "prints supported ciphers, block modes, "
+		"hashes, etc.")
+	    ("open", po::value<std::string>(),
+		"sets up a LUKS partition with the device mapper with its "
+		"name set to the specified argument")
 	    ("pass", "add a passphrase to a LUKS partition")
 	    ("revoke", "revoke a passphrase of a LUKS partition")
+	    ("uuid", "print the UUID of a LUKS partition")
 	    ;
 
 	po::options_description general_desc("General Options");
@@ -236,11 +244,15 @@ main(int argc, char **argv)
 		return 0;
 	}
 
-	enum { CREATE, DUMP, LIST_MODES,
-	    ADD_PASS, REVOKE_PASS } command;
+	enum { CLOSE, CREATE, DUMP, LIST_MODES, OPEN,
+	    ADD_PASS, REVOKE_PASS, UUID } command;
 	uint8_t command_count = 0;
 
 	// get command
+	if (!var_map["close"].empty()) {
+		command = CLOSE;
+		command_count++;
+	}
 	if (!var_map["create"].empty()) {
 		command = CREATE;
 		command_count++;
@@ -253,6 +265,10 @@ main(int argc, char **argv)
 		command = LIST_MODES;
 		command_count++;
 	}
+	if (!var_map["open"].empty()) {
+		command = OPEN;
+		command_count++;
+	}
 	if (!var_map["pass"].empty()) {
 		command = ADD_PASS;
 		command_count++;
@@ -261,15 +277,14 @@ main(int argc, char **argv)
 		command = REVOKE_PASS;
 		command_count++;
 	}
+	if (!var_map["uuid"].empty()) {
+		command = UUID;
+		command_count++;
+	}
 
 	if (command_count > 1) {
 		std::cout << "must specify at most one command\n";
 		return 1;
-	}
-
-	if (command == LIST_MODES) {
-		list_modes();
-		return 0;
 	}
 
 	bool pretend = !var_map["pretend"].empty();
@@ -280,8 +295,10 @@ main(int argc, char **argv)
 	switch (command) {
 	case CREATE:
 	case DUMP:
+	case OPEN:
 	case ADD_PASS:
 	case REVOKE_PASS:
+	case UUID:
 		if (var_map["device"].empty()) {
 			std::cerr << "must provide a device\n";
 			return 1;
@@ -314,22 +331,41 @@ main(int argc, char **argv)
 	default:;
 	}
 
+	// open the header as needed
 	std::tr1::shared_ptr<Luks_header> header;
+	switch (command) {
+	case OPEN:
+	case ADD_PASS:
+	case REVOKE_PASS:
+	case UUID:
+		header.reset(new Luks_header(device));
+		break;
+	default:;
+	};
 
-	if (command == CREATE) {
+	// execute the command
+	switch (command) {
+	case CLOSE: {
+		std::string name = var_map["close"].as<std::string>();
+		if (!pretend) {
+			dm_close(name);
+			std::cout << "Mapping removed\n";
+		}
+		break;
+	}
+	case CREATE: {
 		// check for mandatory options
 		if (var_map["size"].empty()) {
-			std::cerr << "--create requires a --size option\n";
+			std::cout << "--create requires a --size option\n";
 			return 1;
 		} else if (var_map["cipher"].empty()) {
-			std::cerr << "--create requires a --cipher option\n";
+			std::cout << "--create requires a --cipher option\n";
 			return 1;
 		} else if (var_map["hash"].empty()) {
-			std::cerr << "--create requires a --hash option\n";
+			std::cout << "--create requires a --hash option\n";
 			return 1;
 		}
 
-		std::string name = var_map["create"].as<std::string>();
 		unsigned sz_key = var_map["size"].as<unsigned>();
 		std::string cipher = var_map["cipher"].as<std::string>();
 		std::string hash = var_map["hash"].as<std::string>();
@@ -355,27 +391,51 @@ main(int argc, char **argv)
 
 		// write to disk
 		if (!pretend) {
-			uint32_t num_sect = num_sectors(*device);
-
-			dm_create(name, header->sectors(),
-			    num_sect - header->sectors(),
-			    header->cipher_spec(), header->master_key(),
-			    sz_key, device_path);
-
 			header->save();
 			std::cout << "Header written to disk\n";
 		}
-	} else if (command == DUMP) {
+		break;
+	}
+	case DUMP: {
 		if (pretend)
 			std::cout << "(--dump command has no pretend mode, "
 			    "proceeding...)\n";
 		std::string backup_path = var_map["dump"].as<std::string>();
 		make_backup(*device, backup_path);
 		std::cout << "Backup completed\n";
-	} else if (command == ADD_PASS) {
-		// read existing header from disk
-		header.reset(new Luks_header(device));
+		break;
+	}
+	case LIST_MODES:
+		list_modes();
+		break;
+	case OPEN: {
+		std::string name = var_map["open"].as<std::string>();
 
+		// read password
+		std::string pass = prompt_passwd("Initial passphrase");
+		if (pass.empty())
+			return 1;
+
+		if (!header->read_key(pass)) {
+			std::cout << "Incorrect password\n";
+			return 1;
+		}
+
+		std::pair<const uint8_t *, size_t> master_key =
+		    header->master_key();
+		uint32_t num_sect = num_sectors(*device);
+
+		if (!pretend) {
+			dm_open(name, header->sectors(),
+			    num_sect - header->sectors(),
+			    header->cipher_spec(), master_key.first,
+			    master_key.second, device_path);
+			std::cout << "Mapping added\n";
+		}
+
+		break;
+	}
+	case ADD_PASS: {
 		std::cout << "First enter a passphrase that has already "
 		    "been established with the partition\n";
 		std::string passwd = prompt_passwd("Existing passphrase");
@@ -395,11 +455,13 @@ main(int argc, char **argv)
 		header->add_passwd(newpass);
 
 		// write to disk
-		if (!pretend) header->save();
-
-		std::cout << "Password added to partition\n";
-	} else if (command == REVOKE_PASS) {
-		header.reset(new Luks_header(device));
+		if (!pretend) {
+			header->save();
+			std::cout << "Password added to partition\n";
+		}
+		break;
+	}
+	case REVOKE_PASS: {
 		std::cout << "First enter a passphrase that will not "
 		    "be revoked\n";
 		std::string passwd = prompt_passwd("Existing passphrase");
@@ -412,6 +474,7 @@ main(int argc, char **argv)
 		}
 
 		std::cout << "Master key decrypted.\n";
+
 		std::string revoke = prompt_passwd("Passphrase to revoke");
 		if (passwd.empty())
 			return 1;
@@ -421,13 +484,24 @@ main(int argc, char **argv)
 			return 1;
 		}
 
-		if (!pretend) header->save();
-
-		std::cout << "Key material removed\n";
+		if (!pretend) {
+			header->save();
+			std::cout << "Key material removed\n";
+		}
+		break;
+	}
+	case UUID:
+		std::cout << header->uuid();
+		break;
 	}
 
-	if (!var_map["info"].empty())
-		header->info();
+	if (!var_map["info"].empty()) {
+		if (header)
+			header->info();
+		else
+			std::cout
+			    << "cannot print --info with current command\n";
+	}
 
 	return 0;
 }

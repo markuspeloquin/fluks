@@ -168,7 +168,7 @@ luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 
 	uuid_t uuid; // actually a buffer
 	uuid_generate(uuid);
-	uuid_unparse(uuid, _hdr->uuid_part);
+	uuid_unparse(uuid, _hdr->uuid);
 }
 
 luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
@@ -337,7 +337,7 @@ luks::Luks_header::info() const
 	    << "\npayload start sector                " << _hdr->off_payload
 	    << "\nmaster key size                     " << _hdr->sz_key
 	    << "\nmaster key iterations               " << _hdr->mk_iterations
-	    << "\nuuid                                " << _hdr->uuid_part;
+	    << "\nuuid                                " << _hdr->uuid;
 	for (size_t i = 0; i < NUM_KEYS; i++) {
 		std::cout
 		    << "\nkey " << i << " state                         "

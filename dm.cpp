@@ -69,7 +69,29 @@ void dm_setup_log()
 } // end anon namespace
 
 void
-luks::dm_create(const std::string &name, uint64_t start_sector,
+luks::dm_close(const std::string &name)
+{
+	struct dm_task *task;
+
+	dm_setup_log();
+
+	log_output = "";
+	if (!(task = dm_task_create(DM_DEVICE_REMOVE)))
+		throw Dm_error(log_output);
+
+	Dm_task_watch watcher(task);
+
+	log_output = "";
+	if (!dm_task_set_name(task, name.c_str()))
+		throw Dm_error(log_output);
+
+	log_output = "";
+	if (!dm_task_run(task))
+		throw Dm_error(log_output);
+}
+
+void
+luks::dm_open(const std::string &name, uint64_t start_sector,
     uint64_t num_sectors, const std::string &cipher_spec,
     const uint8_t *key, size_t sz_key, const std::string &device_path)
     throw (Dm_error)
@@ -106,9 +128,6 @@ luks::dm_create(const std::string &name, uint64_t start_sector,
 
 	// IV_OFFSET = 0
 	param_out << " 0 " << device_path << ' ' << start_sector;
-
-	std::cerr << "dm_task_add_target(task, 0, " << num_sectors
-	    << ", \"crypt\", " << param_out.str() << ");\n";
 
 	// logical start sector: 0
 	log_output = "";

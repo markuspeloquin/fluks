@@ -68,7 +68,7 @@ struct phdr1 {
 /*70*/	uint8_t		mk_digest[SZ_MK_DIGEST];
 /*84*/	uint8_t		mk_salt[SZ_SALT];
 /*a4*/	uint32_t	mk_iterations;
-/*a8*/	char		uuid_part[SZ_UUID];
+/*a8*/	char		uuid[SZ_UUID];
 /*d0*/	struct key	keys[NUM_KEYS];
 // 250 (592 bytes)
 };
@@ -219,8 +219,11 @@ public:
 	 *
 	 * \retval nullptr	The key hasn't been decrypted yet.
 	 */
-	const uint8_t *master_key() const
-	{	return _master_key.get(); }
+	std::pair<const uint8_t *, size_t> master_key() const
+	{
+		const_cast<Luks_header *>(this)->set_mach_end(true);
+		return std::make_pair(_master_key.get(), _hdr->sz_key);
+	}
 
 	/** The size of the header and key material in sectors
 	 *
@@ -230,6 +233,9 @@ public:
 	 */
 	uint32_t sectors() const
 	{	return _hdr->off_payload; }
+
+	std::string uuid() const
+	{	return std::string(_hdr->uuid); }
 
 	/** Decrypt the private key
 	 *

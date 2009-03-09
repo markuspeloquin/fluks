@@ -10,7 +10,9 @@
 
 namespace luks {
 
-void	dm_create(const std::string &name, uint64_t start_sector,
+void	dm_close(const std::string &name);
+
+void	dm_open(const std::string &name, uint64_t start_sector,
 	    uint64_t num_sectors, const std::string &cipher_spec,
 	    const uint8_t *key, size_t sz_key, const std::string &device_path)
 	    throw (Dm_error);
