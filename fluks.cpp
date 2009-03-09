@@ -12,9 +12,11 @@
 #include "backup.hpp"
 #include "detect.hpp"
 #include "hash.hpp"
+#include "support.hpp"
 
 char *prog;
 
+namespace luks {
 namespace {
 
 void	usage();
@@ -28,6 +30,80 @@ have_urandom()
 }
 
 void
+list_modes()
+{
+	std::vector<enum cipher_type> ciphers = cipher_info::types();
+	std::vector<enum hash_type> hashes = hash_info::types();
+	std::vector<enum block_mode> block_modes = block_mode_info::types();
+	std::vector<enum iv_mode> iv_modes = iv_mode_info::types();
+
+	std::cout <<
+"Entries prefixed with [VERSION] (indicating required version of LUKS) or\n"
+"[!] (not in any LUKS spec).\n\n";
+
+	std::cout << "ciphers (with supported key sizes):\n";
+	for (std::vector<enum cipher_type>::iterator i = ciphers.begin();
+	    i != ciphers.end(); ++i) {
+		std::vector<uint16_t> sizes = cipher_info::key_sizes(*i);
+
+		uint16_t version = cipher_info::version(*i);
+		std::cout << "\t[";
+		if (!version)	std::cout << '!';
+		else		std::cout << version;
+		std::cout << "] ";
+
+		std::cout << cipher_info::name(*i) << " (";
+		for (std::vector<uint16_t>::iterator j = sizes.begin();
+		    j != sizes.end(); ++j) {
+			if (j != sizes.begin())
+				std::cout << ' ';
+			std::cout << *j;
+		}
+		std::cout << ")\n";
+	}
+
+	std::cout << "hashes (with digest size):\n";
+	for (std::vector<enum hash_type>::iterator i = hashes.begin();
+	    i != hashes.end(); ++i) {
+
+		uint16_t version = hash_info::version(*i);
+		std::cout << "\t[";
+		if (!version)	std::cout << '!';
+		else		std::cout << version;
+		std::cout << "] ";
+
+		std::cout << hash_info::name(*i) << " ("
+		    << hash_info::digest_size(*i) << ")\n";
+	}
+
+	std::cout << "block modes:\n";
+	for (std::vector<enum block_mode>::iterator i = block_modes.begin();
+	    i != block_modes.end(); ++i) {
+
+		uint16_t version = block_mode_info::version(*i);
+		std::cout << "\t[";
+		if (!version)	std::cout << '!';
+		else		std::cout << version;
+		std::cout << "] ";
+
+		std::cout << block_mode_info::name(*i) << '\n';
+	}
+
+	std::cout << "IV generation modes:\n";
+	for (std::vector<enum iv_mode>::iterator i = iv_modes.begin();
+	    i != iv_modes.end(); ++i) {
+
+		uint16_t version = iv_mode_info::version(*i);
+		std::cout << "\t[";
+		if (!version)	std::cout << '!';
+		else		std::cout << version;
+		std::cout << "] ";
+
+		std::cout << iv_mode_info::name(*i) << '\n';
+	}
+}
+
+void
 usage(const boost::program_options::options_description &desc)
 {
 	std::cout << "usage: " << prog << " [OPTION ...] DEVICE\n";
@@ -35,10 +111,13 @@ usage(const boost::program_options::options_description &desc)
 }
 
 } // end unnamed namespace
+}
 
 int
 main(int argc, char **argv)
 {
+	using namespace luks;
+
 	namespace po = boost::program_options;
 
 	prog = *argv;
@@ -60,15 +139,15 @@ main(int argc, char **argv)
 	    ("cipher,c", po::value<std::string>(),
 		"cipher spec, formatted as "
 		"CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]])\n"
-		"CIPHER: \tencryption cipher\n"
-		"BLOCK_MODE: \tcipher block mode\n"
-		"IV_MODE: \tIV generation mode\n"
-		"IV_HASH: \thash for essiv, and only needed for essiv\n"
+		"  CIPHER: \tencryption cipher\n"
+		"  BLOCK_MODE: \tcipher block mode\n"
+		"  IV_MODE: \tIV generation mode\n"
+		"  IV_HASH: \thash for essiv, and only needed for essiv\n"
 		"see --list-modes for possible options")
 	    ("hash,h", po::value<std::string>(), "hash spec")
 	    ("iter", po::value<unsigned>()->default_value(
-		luks::NUM_MK_ITER), "master key iterations")
-	    ("stripes", po::value<unsigned>()->default_value(luks::NUM_STRIPES),
+		NUM_MK_ITER), "master key iterations")
+	    ("stripes", po::value<unsigned>()->default_value(NUM_STRIPES),
 		"number of stripes for key material")
 	    ;
 
@@ -105,6 +184,11 @@ main(int argc, char **argv)
 		return 0;
 	}
 
+	if (!var_map["list-modes"].empty()) {
+		list_modes();
+		return 0;
+	}
+
 	if (var_map["device"].empty()) {
 		std::cerr << "must provide a device\n";
 		return 1;
@@ -113,7 +197,7 @@ main(int argc, char **argv)
 
 	if (!var_map["dump"].empty()) {
 		std::string backup_path = var_map["dump"].as<std::string>();
-		luks::make_backup(device_path, backup_path);
+		make_backup(device_path, backup_path);
 	}
 
 	if (!have_urandom()) {
@@ -123,7 +207,7 @@ main(int argc, char **argv)
 		RAND_seed(&now, sizeof(now));
 	}
 
-	std::tr1::shared_ptr<luks::Luks_header> header;
+	std::tr1::shared_ptr<Luks_header> header;
 
 	if (!var_map["create"].empty()) {
 		// check for mandatory options
@@ -137,10 +221,10 @@ main(int argc, char **argv)
 		std::string hash = var_map["hash"].as<std::string>();
 		unsigned iter = var_map["iter"].as<unsigned>();
 		unsigned stripes = var_map["stripes"].as<unsigned>();
-		header.reset(new luks::Luks_header(device_path, sz_key,
+		header.reset(new Luks_header(device_path, sz_key,
 		    cipher, hash, iter, stripes));
 	} else {
-		header.reset(new luks::Luks_header(device_path));
+		header.reset(new Luks_header(device_path));
 	}
 
 	if (!var_map["info"].empty())
