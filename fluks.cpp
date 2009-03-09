@@ -491,7 +491,7 @@ main(int argc, char **argv)
 		break;
 	}
 	case UUID:
-		std::cout << header->uuid();
+		std::cout << header->uuid() << '\n';
 		break;
 	}
 

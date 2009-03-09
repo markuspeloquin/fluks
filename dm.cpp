@@ -69,7 +69,7 @@ void dm_setup_log()
 } // end anon namespace
 
 void
-luks::dm_close(const std::string &name)
+luks::dm_close(const std::string &name) throw (Dm_error)
 {
 	struct dm_task *task;
 
