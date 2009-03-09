@@ -48,8 +48,7 @@ struct Hmac_function {
 	 * \param key	The HMAC %key.
 	 * \param sz	The size of <code>%key</code> in bytes.
 	 */
-	virtual void init(const uint8_t *key, size_t sz)
-		throw (std::length_error) = 0;
+	virtual void init(const uint8_t *key, size_t sz) throw () = 0;
 
 	/** Pipe data into the HMAC computation.
 	 *
@@ -98,7 +97,7 @@ public:
 
 	~Hmac_impl() throw () {}
 
-	void init(const uint8_t *key, size_t sz) throw (std::length_error);
+	void init(const uint8_t *key, size_t sz) throw ();
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{	_hashfn->add(buf, sz); }
 	void end(uint8_t *out) throw();
@@ -135,12 +134,8 @@ public:
 	{
 		HMAC_CTX_cleanup(&_ctx);
 	}
-	void init(const uint8_t *key, size_t sz) throw (std::length_error)
+	void init(const uint8_t *key, size_t sz) throw ()
 	{
-		if (sz > BLOCKSIZE)
-			throw std::length_error(
-			    "HMAC key length cannot exceed the block size "
-			    "of the hash");
 		HMAC_Init_ex(&_ctx, key, sz, _md, 0);
 		_valid = true;
 	}

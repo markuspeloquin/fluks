@@ -4,6 +4,7 @@ using gcc
 	: # c++ compile command
 	: <cxxflags>"-std=c++98 $(DEBUG)" <cflags>"-std=c99 $(DEBUG)"
 	;
+lib boost_program_options ;
 lib boost_regex ;
 lib ssl ;
 lib uuid ;
@@ -13,5 +14,5 @@ exe fluks
 	    gutmann.cpp hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
 	    serpent.c tiger.cpp
 	    tiger_sboxes.c twofish.c util.cpp whirlpool.c
-	    boost_regex ssl uuid
+	    boost_program_options boost_regex ssl uuid
 	;

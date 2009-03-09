@@ -8,7 +8,7 @@
 void
 luks::make_backup(const std::string &device_path,
     const std::string &backup_path)
-    throw (Disk_error, Unix_error, Unsupported_version)
+    throw (Disk_error, No_header, Unix_error, Unsupported_version)
 {
 	struct phdr1 hdr;
 
@@ -25,8 +25,9 @@ luks::make_backup(const std::string &device_path,
 
 	// check the header
 	endian_switch(&hdr, false);
-	if (!header_version_1(&hdr))
-		throw Unsupported_version();
+
+	if (!check_magic(&hdr)) throw No_header();
+	if (!check_version_1(&hdr)) throw Unsupported_version();
 	size_t bytes = sector_size(device_path) * hdr.off_payload -
 	    sizeof(hdr);
 	endian_switch(&hdr, false);

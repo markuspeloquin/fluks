@@ -15,7 +15,7 @@ luks::xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz, uint8_t *c)
 	while (whole--)
 		*c64++ = *a64++ ^ *b64++;
 
-	size_t offset = whole * 8;
+	size_t offset = sz / 8 * 8;
 	sz -= offset;
 	a += offset;
 	b += offset;

@@ -72,6 +72,16 @@ struct phdr1 {
 };
 
 
+/** Check if LUKS magic is present (to indicate that it's a LUKS header or
+ * not)
+ *
+ * \param header	The possible header
+ * \retval true		Magic is present
+ * \retval false	Magic is not present
+ */
+bool	check_magic(const struct phdr1 *header);
+
+
 /** Check if a header is version LUKS v1
  *
  * \param header	The header in machine-endian
@@ -79,7 +89,7 @@ struct phdr1 {
  * \retval false	The header is not LUKS v1
  * \see endian_switch()
  */
-bool	header_version_1(const struct phdr1 *header);
+bool	check_version_1(const struct phdr1 *header);
 
 
 /** Ciphers supported by <em>fluks</em> */
@@ -183,7 +193,8 @@ public:
 	 * \param device	I don't know what to do with this yet.
 	 */
 	Luks_header(const std::string &device)
-	    throw (Bad_spec, Disk_error, Unix_error, Unsupported_version);
+	    throw (Bad_spec, Disk_error, No_header, Unix_error,
+		Unsupported_version);
 
 	~Luks_header() {}
 
@@ -210,6 +221,8 @@ public:
 	 */
 	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
 	    throw (No_private_key, Slots_full);
+
+	void info() const;
 
 	/** Disable a password slot
 	 *

@@ -58,6 +58,13 @@ struct Hash_error : virtual std::exception {
 };
 
 
+struct No_header : std::exception {
+	~No_header() throw () {}
+	const char *what() const throw ()
+	{	return "LUKS header not found"; }
+};
+
+
 struct No_private_key : std::exception {
 	No_private_key() {}
 	~No_private_key() throw () {}

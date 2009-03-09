@@ -44,15 +44,18 @@ luks::Hmac_function::create(enum hash_type type)
 }
 
 void
-luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw (std::length_error)
+luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
 {
 	size_t sz_block = block_size();
-	if (sz > sz_block)
-		throw std::length_error(
-		    "HMAC key length cannot exceed the block size "
-		    "of the hash");
+	if (sz > sz_block) {
+		_hashfn->init();
+		_hashfn->add(key, sz);
+		_hashfn->end(_key.get());
+		sz = digest_size();
+	} else {
+		std::copy(key, key + sz, _key.get());
+	}
 
-	std::copy(key, key + sz, _key.get());
 	if (sz < sz_block)
 		std::fill(_key.get() + sz, _key.get() + sz_block, 0);
 
@@ -64,7 +67,7 @@ luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw (std::length_error)
 }
 
 void
-luks::Hmac_impl::end(uint8_t *out) throw()
+luks::Hmac_impl::end(uint8_t *out) throw ()
 {
 	size_t sz_block = block_size();
 

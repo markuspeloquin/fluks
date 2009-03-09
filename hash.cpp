@@ -39,7 +39,7 @@ Lookup::Lookup()
 	type2str[HT_SHA512] = (hash_stat){ "sha512", 128, 64 };
 	type2str[HT_TIGER128] = (hash_stat){ "tgr128", 64, 16 };
 	type2str[HT_TIGER160] = (hash_stat){ "tgr160", 64, 20 };
-	type2str[HT_TIGER192] = (hash_stat){ "tgr", 64, 24 };
+	type2str[HT_TIGER192] = (hash_stat){ "tgr192", 64, 24 };
 	type2str[HT_WHIRLPOOL256] = (hash_stat){ "wp256", 64, 32 };
 	type2str[HT_WHIRLPOOL384] = (hash_stat){ "wp384", 64, 48 };
 	type2str[HT_WHIRLPOOL512] = (hash_stat){ "wp512", 64, 64 };

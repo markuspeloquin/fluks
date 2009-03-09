@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -74,10 +75,14 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 }
 
 bool
-luks::header_version_1(const struct phdr1 *header)
+luks::check_magic(const struct phdr1 *header)
 {
-	if (!std::equal(MAGIC, MAGIC + sizeof(MAGIC), header->magic))
-		return false;
+	return std::equal(MAGIC, MAGIC + sizeof(MAGIC), header->magic);
+}
+
+bool
+luks::check_version_1(const struct phdr1 *header)
+{
 	return header->version == 1;
 }
 
@@ -102,6 +107,7 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 
 	// initialize LUKS header
 
+	_hdr->sz_key = sz_key;
 	if (!RAND_bytes(_master_key.get(), _hdr->sz_key))
 		throw Ssl_error();
 
@@ -109,8 +115,8 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_hdr->version = 1;
 
 	std::copy(hash_spec.begin(), hash_spec.end(), _hdr->hash_spec);
+	_hdr->hash_spec[hash_spec.size()] = '\0';
 
-	_hdr->sz_key = sz_key;
 	if (!RAND_bytes(_hdr->mk_salt, SZ_SALT))
 		throw Ssl_error();
 	_hdr->mk_iterations = mk_iterations;
@@ -144,7 +150,7 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 }
 
 luks::Luks_header::Luks_header(const std::string &device)
-    throw (Bad_spec, Disk_error, Unix_error, Unsupported_version) :
+    throw (Bad_spec, Disk_error, No_header, Unix_error, Unsupported_version) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(device)),
@@ -167,7 +173,10 @@ luks::Luks_header::Luks_header(const std::string &device)
 	// big-endian -> machine-endian
 	ensure_mach_hdr(true);
 
-	if (!header_version_1(_hdr.get()))
+	if (!check_magic(_hdr.get()))
+		throw No_header();
+
+	if (!check_version_1(_hdr.get()))
 		throw Unsupported_version();
 
 	{
@@ -327,6 +336,36 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 }
 
 void
+luks::Luks_header::info() const
+{
+	const_cast<Luks_header *>(this)->ensure_mach_hdr(true);
+	std::cout
+	    <<   "device                              " << _device
+	    << "\nversion                             " << _hdr->version
+	    << "\ncipher                              " << _hdr->cipher_name
+	    << "\ncipher mode                         " << _hdr->cipher_mode
+	    << "\nhash spec                           " << _hdr->hash_spec
+	    << "\npayload start sector                " << _hdr->off_payload
+	    << "\nmaster key size                     " << _hdr->sz_key
+	    << "\nmaster key iterations               " << _hdr->mk_iterations
+	    << "\nuuid                                " << _hdr->uuid_part;
+	for (size_t i = 0; i < NUM_KEYS; i++) {
+		const_cast<Luks_header *>(this)->ensure_mach_key(i, true);
+		std::cout
+		    << "\nkey " << i << " state                         "
+		    << (_hdr->keys[i].active == KEY_ENABLED ?
+		    "ENABLED" : "DISABLED")
+		    << "\nkey " << i << " iterations                    "
+		    << _hdr->keys[i].iterations
+		    << "\nkey " << i << " key material sector offset    "
+		    << _hdr->keys[i].off_km
+		    << "\nkey " << i << " stripes                       "
+		    << _hdr->keys[i].stripes;
+	}
+	std::cout << '\n';
+}
+
+void
 luks::Luks_header::revoke_slot(uint8_t which)
 {
 	ensure_mach_key(which, true);
@@ -477,9 +516,11 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	std::string mode = make_mode(block_mode, ivmode, ivhash);
 	std::string hash = hash_name(_hash_type);
 
-	// copy specs into header
+	// copy specs (back) into header
 	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);
+	_hdr->cipher_name[cipher.size()] = '\0';
 	std::copy(mode.begin(), mode.end(), _hdr->cipher_mode);
+	_hdr->cipher_mode[mode.size()] = '\0';
 }
 
 

@@ -9,7 +9,7 @@ namespace luks {
 
 void	make_backup(const std::string &device_path,
 	    const std::string &backup_path)
-	    throw (Disk_error, Unix_error, Unsupported_version);
+	    throw (Disk_error, No_header, Unix_error, Unsupported_version);
 
 }
 
