@@ -144,7 +144,7 @@ prompt_passwd(const std::string &msg)
 void
 usage(const boost::program_options::options_description &desc)
 {
-	std::cout << "usage: " << prog << " [OPTION ...] DEVICE\n";
+	std::cout << "usage: " << prog << " COMMAND [OPTION ...] DEVICE\n";
 	std::cout << desc;
 }
 
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 
 	prog = *argv;
 
-	po::options_description commands_desc("Commands (exactly one)");
+	po::options_description commands_desc("Commands (at most one)");
 	commands_desc.add_options()
 	    ("create", "create a LUKS partition header")
 	    ("dump", po::value<std::string>(),
@@ -169,26 +169,28 @@ main(int argc, char **argv)
 	    ("list-modes",
 		"prints supported ciphers, block modes, hashes, etc.")
 	    ("pass", "add a passphrase to a LUKS partition")
+	    ("revoke", "revoke a passphrase of a LUKS partition")
 	    ;
 
 	po::options_description general_desc("General Options");
 	general_desc.add_options()
-	    ("info,i", "print the information in the header")
-	    ("pretend,p", "do not commit the changes")
+	    ("info,i", "print the information in the header (after changes)")
+	    ("pretend,p", "do not commit the changes to disk")
 	    ;
 
 	po::options_description create_desc("Creation Options");
 	create_desc.add_options()
-	    ("size,s", po::value<unsigned>(), "master key size (bits)")
+	    ("size,s", po::value<unsigned>(),
+		"[required] master key size in bits")
 	    ("cipher,c", po::value<std::string>(),
-		"cipher spec, formatted as "
+		"[required] cipher spec, formatted as\n"
 		"CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]])\n"
 		"  CIPHER: \tencryption cipher\n"
 		"  BLOCK_MODE: \tcipher block mode\n"
 		"  IV_MODE: \tIV generation mode\n"
 		"  IV_HASH: \thash for essiv, and only needed for essiv\n"
 		"see --list-modes for possible options")
-	    ("hash,h", po::value<std::string>(), "hash spec")
+	    ("hash,h", po::value<std::string>(), "[required] hash spec")
 	    ("iter", po::value<unsigned>()->default_value(
 		NUM_MK_ITER), "master key iterations")
 	    ("stripes", po::value<unsigned>()->default_value(NUM_STRIPES),
@@ -256,8 +258,8 @@ main(int argc, char **argv)
 		command_count++;
 	}
 
-	if (command_count != 1) {
-		std::cout << "must specify exactly one command\n";
+	if (command_count > 1) {
+		std::cout << "must specify at most one command\n";
 		return 1;
 	}
 
@@ -282,16 +284,6 @@ main(int argc, char **argv)
 	default:;
 	}
 
-	bool pretend = !var_map["pretend"].empty();
-
-	if (command == DUMP) {
-		if (pretend)
-			std::cout << "(--dump command has no pretend mode, "
-			    "proceeding...)\n";
-		std::string backup_path = var_map["dump"].as<std::string>();
-		make_backup(device_path, backup_path);
-	}
-
 	// check urandom if needed, seed the random number generator if it
 	// doesn't exist
 	switch (command) {
@@ -308,6 +300,7 @@ main(int argc, char **argv)
 	}
 
 	std::tr1::shared_ptr<Luks_header> header;
+	bool pretend = !var_map["pretend"].empty();
 
 	if (command == CREATE) {
 		// check for mandatory options
@@ -347,6 +340,12 @@ main(int argc, char **argv)
 
 		// write to disk
 		if (!pretend) header->save();
+	} else if (command == DUMP) {
+		if (pretend)
+			std::cout << "(--dump command has no pretend mode, "
+			    "proceeding...)\n";
+		std::string backup_path = var_map["dump"].as<std::string>();
+		make_backup(device_path, backup_path);
 	} else if (command == ADD_PASS) {
 		// read existing header from disk
 		header.reset(new Luks_header(device_path));
@@ -369,8 +368,13 @@ main(int argc, char **argv)
 			return 1;
 
 		std::string revoke = prompt_passwd("Passphrase to revoke");
+		if (passwd.empty())
+			return 1;
 
-		header->revoke_passwd(revoke);
+		if (!header->revoke_passwd(revoke)) {
+			std::cerr << "Matching key material not found\n";
+			return 1;
+		}
 		if (!pretend) header->save();
 	}
 
