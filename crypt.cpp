@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 
-#include "cipher.hpp"
 #include "crypt.hpp"
 #include "errors.hpp"
 #include "hash.hpp"

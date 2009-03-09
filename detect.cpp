@@ -5,7 +5,6 @@
 #include <sstream>
 #include <boost/regex.hpp>
 
-#include "cipher.hpp"
 #include "detect.hpp"
 #include "hash.hpp"
 
