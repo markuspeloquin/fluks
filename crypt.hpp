@@ -140,6 +140,34 @@ void		ecb_encrypt(Crypt *crypter, const uint8_t *iv,
 void		ecb_decrypt(Crypt *crypter, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
+/** Encrypt using Propagating Cyclic Block Chaining mode
+ *
+ * The final block is padded as necessary so that the size of the plaintext
+ * is a multiple of the cipher's block size.
+ *
+ * \param[in] crypter	Block encrypter
+ * \param[in] iv	Initialization Vector
+ * \param[in] in	Plaintext
+ * \param[in] sz_plain	The size of the plaintext
+ * \param[out] out	The ciphertext.  Its size should be at least
+ *	<code>ceil(sz_plain/B)</code>, where <code>B</code> is the block
+ *	size of the cipher.
+ */
+void		pcbc_encrypt(Crypt *crypter, const uint8_t *iv,
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
+
+/** Decrypt using Propagating Cyclic Block Chaining mode
+ *
+ * \param[in] crypter	Block decrypter
+ * \param[in] iv	Initialization Vector
+ * \param[in] in	Ciphertext
+ * \param[in] sz_plain	The size of the plaintext
+ * \param[out] out	The plaintext.  Its size should be at least
+ *	<code>sz_plain</code>.
+ */
+void		pcbc_decrypt(Crypt *crypter, const uint8_t *iv,
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
+
 // the encryption and decryption work the same
 inline void
 ctr_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,

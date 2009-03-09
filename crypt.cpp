@@ -53,7 +53,7 @@ luks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	uint32_t	blocks = sz_plain / crypter->block_size();
 	size_t		sz_blk = crypter->block_size();
 
-	// encypt whole blocks
+	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
 		// first block:
 		//   out = E(in XOR iv)
@@ -128,7 +128,6 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {
 	uint8_t		pre[crypter->block_size()];
-	uint8_t		post[crypter->block_size()];
 	uint32_t	blocks = sz / crypter->block_size();
 	uint32_t	iv_tail;
 	size_t		sz_blk = crypter->block_size();
@@ -144,8 +143,8 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
 		    htonl(i ^ iv_tail);
 
-		crypter->crypt(pre, post);
-		xor_bufs(post, in, sz_blk, out);
+		crypter->crypt(pre, out);
+		xor_bufs(out, in, sz_blk, out);
 
 		in += sz_blk;
 		out += sz_blk;
@@ -154,6 +153,8 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	// encrypt partial block
 	uint32_t left = sz % sz_blk;
 	if (left) {
+		uint8_t post[crypter->block_size()];
+
 		// pre = iv XOR counter
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
 		    htonl(blocks ^ iv_tail);
@@ -209,5 +210,86 @@ luks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		uint8_t buf[crypter->block_size()];
 		crypter->crypt(in, buf);
 		std::copy(buf, buf + left, out);
+	}
+}
+
+void
+luks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_plain, uint8_t *out)
+{
+	uint8_t		buf[crypter->block_size()];
+	uint32_t	blocks = sz_plain / crypter->block_size();
+	size_t		sz_blk = crypter->block_size();
+
+	// encrypt whole blocks
+	for (uint32_t i = 0; i < blocks; i++) {
+		// first block:
+		//   out = E(in XOR iv)
+		// for rest:
+		//   out = E(in XOR out-prev XOR in-prev)
+		if (i) {
+			xor_bufs(out - sz_blk, in - sz_blk, sz_blk, buf);
+			xor_bufs(buf, in, sz_blk, buf);
+		} else
+			xor_bufs(iv, in, sz_blk, buf);
+		crypter->crypt(buf, out);
+
+		in += sz_blk;
+		out += sz_blk;
+	}
+
+	// encrypt partial block
+	uint32_t left = sz_plain % sz_blk;
+	if (left) {
+		if (sz_plain > sz_blk) {
+			// not first block
+			xor_bufs(out - sz_blk, in - sz_blk, sz_blk, buf);
+			xor_bufs(buf, in, left, buf);
+		} else {
+			// first block
+			xor_bufs(iv, in, left, buf);
+			std::copy(iv + left, iv + sz_blk, buf + left);
+		}
+		crypter->crypt(buf, out);
+	}
+}
+
+void
+luks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_plain, uint8_t *out)
+{
+	uint32_t	blocks = sz_plain / crypter->block_size();
+	size_t		sz_blk = crypter->block_size();
+
+	// encrypt whole blocks
+	for (uint32_t i = 0; i < blocks; i++) {
+		// first block:
+		//   out = D(in) XOR iv
+		// for rest:
+		//   out = D(in) XOR out-prev XOR in-prev
+		crypter->crypt(in, out);
+		if (i) {
+			xor_bufs(out - sz_blk, out, sz_blk, out);
+			xor_bufs(in - sz_blk, out, sz_blk, out);
+		} else
+			xor_bufs(iv, out, sz_blk, out);
+
+		in += sz_blk;
+		out += sz_blk;
+	}
+
+	// encrypt partial block
+	uint32_t left = sz_plain % sz_blk;
+	if (left) {
+		uint8_t buf[sz_blk];
+		crypter->crypt(in, buf);
+		if (sz_plain > sz_blk) {
+			// not first block
+			xor_bufs(out - sz_blk, buf, left, out);
+			xor_bufs(in - sz_blk, out, left, out);
+		} else {
+			// first block
+			xor_bufs(iv, buf, left, out);
+		}
 	}
 }
