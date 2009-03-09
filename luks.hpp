@@ -230,6 +230,7 @@ private:
 
 	boost::scoped_ptr<struct phdr1>	_hdr;
 	boost::scoped_array<uint8_t>	_master_key;
+	uint16_t			_sz_sect;
 	enum hash_type			_hash_type;
 	enum cipher_type		_cipher_type;
 	enum block_mode			_block_mode;

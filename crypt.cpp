@@ -5,24 +5,37 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "cipher.hpp"
 #include "crypt.hpp"
+#include "errors.hpp"
 #include "hash.hpp"
 #include "util.hpp"
 
 namespace luks {
 namespace {
 
-inline void	derive_essiv(Crypt *crypter, uint32_t sector,
-		    uint8_t *sector_buf, uint8_t *essiv);
+inline std::tr1::shared_ptr<Crypt>
+		make_essiv_crypter(enum cipher_type cipher,
+		    enum hash_type hash, const uint8_t *key, size_t sz);
 
-inline void
-derive_essiv(Crypt *crypter, uint32_t sector,
-    uint8_t *sector_buf, uint8_t *essiv)
+inline std::tr1::shared_ptr<Crypt>
+make_essiv_crypter(enum cipher_type cipher, enum hash_type hash,
+    const uint8_t *key, size_t sz)
 {
-	// sector number needs to be le64
-	reinterpret_cast<uint32_t *>(sector_buf)[0] = host_little(sector);
-	reinterpret_cast<uint32_t *>(sector_buf)[1] = 0;
-	crypter->crypt(sector_buf, essiv);
+	std::tr1::shared_ptr<Crypt> crypter(Crypt::create(cipher));
+	std::tr1::shared_ptr<Hash_function> hashfn(
+	    Hash_function::create(hash));
+	size_t sz_hash = hashfn->digest_size();
+	uint8_t key_hash[sz_hash];
+
+	// compute H(K)
+	hashfn->init();
+	hashfn->add(key, sz);
+	hashfn->end(key_hash);
+
+	// set key to H(K)
+	crypter->init(DIR_ENCRYPT, key_hash, sz_hash);
+	return crypter;
 }
 
 } // end anon namespace
@@ -299,5 +312,176 @@ luks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 			// first block
 			xor_bufs(iv, buf, left, out);
 		}
+	}
+}
+
+size_t
+luks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
+    size_t sz_data)
+{
+	switch (block_mode) {
+	case BM_CBC:
+	case BM_ECB:
+	case BM_PCBC: {
+		size_t blocksize = cipher_block_size(cipher);
+		size_t numblocks = (sz_data + blocksize - 1) / blocksize;
+		return numblocks * blocksize;
+	}
+	case BM_CTR:
+		return sz_data;
+	default:
+		throw Failure("ciphertext_size() block mode undefined");
+	}
+}
+
+void
+luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
+    enum iv_mode iv_mode, enum hash_type iv_hash,
+    uint32_t start_sector, size_t sz_sector,
+    const uint8_t *key, size_t sz_key,
+    const uint8_t *data, size_t sz_data, uint8_t *out)
+{
+	std::tr1::shared_ptr<Crypt> encrypter(Crypt::create(cipher));
+	std::tr1::shared_ptr<Crypt> iv_crypt;
+	boost::scoped_array<uint8_t> pre_essiv;
+	uint8_t		iv[encrypter->block_size()];
+
+	size_t		sz_blk = encrypter->block_size();
+	uint16_t	blk_per_sect = sz_sector / sz_blk;
+
+	encrypter->init(DIR_ENCRYPT, key, sz_key);
+
+	switch (iv_mode) {
+	case IM_PLAIN:
+		std::fill(iv, iv + sz_blk, 0);
+		break;
+	case IM_ESSIV:
+		iv_crypt = make_essiv_crypter(cipher, iv_hash, key, sz_key);
+		pre_essiv.reset(new uint8_t[sz_blk]);
+		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
+		break;
+	default:
+		throw Failure ("encrypt() IV type undefined");
+	}
+
+	uint16_t num_sect = (sz_blk + blk_per_sect - 1) / blk_per_sect;
+
+	for (uint16_t s = 0; s < num_sect; s++) {
+		// generate a new IV for this sector
+		switch (iv_mode) {
+		case IM_PLAIN:
+			*reinterpret_cast<uint32_t *>(iv) =
+			    host_little(start_sector + s);
+			break;
+		case IM_ESSIV:
+			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
+			    host_little(start_sector + s);
+			iv_crypt->crypt(pre_essiv.get(), iv);
+			break;
+		default:;
+		}
+
+		uint16_t by;
+		if (s == num_sect - 1) {
+			by = sz_data - sz_sector * (num_sect - 1);
+		} else {
+			by = sz_sector;
+		}
+
+		switch (block_mode) {
+		case BM_CBC:
+			cbc_encrypt(encrypter.get(), iv, data, by, out);
+			break;
+		case BM_CTR:
+			ctr_encrypt(encrypter.get(), iv, data, by, out);
+			break;
+		case BM_ECB:
+			ecb_encrypt(encrypter.get(), iv, data, by, out);
+			break;
+		case BM_PCBC:
+			pcbc_encrypt(encrypter.get(), iv, data, by, out);
+			break;
+		default:
+			throw Failure("encrypt() block mode undefined");
+		}
+
+		data += sz_sector;
+		out += sz_sector;
+	}
+}
+
+void
+luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
+    enum iv_mode iv_mode, enum hash_type iv_hash,
+    uint32_t start_sector, size_t sz_sector,
+    const uint8_t *key, size_t sz_key,
+    const uint8_t *data, size_t sz_data, uint8_t *out)
+{
+	std::tr1::shared_ptr<Crypt> decrypter(Crypt::create(cipher));
+	std::tr1::shared_ptr<Crypt> iv_crypt;
+	boost::scoped_array<uint8_t> pre_essiv;
+	uint8_t		iv[decrypter->block_size()];
+
+	size_t		sz_blk = decrypter->block_size();
+	uint16_t	blk_per_sect = sz_sector / sz_blk;
+
+	decrypter->init(DIR_ENCRYPT, key, sz_key);
+
+	switch (iv_mode) {
+	case IM_PLAIN:
+		std::fill(iv, iv + sz_blk, 0);
+		break;
+	case IM_ESSIV:
+		iv_crypt = make_essiv_crypter(cipher, iv_hash, key, sz_key);
+		pre_essiv.reset(new uint8_t[sz_blk]);
+		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
+		break;
+	default:
+		throw Failure ("decrypt() IV type undefined");
+	}
+
+	uint16_t num_sect = (sz_blk + blk_per_sect - 1) / blk_per_sect;
+
+	for (uint16_t s = 0; s < num_sect; s++) {
+		// generate a new IV for this sector
+		switch (iv_mode) {
+		case IM_PLAIN:
+			*reinterpret_cast<uint32_t *>(iv) =
+			    host_little(start_sector + s);
+			break;
+		case IM_ESSIV:
+			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
+			    host_little(start_sector + s);
+			iv_crypt->crypt(pre_essiv.get(), iv);
+			break;
+		default:;
+		}
+
+		uint16_t by;
+		if (s == num_sect - 1) {
+			by = sz_data - sz_sector * (num_sect - 1);
+		} else {
+			by = sz_sector;
+		}
+
+		switch (block_mode) {
+		case BM_CBC:
+			cbc_decrypt(decrypter.get(), iv, data, by, out);
+			break;
+		case BM_CTR:
+			ctr_decrypt(decrypter.get(), iv, data, by, out);
+			break;
+		case BM_ECB:
+			ecb_decrypt(decrypter.get(), iv, data, by, out);
+			break;
+		case BM_PCBC:
+			pcbc_decrypt(decrypter.get(), iv, data, by, out);
+			break;
+		default:
+			throw Failure("decrypt() block mode undefined");
+		}
+
+		data += sz_sector;
+		out += sz_sector;
 	}
 }

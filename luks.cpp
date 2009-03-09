@@ -9,6 +9,7 @@
 
 #include "af.hpp"
 #include "cipher.hpp"
+#include "crypt.hpp"
 #include "detect.hpp"
 #include "hash.hpp"
 #include "luks.hpp"
@@ -177,15 +178,15 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	pbkdf2(_hash_type, _master_key.get(), sz_key, _hdr->mk_salt,
 	    _hdr->mk_iterations, _hdr->mk_digest, SZ_MK_DIGEST);
 
-	int sz_sector = sector_size(device);
+	_sz_sect = sector_size(device);
 	// LUKS defines off_base as
-	//	floor(sizeof(phdr) / sz_sector) + 1,
+	//	floor(sizeof(phdr) / sz_sect) + 1,
 	// but it is clearly more correct to use
-	//	ceil(sizeof(phdr) / sz_sector).
+	//	ceil(sizeof(phdr) / sz_sect).
 	// the same goes for km_sectors
-	uint32_t off_base = (sizeof(phdr1) + sz_sector - 1) / sz_sector;
+	uint32_t off_base = (sizeof(phdr1) + _sz_sect - 1) / _sz_sect;
 	uint32_t km_sectors =
-	    (stripes * _hdr->sz_key + sz_sector - 1) / sz_sector;
+	    (stripes * _hdr->sz_key + _sz_sect - 1) / _sz_sect;
 
 	for (size_t i = 0; i < NUM_KEYS; i++) {
 		_hdr->keys[i].active = KEY_DISABLED;
@@ -244,9 +245,11 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 		// TODO key_crypt = read(key->off_km, sizeof(pw_disk_crypt));
 
 		// (pw_digest, key_crypt) => key_splitted
-		// TODO key_splitted = decrypt(_hdr->cipher_name,
-		//	_hdr->cipher_mode, pw_digest, key_crypt,
-		//	sizeof(key_crypt));
+		decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
+		    key->off_km, _sz_sect,
+		    pw_digest, sizeof(pw_digest),
+		    key_crypt, sizeof(key_crypt),
+		    key_splitted);
 
 		// key_splitted => key_merged
 		af_merge(key_splitted, sizeof(key_splitted), key->stripes,
@@ -312,9 +315,14 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    passwd.size(), avail->salt, avail->iterations, pw_digest,
 	    sizeof(pw_digest));
 
-	uint8_t pw_crypt[sizeof(split_key)];
-	// TODO pw_crypt = encrypt(_hdr->cipher_name, _hdr->cipher_mode,
-	//	pw_digest, split_key, sizeof(split_key));
+	uint8_t key_crypt[sizeof(split_key)];
+	encrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
+	    avail->off_km, _sz_sect,
+	    pw_digest, sizeof(pw_digest),
+	    _master_key.get(), _hdr->sz_key,
+	    key_crypt);
+
+	// TODO do something with key_crypt
 
 	avail->active = KEY_ENABLED;
 }

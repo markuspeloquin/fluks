@@ -55,6 +55,61 @@ public:
 	virtual size_t block_size() const throw () = 0;
 };
 
+/** Get the number of bytes required to encrypt data
+ *
+ * \param cipher	The cipher to encrypt with
+ * \param block_mode	The block mode to encrypt with
+ * \param sz_data	The size of the plaintext in bytes
+ * \return		The size buffer the ciphertext will require
+ */
+size_t	ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
+	    size_t sz_data);
+
+/** Encrypt a span of data
+ *
+ * \param cipher	The cipher to encrypt with
+ * \param block_mode	The block mode to encrypt with
+ * \param iv_mode	The IV generation mode
+ * \param iv_hash	The hash function to use for ESSIV, whose block size
+ *	is a possible key size of the cipher.
+ * \param start_sector	The sector the data will start at
+ * \param sz_sector	The size of the sectors
+ * \param key		The key to encrypt the data with
+ * \param sz_key	The size of the key in bytes
+ * \param data		The data to encrypt
+ * \param sz_data	The size of the plaintext in bytes
+ * \param[out] out	The output buffer for the ciphertext.  The number
+ *	of bytes required in the buffer can be obtained from
+ *	ciphertext_size().
+ */
+void	encrypt(enum cipher_type cipher, enum block_mode block_mode,
+	    enum iv_mode iv_mode, enum hash_type iv_hash,
+	    uint32_t start_sector, size_t sz_sector,
+	    const uint8_t *key, size_t sz_key,
+	    const uint8_t *data, size_t sz_data,
+	    uint8_t *out);
+
+/** Decrypt a span of data
+ *
+ * \param cipher	The cipher that was used
+ * \param block_mode	The block mode that was used
+ * \param iv_mode	The IV generation mode that was used
+ * \param iv_hash	The hash function used for ESSIV
+ * \param start_sector	The sector the data starts at
+ * \param sz_sector	The size of the sectors
+ * \param key		The key used to encrypt the data
+ * \param sz_key	The size of the key in bytes
+ * \param data		The ciphertext to decrypt
+ * \param sz_data	The size of the plaintext in bytes
+ * \param[out] out	The output buffer for the plaintext
+ */
+void	decrypt(enum cipher_type cipher, enum block_mode block_mode,
+	    enum iv_mode iv_mode, enum hash_type iv_hash,
+	    uint32_t start_sector, size_t sz_sector,
+	    const uint8_t *key, size_t sz_key,
+	    const uint8_t *data, size_t sz_data,
+	    uint8_t *out);
+
 /** Encrypt using Cyclic Block Chaining mode
  *
  * The final block is padded as necessary so that the size of the plaintext

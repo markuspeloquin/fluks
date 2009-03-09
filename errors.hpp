@@ -7,6 +7,15 @@
 namespace luks {
 
 
+/** Not to be caught */
+struct Failure : std::exception {
+	Failure(const std::string &msg) : _msg(msg) {}
+	~Failure() throw () {}
+	const char *what() const throw ()
+	{	return _msg.c_str(); }
+	std::string _msg;
+};
+
 struct Bad_spec : std::exception {
 	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
 	{	_msg += msg; }
