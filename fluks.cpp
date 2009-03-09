@@ -50,13 +50,21 @@ main(int argc, char **argv)
 		"dump the header and key material to a file")
 	    ("help", "show this message")
 	    ("info,i", "print the information in the header")
+	    ("list-modes",
+		"prints supported ciphers, block modes, hashes, etc.")
 	    ;
 
 	po::options_description create_desc("Creation Options");
 	create_desc.add_options()
 	    ("size,s", po::value<unsigned>(), "master key size")
-	    ("cipher,c", po::value<std::string>(), "cipher spec\n(format is "
-		"CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]])")
+	    ("cipher,c", po::value<std::string>(),
+		"cipher spec, formatted as "
+		"CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]])\n"
+		"CIPHER: \tencryption cipher\n"
+		"BLOCK_MODE: \tcipher block mode\n"
+		"IV_MODE: \tIV generation mode\n"
+		"IV_HASH: \thash for essiv, and only needed for essiv\n"
+		"see --list-modes for possible options")
 	    ("hash,h", po::value<std::string>(), "hash spec")
 	    ("iter", po::value<unsigned>()->default_value(
 		luks::NUM_MK_ITER), "master key iterations")

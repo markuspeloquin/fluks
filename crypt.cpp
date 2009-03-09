@@ -324,7 +324,7 @@ luks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
 	case BM_CBC:
 	case BM_ECB:
 	case BM_PCBC: {
-		size_t blocksize = cipher_block_size(cipher);
+		size_t blocksize = cipher_info::block_size(cipher);
 		size_t numblocks = (sz_data + blocksize - 1) / blocksize;
 		return numblocks * blocksize;
 	}

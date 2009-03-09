@@ -11,7 +11,6 @@
 #include <uuid/uuid.h>
 
 #include "af.hpp"
-#include "cipher.hpp"
 #include "crypt.hpp"
 #include "detect.hpp"
 #include "gutmann.hpp"
@@ -19,6 +18,7 @@
 #include "luks.hpp"
 #include "pbkdf2.hpp"
 #include "os.hpp"
+#include "support.hpp"
 
 namespace luks {
 namespace {
@@ -94,7 +94,7 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
 	_sz_sect(sector_size(device)),
-	_hash_type(get_hash_type(hash_spec)),
+	_hash_type(hash_info::type(hash_spec)),
 	_key_mach_end(NUM_KEYS, true),
 	_hdr_mach_end(true),
 	_key_dirty(NUM_KEYS, true),
@@ -189,7 +189,7 @@ luks::Luks_header::Luks_header(const std::string &device)
 		init_cipher_spec(cipher_spec);
 	}
 
-	_hash_type = get_hash_type(_hdr->hash_spec);
+	_hash_type = hash_info::type(_hdr->hash_spec);
 
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec(
@@ -203,7 +203,7 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 {
 	uint8_t pw_digest[_hdr->sz_key];
 	uint8_t key_merged[_hdr->sz_key];
-	uint8_t key_digest[hash_digest_size(_hash_type)];
+	uint8_t key_digest[hash_info::digest_size(_hash_type)];
 	struct key *key;
 
 	if (_master_key)
@@ -447,10 +447,10 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 		throw Bad_spec("unrecognized spec format");
 
 	// make the cipher/hash specs malleable
-	_cipher_type = get_cipher_type(cipher);
-	_block_mode = get_block_mode(block_mode);
-	_iv_mode = get_iv_mode(ivmode);
-	_iv_hash = get_hash_type(ivhash);
+	_cipher_type = cipher_info::type(cipher);
+	_block_mode = block_mode_info::type(block_mode);
+	_iv_mode = iv_mode_info::type(ivmode);
+	_iv_hash = hash_info::type(ivhash);
 
 	// are the specs supported by fluks?
 	if (_cipher_type == CT_UNDEFINED)
@@ -464,8 +464,8 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 
 	// canonize cipher and IV hash; note that ivhash will remain an
 	// empty string if it was empty initially
-	cipher = cipher_name(_cipher_type);
-	ivhash = hash_name(_iv_hash);
+	cipher = cipher_info::name(_cipher_type);
+	ivhash = hash_info::name(_iv_hash);
 
 	// is the cipher spec supported by the system?
 	{
@@ -493,8 +493,9 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	if (_iv_mode == IM_ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
-		std::vector<uint16_t> sizes = cipher_key_sizes(_cipher_type);
-		uint16_t size = hash_digest_size(_iv_hash);
+		std::vector<uint16_t> sizes = cipher_info::key_sizes(
+		    _cipher_type);
+		uint16_t size = hash_info::digest_size(_iv_hash);
 		if (std::find(sizes.begin(), sizes.end(), size) ==
 		    sizes.end()) {
 			typedef std::vector<uint16_t>::iterator Iter;
@@ -514,7 +515,7 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	// recreate a canonical cipher spec, canonize the hash spec; note
 	// that cipher and ivhash were already canonized
 	std::string mode = make_mode(block_mode, ivmode, ivhash);
-	std::string hash = hash_name(_hash_type);
+	std::string hash = hash_info::name(_hash_type);
 
 	// copy specs (back) into header
 	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);
@@ -522,23 +523,3 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	std::copy(mode.begin(), mode.end(), _hdr->cipher_mode);
 	_hdr->cipher_mode[mode.size()] = '\0';
 }
-
-
-enum luks::block_mode
-luks::get_block_mode(const std::string &mode)
-{
-	if (mode == "cbc") return BM_CBC;
-	if (mode == "ctr") return BM_CTR;
-	if (mode == "ecb") return BM_ECB;
-	if (mode == "pcbc") return BM_PCBC;
-	return BM_UNDEFINED;
-}
-
-enum luks::iv_mode
-luks::get_iv_mode(const std::string &name)
-{
-	if (name == "plain") return IM_PLAIN;
-	if (name == "essiv") return IM_ESSIV;
-	return IM_UNDEFINED;
-}
-

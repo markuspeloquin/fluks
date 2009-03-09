@@ -13,6 +13,7 @@
 
 namespace luks {
 
+
 enum crypt_direction { DIR_ENCRYPT, DIR_DECRYPT };
 
 /** En/Decrypt a block of data */

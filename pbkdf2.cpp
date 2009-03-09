@@ -3,6 +3,7 @@
 
 #include "hmac.hpp"
 #include "pbkdf2.hpp"
+#include "support.hpp"
 #include "util.hpp"
 
 namespace luks {
@@ -71,7 +72,7 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 	if (benchmark)
 		timer.reset(new boost::timer);
 
-	uint32_t sz_hash = hash_digest_size(type);
+	uint32_t sz_hash = hash_info::digest_size(type);
 
 	// 1.
 	// If dkLen > (2^32 - 1) * hLen, stop

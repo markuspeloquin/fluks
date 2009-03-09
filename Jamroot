@@ -9,10 +9,10 @@ lib boost_regex ;
 lib ssl ;
 lib uuid ;
 exe fluks
-	: af.cpp backup.cpp cipher.cpp crypt.cpp
+	: af.cpp backup.cpp crypt.cpp
 	    detect.cpp errors.cpp fluks.cpp
 	    gutmann.cpp hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
-	    serpent.c tiger.cpp
+	    serpent.c support.cpp tiger.cpp
 	    tiger_sboxes.c twofish.c util.cpp whirlpool.c
 	    boost_program_options boost_regex ssl uuid
 	;

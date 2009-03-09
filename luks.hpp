@@ -278,10 +278,6 @@ private:
 };
 
 
-enum block_mode get_block_mode(const std::string &mode);
-enum iv_mode	get_iv_mode(const std::string &name);
-
-
 }
 
 #include "luks_private.hpp"
