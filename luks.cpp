@@ -433,6 +433,11 @@ luks::Luks_header::save() throw (Disk_error)
 
 		_dirty = false;
 	}
+
+	// run dmsetup
+	// NAME = device-mapper name
+	// LOGICAL_START_SECTOR
+	// dmsetup create NAME --table "LOGICAL_START_SECTOR NUM_SECTORS crypt CIPHER KEY IV_OFFSET DEVICE_PATH OFFSET"
 }
 
 // initializes the values of the cipher-spec enums, the cipher-spec

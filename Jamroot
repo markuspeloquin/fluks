@@ -7,13 +7,17 @@ using gcc
 lib boost_filesystem ;
 lib boost_program_options ;
 lib boost_regex ;
+lib devmapper ;
 lib ssl ;
 lib uuid ;
 exe fluks
 	: af.cpp backup.cpp crypt.cpp
-	    detect.cpp errors.cpp fluks.cpp
+	    detect.cpp dm.cpp errors.cpp fluks.cpp
 	    gutmann.cpp hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
 	    support.cpp tiger.cpp util.cpp
+
 	    serpent.c tiger_sboxes.c twofish.c whirlpool.c
-	    boost_filesystem boost_program_options boost_regex ssl uuid
+
+	    boost_filesystem boost_program_options
+	    boost_regex devmapper ssl uuid
 	;

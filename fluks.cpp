@@ -194,7 +194,7 @@ main(int argc, char **argv)
 		"see --list-modes for possible options")
 	    ("hash,h", po::value<std::string>(), "[required] hash spec")
 	    ("iter", po::value<unsigned>()->default_value(
-		NUM_MK_ITER), "master key iterations")
+		NUM_MK_ITER), "master key digest iterations")
 	    ("stripes", po::value<unsigned>()->default_value(NUM_STRIPES),
 		"number of stripes for key material")
 	    ;

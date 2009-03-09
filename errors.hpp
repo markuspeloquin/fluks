@@ -54,6 +54,16 @@ struct Disk_error : std::exception {
 };
 
 
+struct Dm_error : std::exception {
+	Dm_error(const std::string &msg) : _msg("Device mapper error: ")
+	{	_msg += msg; }
+	~Dm_error() throw () {}
+	const char *what() const throw ()
+	{	return _msg.c_str(); }
+	std::string _msg;
+};
+
+
 struct Hash_error : virtual std::exception {
 };
 
