@@ -63,10 +63,10 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 	if (!boost::regex_match(cipher_spec, matches, expr))
 		return false;
 
-	cipher = matches[0];
-	block_mode = matches[1];
-	ivmode = matches[2];
-	ivhash = matches[3];
+	cipher = matches[1];
+	block_mode = matches[2];
+	ivmode = matches[3];
+	ivhash = matches[4];
 	return true;
 }
 
@@ -182,8 +182,10 @@ luks::Luks_header::Luks_header(const std::string &device)
 
 	_hash_type = get_hash_type(_hdr->hash_spec);
 
-	if (_hash_type != HT_UNDEFINED)
-		throw Bad_spec("undefined hash spec in header");
+	if (_hash_type == HT_UNDEFINED)
+		throw Bad_spec(
+		    std::string("undefined hash spec in header: ") +
+		    _hdr->hash_spec);
 }
 
 bool
@@ -413,13 +415,13 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 
 	// are the specs supported by fluks?
 	if (_cipher_type == CT_UNDEFINED)
-		throw Bad_spec("unrecognized cipher");
+		throw Bad_spec("unrecognized cipher: " + cipher);
 	if (block_mode.size() && _block_mode == BM_UNDEFINED)
-		throw Bad_spec("unrecognized block mode");
+		throw Bad_spec("unrecognized block mode: " + block_mode);
 	if (ivmode.size() &&  _iv_mode == IM_UNDEFINED)
-		throw Bad_spec("unrecognized IV mode");
+		throw Bad_spec("unrecognized IV mode: " + ivmode);
 	if (ivhash.size() && _iv_hash == HT_UNDEFINED)
-		throw Bad_spec("unrecognized IV hash");
+		throw Bad_spec("unrecognized IV hash: " + ivhash);
 
 	// canonize cipher and IV hash; note that ivhash will remain an
 	// empty string if it was empty initially
@@ -430,11 +432,13 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	{
 		const std::set<std::string> &sys_ciph = system_ciphers();
 		if (!sys_ciph.count(cipher))
-			throw Bad_spec("cipher not supported by system");
+			throw Bad_spec("cipher not supported by system: " +
+			    cipher);
 
 		const std::set<std::string> &sys_hash = system_hashes();
 		if (ivhash.size() && !sys_hash.count(ivhash))
-			throw Bad_spec("IV hash not supported by system");
+			throw Bad_spec("IV hash not supported by system: " +
+			    ivhash);
 	}
 
 	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
@@ -452,7 +456,7 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 		// cipher
 		std::vector<uint16_t> sizes = cipher_key_sizes(_cipher_type);
 		uint16_t size = hash_digest_size(_iv_hash);
-		if (std::find(sizes.begin(), sizes.end(), size) !=
+		if (std::find(sizes.begin(), sizes.end(), size) ==
 		    sizes.end()) {
 			typedef std::vector<uint16_t>::iterator Iter;
 			std::ostringstream out;
@@ -463,6 +467,7 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 					out << ',';
 				out << ' ' << *i;
 			}
+			out << "; incompatible with hash `" << ivhash << '\'';
 			throw Bad_spec(out.str());
 		}
 	}

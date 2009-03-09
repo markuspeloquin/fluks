@@ -46,8 +46,7 @@ main(int argc, char **argv)
 		RAND_seed(&now, sizeof(now));
 	}
 
-	std::cout << "sizeof(luks::phdr1): " << sizeof(struct luks::phdr1)
-	    << "\nsizeof(luks::key): " << sizeof(struct luks::key) << '\n';
+	luks::Luks_header header(argv[1]);
 
 	return 0;
 }
