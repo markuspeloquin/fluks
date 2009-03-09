@@ -64,6 +64,8 @@ void write_pattern(std::ofstream &file, off_t pos,
 
 	if (file.write(buf, bytes))
 		throw Disk_error("Gutmann erase: write failed");
+
+	file.flush();
 }
 
 } // end anon namespace
