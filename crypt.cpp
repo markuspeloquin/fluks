@@ -164,48 +164,6 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::cts_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
-    size_t sz_plain, uint8_t *out)
-{
-	uint8_t		buf[crypter->block_size()];
-	size_t		sz_blk = crypter->block_size();
-
-	if (sz_plain <= sz_blk) {
-		// this situation is completely undefined by RFC 2040; the
-		// most reasonable solution I can think of is to call the
-		// only block P_{n-1} and the following block of length 0 P_n;
-		// then:
-		//	X_{n-1} = IV ^ P_{n-1}
-		//	E_{n-1} = E(X_{n-1})
-		//	C_{n-1} = E(E_{n-1})
-		// or
-		//	out = E(E(IV ^ in))
-		// but then what's the point of encrypting twice? instead,
-		// I pad the block and encrypt it CBC style
-		xor_bufs(iv, in, sz_plain, buf);
-		std::copy(iv + sz_plain, iv + sz_blk, buf + sz_plain);
-		crypter->crypt(buf, out);
-	} else if (sz_plain <= sz_blk * 2) {
-		uint8_t buf2[crypter->block_size()];
-		uint32_t remainder = sz_plain % sz_blk;
-		xor_bufs(iv, in, sz_blk, buf);
-		crypter->crypt(buf, buf2);
-		std::copy(buf2, buf2 + remainder, out + sz_blk);
-		xor_bufs(in + sz_blk, buf2, remainder, buf2);
-		crypter->crypt(buf2, out);
-	} else {
-		// TODO
-	}
-}
-
-void
-luks::cts_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
-    size_t sz_plain, uint8_t *out)
-{
-	// TODO
-}
-
-void
 luks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {

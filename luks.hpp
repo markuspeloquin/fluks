@@ -91,7 +91,6 @@ enum block_mode {
 	/** Cipher Text Stealing
 	 *
 	 * Described in RFC 2040, Section 8 */
-	BM_CTS,
 	BM_ECB,
 	BM_PCBC /**< Propogating Cipher Block Chaining */
 };

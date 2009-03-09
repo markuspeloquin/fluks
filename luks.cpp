@@ -334,7 +334,6 @@ luks::get_block_mode(const std::string &mode)
 {
 	if (mode == "cbc") return BM_CBC;
 	if (mode == "ctr") return BM_CTR;
-	if (mode == "cts") return BM_CTS;
 	if (mode == "ecb") return BM_ECB;
 	if (mode == "pcbc") return BM_PCBC;
 	return BM_UNDEFINED;
