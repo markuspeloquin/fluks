@@ -67,7 +67,7 @@ struct Slots_full : std::exception {
 struct Ssl_error : virtual std::exception {
 	Ssl_error();
 	~Ssl_error() throw() {}
-	const char *what() throw()
+	const char *what() throw ()
 	{	return _msg.c_str(); }
 
 	std::string _msg;
@@ -78,6 +78,7 @@ struct Ssl_error : virtual std::exception {
 struct Ssl_hash_error : Hash_error, Ssl_error {
 	Ssl_hash_error() {}
 	~Ssl_hash_error() throw() {}
+	using Ssl_error::what;
 };
 
 
