@@ -319,13 +319,32 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 }
 
 void
-luks::Luks_header::revoke_slot(uint8_t which)
+luks::Luks_header::revoke_slot(uint8_t which) throw (Ssl_error)
 {
+	std::ofstream dev_out(_device.c_str(),
+	    std::ios_base::binary | std::ios_base::in);
+	if (!dev_out)
+		throw Disk_error("failed to open device");
+
+	dev_out.seekp(_hdr->keys[which].off_km * _sz_sect, std::ios_base::beg);
+	if (!dev_out)
+		throw Disk_error("seek error");
+
+	// TODO use Gutmann erase method instead, see:
+	// http://www.cs.auckland.ac.nz/~pgut001/pubs/secure_del.html
+
+	uint8_t random_data[_hdr->sz_key * _hdr->keys[which].stripes];
+	if (!RAND_bytes(random_data, sizeof(random_data)))
+		throw Ssl_error();
+
+	dev_out.write(reinterpret_cast<char *>(random_data),
+	    sizeof(random_data));
+	if (!dev_out)
+		throw Disk_error("failed to erase key material");
+
 	ensure_mach_key(which, true);
 	_hdr->keys[which].active = KEY_DISABLED;
 	_key_dirty[which] = true;
-	// see http://www.cs.auckland.ac.nz/~pgut001/pubs/secure_del.html
-	// TODO gutmann_erase(key->off_km, hdr->sz_key * key->stripes);
 }
 
 // initializes the values of the cipher-spec enums and the cipher-spec

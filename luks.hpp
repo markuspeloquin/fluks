@@ -205,7 +205,7 @@ public:
 	 *
 	 * \param which	The index of the key slot to revoke.
 	 */
-	void revoke_slot(uint8_t which);
+	void revoke_slot(uint8_t which) throw (Ssl_error);
 
 	/** Get the master key
 	 *
