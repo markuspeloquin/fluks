@@ -9,9 +9,12 @@
 
 namespace luks {
 
-std::ofstream	&gutmann_erase(std::ofstream &file, off_t pos, size_t bytes)
-		    throw (Disk_error);
+template <class Fstream>
+Fstream	&gutmann_erase(Fstream &file, off_t pos, size_t bytes)
+	    throw (Disk_error);
 
 }
+
+#include "gutmann_private.hpp"
 
 #endif

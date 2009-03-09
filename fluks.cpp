@@ -177,6 +177,8 @@ main(int argc, char **argv)
 	po::options_description general_desc("General Options");
 	general_desc.add_options()
 	    ("info,i", "print the information in the header (after changes)")
+	    ("name,n", po::value<std::string>(),
+		"[usually required] name of the device-mapper partition")
 	    ("pretend,p", "do not commit the changes to disk")
 	    ;
 
@@ -270,8 +272,11 @@ main(int argc, char **argv)
 		return 0;
 	}
 
-	// read device path if needed
+	bool pretend = !var_map["pretend"].empty();
+
+	// read device path and open device if needed
 	std::string device_path;
+	std::tr1::shared_ptr<std::sys_fstream> device;
 	switch (command) {
 	case CREATE:
 	case DUMP:
@@ -282,6 +287,27 @@ main(int argc, char **argv)
 			return 1;
 		}
 		device_path = var_map["device"].as<std::string>();
+		{
+			std::ios_base::openmode mode =
+			    std::ios_base::in | std::ios_base::binary;
+			if (!pretend)
+				mode |= std::ios_base::out;
+			device.reset(
+			    new std::sys_fstream(device_path.c_str(), mode));
+		}
+		break;
+	default:;
+	}
+
+	// get partition name
+	std::string part_name;
+	switch (command) {
+	case CREATE:
+		if (var_map["name"].empty()) {
+			std::cerr << "must provide a partition name\n";
+			return 1;
+		}
+		part_name = var_map["name"].as<std::string>();
 		break;
 	default:;
 	}
@@ -302,7 +328,6 @@ main(int argc, char **argv)
 	}
 
 	std::tr1::shared_ptr<Luks_header> header;
-	bool pretend = !var_map["pretend"].empty();
 
 	if (command == CREATE) {
 		// check for mandatory options
@@ -331,8 +356,8 @@ main(int argc, char **argv)
 		sz_key /= 8;
 
 		// create the header
-		header.reset(new Luks_header(device_path, sz_key,
-		    cipher, hash, iter, stripes));
+		header.reset(new Luks_header(device, sz_key, cipher, hash,
+		    iter, stripes));
 
 		// get a password
 		std::string pass = prompt_passwd("Initial passphrase");
@@ -350,11 +375,11 @@ main(int argc, char **argv)
 			std::cout << "(--dump command has no pretend mode, "
 			    "proceeding...)\n";
 		std::string backup_path = var_map["dump"].as<std::string>();
-		make_backup(device_path, backup_path);
+		make_backup(*device, backup_path);
 		std::cout << "Backup completed\n";
 	} else if (command == ADD_PASS) {
 		// read existing header from disk
-		header.reset(new Luks_header(device_path));
+		header.reset(new Luks_header(device));
 
 		std::cout << "First enter a passphrase that has already "
 		    "been established with the partition\n";
@@ -379,7 +404,7 @@ main(int argc, char **argv)
 
 		std::cout << "Password added to partition\n";
 	} else if (command == REVOKE_PASS) {
-		header.reset(new Luks_header(device_path));
+		header.reset(new Luks_header(device));
 		std::cout << "First enter a passphrase that will not "
 		    "be revoked\n";
 		std::string passwd = prompt_passwd("Existing passphrase");

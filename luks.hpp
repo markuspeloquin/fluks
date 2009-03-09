@@ -4,14 +4,15 @@
 #include <stdint.h> // no cstdint yet
 
 #include <cstddef>
-#include <fstream>
 #include <string>
 #include <vector>
+#include <tr1/memory>
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "errors.hpp"
 #include "os.hpp"
+#include "sys_fstream.hpp"
 
 namespace luks {
 
@@ -169,7 +170,7 @@ class Luks_header {
 public:
 	/** Create a new header
 	 *
-	 * \param device	The pathname of the device.
+	 * \param device	The device to read/write
 	 * \param sz_key	The byte length of the master key.
 	 * \param cipher_spec	Cipher to encrypt with.  Format is
 	 *	CIPHER [ - CHAINMODE [ - IV_OPTS [ : IV_MODE ]]], where
@@ -184,20 +185,48 @@ public:
 	 * \throw Unix_error	Error encountered determining the sector
 	 *	size.
 	 */
-	Luks_header(const std::string &device, uint32_t sz_key,
-	    const std::string &cipher_spec, const std::string &hash_spec,
-	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES)
+	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
+	    uint32_t sz_key, const std::string &cipher_spec,
+	    const std::string &hash_spec, uint32_t mk_iterations=NUM_MK_ITER,
+	    uint32_t stripes=NUM_STRIPES)
 	    throw (Bad_spec, Unix_error);
 
 	/** Read a header from the disk
 	 *
-	 * \param device	I don't know what to do with this yet.
+	 * \param device	The device to read/write
 	 */
-	Luks_header(const std::string &device)
+	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
 	    throw (Bad_spec, Disk_error, No_header, Unix_error,
 		Unsupported_version);
 
 	~Luks_header() {}
+
+	/** Get the full, canonized cipher spec
+	 *
+	 * \return  The cipher spec, for use by dm-crypt
+	 */
+	const std::string cipher_spec() const
+	{
+		std::string res = _hdr->cipher_name;
+		if (*_hdr->cipher_mode) res += _hdr->cipher_mode;
+		return res;
+	}
+
+	/** Get the master key
+	 *
+	 * \retval nullptr	The key hasn't been decrypted yet.
+	 */
+	const uint8_t *master_key() const
+	{	return _master_key.get(); }
+
+	/** The size of the header and key material in sectors
+	 *
+	 * This is the same as the start sector of the partition's data.
+	 *
+	 * \return The size in sectors
+	 */
+	uint32_t sectors() const
+	{	return _hdr->off_payload; }
 
 	/** Decrypt the private key
 	 *
@@ -252,13 +281,6 @@ public:
 		return true;
 	}
 
-	/** Get the master key
-	 *
-	 * \retval nullptr	The key hasn't been decrypted yet.
-	 */
-	const uint8_t *master_key() const
-	{	return _master_key.get(); }
-
 	void save() throw (Disk_error);
 
 private:
@@ -273,14 +295,14 @@ private:
 
 	int8_t locate_passwd(const std::string &passwd) throw (Disk_error);
 
-	void decrypt_key(std::ifstream &dev, const std::string &passwd,
-	    uint8_t slot, uint8_t key_digest[SZ_MK_DIGEST],
-	    uint8_t *master_key);
+	void decrypt_key(const std::string &passwd, uint8_t slot,
+	    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key);
 
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
-	std::string			_device;
+	std::tr1::shared_ptr<std::sys_fstream>
+					_device;
 	boost::scoped_ptr<struct phdr1>	_hdr;
 	boost::scoped_array<uint8_t>	_master_key;
 	uint16_t			_sz_sect;

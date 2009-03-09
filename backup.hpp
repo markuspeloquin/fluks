@@ -4,11 +4,11 @@
 #include <string>
 
 #include "errors.hpp"
+#include "sys_fstream.hpp"
 
 namespace luks {
 
-void	make_backup(const std::string &device_path,
-	    const std::string &backup_path)
+void	make_backup(std::sys_fstream &device, const std::string &backup_path)
 	    throw (Disk_error, No_header, Unix_error, Unsupported_version);
 
 }

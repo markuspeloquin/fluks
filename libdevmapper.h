@@ -2,7 +2,7 @@
 #define LIB_DEVICE_MAPPER_H
 
 /* The only functions I need from <libdevmapper.h>.  It cannot be directly
- * included by C++ source. */
+ * included by C++ source.  Thanks, guys. */
 
 #include <features.h>
 

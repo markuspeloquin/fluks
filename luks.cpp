@@ -110,14 +110,14 @@ luks::check_version_1(const struct phdr1 *header)
 	return header->version == 1;
 }
 
-luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
-    const std::string &cipher_spec, const std::string &hash_spec,
-    uint32_t mk_iterations, uint32_t stripes)
+luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
+    uint32_t sz_key, const std::string &cipher_spec,
+    const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
     throw (Bad_spec, Unix_error) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
-	_sz_sect(sector_size(device)),
+	_sz_sect(sector_size(*device)),
 	_hash_type(hash_info::type(hash_spec)),
 	_proved_passwd(-1),
 	_mach_end(true),
@@ -171,24 +171,20 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	uuid_unparse(uuid, _hdr->uuid_part);
 }
 
-luks::Luks_header::Luks_header(const std::string &device)
+luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
     throw (Bad_spec, Disk_error, No_header, Unix_error, Unsupported_version) :
 	_device(device),
 	_hdr(new struct phdr1),
-	_sz_sect(sector_size(device)),
+	_sz_sect(sector_size(*device)),
 	_proved_passwd(-1),
 	_mach_end(false),
 	_dirty(false),
 	_key_need_erase(NUM_KEYS, false)
 {
-	std::ifstream dev_in(_device.c_str(),
-	    std::ios_base::binary | std::ios_base::in);
-	if (!dev_in)
-		throw Disk_error("failed to open device");
-
-	dev_in.read(reinterpret_cast<char *>(_hdr.get()),
-	    sizeof(struct phdr1));
-	if (!dev_in)
+	if (!_device->seekg(0, std::ios_base::beg))
+		throw Disk_error("failed to seek to header");
+	if (!_device->read(reinterpret_cast<char *>(_hdr.get()),
+	    sizeof(struct phdr1)))
 		throw Disk_error("failed to read header");
 
 	// big-endian -> machine-endian
@@ -242,16 +238,11 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 		max = NUM_KEYS;
 	}
 
-	std::ifstream dev_in(_device.c_str(), 
-	    std::ios_base::binary | std::ios_base::in);
-	if (!dev_in)
-		throw Disk_error("failed to open device");
-
 	// find a slot than can be decrypted with the password, copy the
 	// data to _master_key
 	for (; i < max; i++) {
 		if (_hdr->keys[i].active == KEY_DISABLED) continue;
-		decrypt_key(dev_in, passwd, i, key_digest, master_key);
+		decrypt_key(passwd, i, key_digest, master_key);
 
 		if (std::equal(key_digest, key_digest + sizeof(key_digest),
 		    _hdr->mk_digest)) {
@@ -339,8 +330,7 @@ luks::Luks_header::info() const
 	const_cast<Luks_header *>(this)->set_mach_end(true);
 
 	std::cout
-	    <<   "device                              " << _device
-	    << "\nversion                             " << _hdr->version
+	    <<   "version                             " << _hdr->version
 	    << "\ncipher                              " << _hdr->cipher_name
 	    << "\ncipher mode                         " << _hdr->cipher_mode
 	    << "\nhash spec                           " << _hdr->hash_spec
@@ -385,33 +375,26 @@ luks::Luks_header::save() throw (Disk_error)
 {
 	if (!_dirty) return;
 
-	std::ofstream dev_out(_device.c_str(),
-	    std::ios_base::binary | std::ios_base::out);
-	if (!dev_out)
-		throw Disk_error("failed to open device");
-
 	set_mach_end(true);
 
 	// first erase old keys and then commit new keys
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		if (_key_need_erase[i]) {
-			gutmann_erase(dev_out,
+			gutmann_erase(*_device,
 			    _hdr->keys[i].off_km * _sz_sect,
 			    _hdr->sz_key * _hdr->keys[i].stripes);
 			_key_need_erase[i] = false;
 		}
 
 		if (_key_crypt[i]) {
-			dev_out.seekp(_hdr->keys[i].off_km * _sz_sect,
-			    std::ios_base::beg);
-			if (!dev_out)
+			if (!_device->seekp(_hdr->keys[i].off_km * _sz_sect,
+			    std::ios_base::beg))
 				throw Disk_error("writing key "
 				    "material: seek error");
 
-			dev_out.write(reinterpret_cast<char *>(
+			if (!_device->write(reinterpret_cast<char *>(
 			    _key_crypt[i].get()),
-			    _hdr->sz_key * _hdr->keys[i].stripes);
-			if (!dev_out)
+			    _hdr->sz_key * _hdr->keys[i].stripes))
 				throw Disk_error("writing key "
 				    "material: write error");
 			_key_crypt[i].reset();
@@ -422,13 +405,11 @@ luks::Luks_header::save() throw (Disk_error)
 		// ensure big-endian
 		set_mach_end(false);
 
-		dev_out.seekp(0, std::ios_base::beg);
-		if (!dev_out)
+		if (!_device->seekp(0, std::ios_base::beg))
 			throw Disk_error("writing header: seek error");
 
-		dev_out.write(reinterpret_cast<char *>(_hdr.get()),
-		    sizeof(struct phdr1));
-		if (!dev_out)
+		if (!_device->write(reinterpret_cast<char *>(_hdr.get()),
+		    sizeof(struct phdr1)))
 			throw Disk_error("writing header: write error");
 
 		_dirty = false;
@@ -557,15 +538,10 @@ luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 	uint8_t key_digest[SZ_MK_DIGEST];
 	uint8_t master_key[_hdr->sz_key];
 
-	std::ifstream dev_in(_device.c_str(), 
-	    std::ios_base::binary | std::ios_base::in);
-	if (!dev_in)
-		throw Disk_error("failed to open device");
-
 	// find the first slot that can be decrypted with the password
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		if (_hdr->keys[i].active == KEY_DISABLED) continue;
-		decrypt_key(dev_in, passwd, i, key_digest, master_key);
+		decrypt_key(passwd, i, key_digest, master_key);
 
 		if (std::equal(key_digest, key_digest + sizeof(key_digest),
 		    _hdr->mk_digest))
@@ -577,8 +553,8 @@ luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 // key_digest should be as large as the digest size of the hash
 // master_key should be as large as _hdr->sz_key
 void
-luks::Luks_header::decrypt_key(std::ifstream &dev, const std::string &passwd,
-    uint8_t slot, uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key)
+luks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
+    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key)
 {
 	set_mach_end(true);
 
@@ -594,13 +570,11 @@ luks::Luks_header::decrypt_key(std::ifstream &dev, const std::string &passwd,
 	    sizeof(pw_digest));
 
 	// disk => key_crypt
-	dev.seekg(key->off_km * _sz_sect, std::ios_base::beg);
-	if (!dev)
+	if (!_device->seekg(key->off_km * _sz_sect, std::ios_base::beg))
 		throw Disk_error("failed to seek to key material");
 
-	dev.read(reinterpret_cast<char *>(key_crypt),
-	    sizeof(key_crypt));
-	if (!dev)
+	if (!_device->read(reinterpret_cast<char *>(key_crypt),
+	    sizeof(key_crypt)))
 		throw Disk_error("failed to read key material");
 
 	// (pw_digest, key_crypt) => split_key
