@@ -82,19 +82,17 @@ struct Hmac_function {
 /** An HMAC function implemented in terms of a Hash_function object */
 class Hmac_impl : public Hmac_function {
 public:
+	static const uint8_t IPAD = 0x36;
+	static const uint8_t OPAD = 0x5c;
+
 	/** Create an HMAC object tied to a particular hash function
 	 *
 	 * \param hashfn	A hash object.
 	 */
 	Hmac_impl(std::tr1::shared_ptr<Hash_function> hashfn) :
 		_hashfn(hashfn),
-		_ipad(new uint8_t[hashfn->block_size()]),
-		_key(new uint8_t[hashfn->block_size()]),
-		_opad(new uint8_t[hashfn->block_size()])
-	{
-		std::fill(_ipad.get(), _ipad.get() + block_size(), 0x36);
-		std::fill(_ipad.get(), _ipad.get() + block_size(), 0x5c);
-	}
+		_key(new uint8_t[hashfn->block_size()])
+	{}
 
 	~Hmac_impl() throw () {}
 
@@ -112,9 +110,7 @@ private:
 	void operator=(const Hmac_impl &h) {}
 
 	std::tr1::shared_ptr<Hash_function> _hashfn;
-	boost::scoped_array<uint8_t> _ipad;
 	boost::scoped_array<uint8_t> _key;
-	boost::scoped_array<uint8_t> _opad;
 };
 
 

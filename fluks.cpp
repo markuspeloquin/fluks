@@ -341,26 +341,43 @@ main(int argc, char **argv)
 		header->add_passwd(pass);
 
 		// write to disk
-		if (!pretend) header->save();
+		if (!pretend) {
+			header->save();
+			std::cout << "Header written to disk\n";
+		}
 	} else if (command == DUMP) {
 		if (pretend)
 			std::cout << "(--dump command has no pretend mode, "
 			    "proceeding...)\n";
 		std::string backup_path = var_map["dump"].as<std::string>();
 		make_backup(device_path, backup_path);
+		std::cout << "Backup completed\n";
 	} else if (command == ADD_PASS) {
 		// read existing header from disk
 		header.reset(new Luks_header(device_path));
 
-		// get a password
-		std::string pass = prompt_passwd("New passphrase");
-		if (pass.empty())
+		std::cout << "First enter a passphrase that has already "
+		    "been established with the partition\n";
+		std::string passwd = prompt_passwd("Existing passphrase");
+		if (passwd.empty())
 			return 1;
 
-		header->add_passwd(pass);
+		if (!header->read_key(passwd)) {
+			std::cerr << "Matching key material not found\n";
+			return 1;
+		}
+
+		// get a password
+		std::string newpass = prompt_passwd("New passphrase");
+		if (newpass.empty())
+			return 1;
+
+		header->add_passwd(newpass);
 
 		// write to disk
 		if (!pretend) header->save();
+
+		std::cout << "Password added to partition\n";
 	} else if (command == REVOKE_PASS) {
 		header.reset(new Luks_header(device_path));
 		std::cout << "First enter a passphrase that will not "
@@ -369,6 +386,12 @@ main(int argc, char **argv)
 		if (passwd.empty())
 			return 1;
 
+		if (!header->read_key(passwd)) {
+			std::cerr << "Matching key material not found\n";
+			return 1;
+		}
+
+		std::cout << "Master key decrypted.\n";
 		std::string revoke = prompt_passwd("Passphrase to revoke");
 		if (passwd.empty())
 			return 1;
@@ -377,7 +400,10 @@ main(int argc, char **argv)
 			std::cerr << "Matching key material not found\n";
 			return 1;
 		}
+
 		if (!pretend) header->save();
+
+		std::cout << "Key material removed\n";
 	}
 
 	if (!var_map["info"].empty())

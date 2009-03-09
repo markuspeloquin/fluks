@@ -214,8 +214,9 @@ public:
 	/** Add a password for the private key
 	 *
 	 * \param passwd	The password to encrypt the key with.
-	 * \param check_time	The time (in microseconds) to check the key
-	 *	for.
+	 * \param check_time	The time (in microseconds) to spend on the
+	 *	PBKDF2 (password-based key derivation function).  It will of
+	 *	course depend on CPU load and throttling.
 	 * \throw No_private_key	The private key hasn't been
 	 *	decrypted yet.
 	 * \throw Slots_full	All slots are enabled already.
@@ -273,7 +274,8 @@ private:
 	int8_t locate_passwd(const std::string &passwd) throw (Disk_error);
 
 	void decrypt_key(std::ifstream &dev, const std::string &passwd,
-	    uint8_t slot, uint8_t *key_digest, uint8_t *master_key);
+	    uint8_t slot, uint8_t key_digest[SZ_MK_DIGEST],
+	    uint8_t *master_key);
 
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}

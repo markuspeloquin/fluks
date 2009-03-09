@@ -69,6 +69,32 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 	return true;
 }
 
+void dump(const std::string &pfx, const uint8_t *buf, size_t sz)
+{
+	char oldfill = std::cout.fill('0');
+	std::cout << std::hex;
+
+	std::cout << pfx << '\n';
+	for (size_t i = 0; i < sz; i++)
+		std::cout << std::setw(2) << (short)buf[i];
+	std::cout << '\n';
+
+	std::cout.fill(oldfill);
+	std::cout << std::dec;
+}
+
+void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
+{
+	std::tr1::shared_ptr<Hash_function> hash =
+	    Hash_function::create(HT_SHA1);
+	hash->init();
+	hash->add(buf, sz);
+	uint8_t out[hash->digest_size()];
+	hash->end(out);
+
+	dump(pfx, out, sizeof(out));
+}
+
 } // end anon namespace
 }
 
@@ -202,9 +228,11 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 	set_mach_end(true);
 
 	uint8_t master_key[_hdr->sz_key];
-	uint8_t key_digest[hash_info::digest_size(_hash_type)];
+	uint8_t key_digest[SZ_MK_DIGEST];
 	size_t i;
 	size_t max;
+
+	if (hint > 0 && static_cast<uint16_t>(hint) >= NUM_KEYS) hint = -1;
 
 	if (hint >= 0) {
 		i = hint;
@@ -222,6 +250,7 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 	// find a slot than can be decrypted with the password, copy the
 	// data to _master_key
 	for (; i < max; i++) {
+		if (_hdr->keys[i].active == KEY_DISABLED) continue;
 		decrypt_key(dev_in, passwd, i, key_digest, master_key);
 
 		if (std::equal(key_digest, key_digest + sizeof(key_digest),
@@ -381,7 +410,7 @@ luks::Luks_header::save() throw (Disk_error)
 
 			dev_out.write(reinterpret_cast<char *>(
 			    _key_crypt[i].get()),
-			    _hdr->keys[i].off_km * _sz_sect);
+			    _hdr->sz_key * _hdr->keys[i].stripes);
 			if (!dev_out)
 				throw Disk_error("writing key "
 				    "material: write error");
@@ -520,7 +549,7 @@ luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 {
 	set_mach_end(true);
 
-	uint8_t key_digest[hash_info::digest_size(_hash_type)];
+	uint8_t key_digest[SZ_MK_DIGEST];
 	uint8_t master_key[_hdr->sz_key];
 
 	std::ifstream dev_in(_device.c_str(), 
@@ -530,6 +559,7 @@ luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 
 	// find the first slot that can be decrypted with the password
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
+		if (_hdr->keys[i].active == KEY_DISABLED) continue;
 		decrypt_key(dev_in, passwd, i, key_digest, master_key);
 
 		if (std::equal(key_digest, key_digest + sizeof(key_digest),
@@ -543,14 +573,14 @@ luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 // master_key should be as large as _hdr->sz_key
 void
 luks::Luks_header::decrypt_key(std::ifstream &dev, const std::string &passwd,
-    uint8_t slot, uint8_t *key_digest, uint8_t *master_key)
+    uint8_t slot, uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key)
 {
 	set_mach_end(true);
 
 	uint8_t pw_digest[_hdr->sz_key];
 	struct key *key = _hdr->keys + slot;
 	uint8_t key_crypt[_hdr->sz_key * key->stripes];
-	uint8_t key_splitted[sizeof(key_crypt)];
+	uint8_t split_key[sizeof(key_crypt)];
 
 	// password => pw_digest
 	pbkdf2(_hash_type,
@@ -568,15 +598,15 @@ luks::Luks_header::decrypt_key(std::ifstream &dev, const std::string &passwd,
 	if (!dev)
 		throw Disk_error("failed to read key material");
 
-	// (pw_digest, key_crypt) => key_splitted
+	// (pw_digest, key_crypt) => split_key
 	decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
 	    key->off_km, _sz_sect,
 	    pw_digest, sizeof(pw_digest),
 	    key_crypt, sizeof(key_crypt),
-	    key_splitted);
+	    split_key);
 
-	// key_splitted => master_key
-	af_merge(key_splitted, sizeof(key_splitted), key->stripes,
+	// split_key => master_key
+	af_merge(split_key, _hdr->sz_key, key->stripes,
 	    _hash_type, master_key);
 
 	// master_key => key_digest

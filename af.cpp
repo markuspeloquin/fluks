@@ -5,6 +5,7 @@
 #include <openssl/rand.h>
 
 #include "af.hpp"
+#include "errors.hpp"
 #include "hash.hpp"
 #include "util.hpp"
 
@@ -40,17 +41,17 @@ compute_d(const uint8_t *s, size_t sz, unsigned stripes,
 	std::fill(d_even, d_even + sz, 0);
 
 	for (size_t i = 1; i < stripes - 1; i++) {
-		// d_odd ^= i'th stripe
-		luks::xor_bufs(d_odd, s + i * sz, sz, d_odd);
-		// d_even = H(d_odd)
-		hash1(d_odd, sz, type, d_even);
-
-		if (++i == stripes - 1) return;
-
 		// d_even ^= i'th stripe
 		luks::xor_bufs(d_even, s + i * sz, sz, d_even);
 		// d_odd = H(d_even)
 		hash1(d_even, sz, type, d_odd);
+
+		if (++i == stripes - 1) return;
+
+		// d_odd ^= i'th stripe
+		luks::xor_bufs(d_odd, s + i * sz, sz, d_odd);
+		// d_even = H(d_odd)
+		hash1(d_odd, sz, type, d_even);
 	}
 	return;
 }
@@ -63,33 +64,35 @@ hash1(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 	std::tr1::shared_ptr<luks::Hash_function> hashfn(
 	    luks::Hash_function::create(type));
 
-	uint32_t	initial;
-	size_t		whole = sz / hashfn->digest_size();
-	size_t		left = sz % hashfn->digest_size();
+	uint32_t	iv;
+	// the wording in LUKS is bad; it should read 'Digest Size'
+	size_t		sz_blk = hashfn->digest_size();
+	size_t		whole = sz / sz_blk;
+	size_t		left = sz % sz_blk;
 
 	for (size_t i = 0; i < whole; i++) {
 		// compute hash of next block; append digest to output 
 
 		hashfn->init();
-		// prefix with an IV (initial value)
-		initial = htonl(i);
-		hashfn->add(reinterpret_cast<uint8_t *>(&initial), 4);
-		hashfn->add(in, hashfn->digest_size());
+		// prefix with an IV
+		iv = htonl(i);
+		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
+		hashfn->add(in, sz_blk);
 		hashfn->end(out);
 
-		in += hashfn->digest_size();
-		out += hashfn->digest_size();
+		in += sz_blk;
+		out += sz_blk;
 	}
 
 	if (left) {
 		// compute hash of rest of data; append first (left) bytes
 		// of hash to output
 
-		uint8_t full[hashfn->digest_size()];
+		uint8_t full[sz_blk];
 		hashfn->init();
-		// prefix with an IV (initial value)
-		initial = htonl(whole);
-		hashfn->add(reinterpret_cast<uint8_t *>(&initial), 4);
+		// prefix with an IV
+		iv = htonl(whole);
+		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		hashfn->add(in, left);
 		hashfn->end(full);
 
@@ -105,33 +108,35 @@ hash2(const uint8_t *in, size_t sz, enum luks::hash_type type, uint8_t *out)
 	std::tr1::shared_ptr<luks::Hash_function> hashfn(
 	    luks::Hash_function::create(type));
 
-	uint32_t	initial;
-	size_t		whole = sz / hashfn->digest_size();
-	size_t		left = sz % hashfn->digest_size();
+	uint32_t	iv;
+	// the wording in LUKS is bad; it should read 'Digest Size'
+	size_t		sz_blk = hashfn->digest_size();
+	size_t		whole = sz / sz_blk;
+	size_t		left = sz % sz_blk;
 
 	for (size_t i = 0; i < whole; i++) {
 		// compute hash of next block; append digest to output 
 
 		hashfn->init();
-		// prefix with an IV (initial value)
-		initial = htonl(i);
-		hashfn->add(reinterpret_cast<uint8_t *>(&initial), 4);
+		// prefix with an IV
+		iv = htonl(i);
+		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		// key difference between hash1() and hash2() [part un]:
 		hashfn->add(in, sz);
 		hashfn->end(out);
 
-		out += hashfn->digest_size();
+		out += sz_blk;
 	}
 
 	if (left) {
 		// compute hash of rest of data; append first (left) bytes
 		// of hash to output
 
-		uint8_t full[hashfn->digest_size()];
+		uint8_t full[sz_blk];
 		hashfn->init();
-		// prefix with an IV (initial value)
-		initial = htonl(whole);
-		hashfn->add(reinterpret_cast<uint8_t *>(&initial), 4);
+		// prefix with an IV
+		iv = htonl(whole);
+		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		// key difference between hash1() and hash2() [part deux]:
 		hashfn->add(in, sz);
 		hashfn->end(full);
@@ -146,7 +151,7 @@ void
 luks::af_split(const uint8_t *in, size_t sz, size_t stripes,
     enum hash_type type, uint8_t *out)
 {
-	if (type == HT_UNDEFINED) return;
+	Assert(type != HT_UNDEFINED, "undefined hash in af_split()");
 
 	uint8_t d[sz];
 	if (!RAND_bytes(out, sz * (stripes - 1)))
@@ -163,7 +168,7 @@ void
 luks::af_merge(const uint8_t *in, size_t sz, size_t stripes,
     enum hash_type type, uint8_t *out)
 {
-	if (type == HT_UNDEFINED) return;
+	Assert(type != HT_UNDEFINED, "undefined hash in af_merge()");
 
 	uint8_t d[sz];
 

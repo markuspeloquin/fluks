@@ -59,10 +59,10 @@ void write_pattern(std::ofstream &file, off_t pos,
     const char *buf, size_t bytes)
     throw (Disk_error)
 {
-	if (file.seekp(pos, std::ios_base::beg))
+	if (!file.seekp(pos, std::ios_base::beg))
 		throw Disk_error("Gutmann erase: seek failed");
 
-	if (file.write(buf, bytes))
+	if (!file.write(buf, bytes))
 		throw Disk_error("Gutmann erase: write failed");
 
 	file.flush();
