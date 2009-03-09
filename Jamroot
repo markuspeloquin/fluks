@@ -8,7 +8,7 @@ lib boost_regex ;
 lib ssl ;
 exe fluks
 	: af.cpp cipher.cpp crypt.cpp detect.cpp errors.cpp fluks.cpp
-	    hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp tiger.cpp
+	    hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp serpent.c tiger.cpp
 	    tiger_sboxes.c twofish.c util.cpp whirlpool.c
 	    boost_regex ssl
 	;

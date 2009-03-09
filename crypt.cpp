@@ -51,6 +51,8 @@ luks::Crypt::create(enum cipher_type type)
 		return std::tr1::shared_ptr<Crypt>(new Crypt_blowfish);
 	case CT_CAST5:
 		return std::tr1::shared_ptr<Crypt>(new Crypt_cast5);
+	case CT_SERPENT:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_serpent);
 	case CT_TWOFISH:
 		return std::tr1::shared_ptr<Crypt>(new Crypt_twofish);
 /*
@@ -58,8 +60,6 @@ luks::Crypt::create(enum cipher_type type)
 		return std::tr1::shared_ptr<Crypt>(new Crypt_cast6);
 	case CT_DES3:
 		return std::tr1::shared_ptr<Crypt>(new Crypt_des3);
-	case CT_SERPENT:
-		return std::tr1::shared_ptr<Crypt>(new Crypt_serpent);
 */
 	default:
 		Assert(0, "Crypt::create() bad cipher type");

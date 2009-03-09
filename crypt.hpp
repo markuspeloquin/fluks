@@ -8,6 +8,7 @@
 #include <openssl/cast.h>
 
 #include "luks.hpp"
+#include "serpent.h"
 #include "twofish.h"
 
 namespace luks {
@@ -318,6 +319,36 @@ public:
 
 private:
 	CAST_KEY		_key;
+	enum crypt_direction	_dir;
+	bool			_init;
+};
+
+class Crypt_serpent : public Crypt {
+public:
+	Crypt_serpent() : _init(false) {}
+	~Crypt_serpent() throw () {}
+
+	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
+	    throw ()
+	{
+		_init = true;
+		_dir = dir;
+		serpent_set_key(&_key, key, sz);
+	}
+	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no en/decryption key set");
+		if (_dir == DIR_ENCRYPT)
+			serpent_encrypt(&_key, in, out);
+		else
+			serpent_decrypt(&_key, in, out);
+	}
+	size_t block_size() const throw ()
+	{	return SERPENT_BLOCK; }
+
+private:
+	struct serpent_key	_key;
 	enum crypt_direction	_dir;
 	bool			_init;
 };
