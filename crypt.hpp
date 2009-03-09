@@ -4,6 +4,8 @@
 #include <tr1/memory>
 
 #include <openssl/aes.h>
+#include <openssl/blowfish.h>
+#include <openssl/cast.h>
 
 #include "luks.hpp"
 
@@ -180,22 +182,20 @@ public:
 	Crypt_aes() : _init(false) {}
 	~Crypt_aes() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz_key)
+	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
 	    throw ()
 	{
 		_dir = dir;
 		if (_dir == DIR_ENCRYPT)
-			AES_set_encrypt_key(key, sz_key * 8, &_key);
+			AES_set_encrypt_key(key, sz * 8, &_key);
 		else
-			AES_set_decrypt_key(key, sz_key * 8, &_key);
+			AES_set_decrypt_key(key, sz * 8, &_key);
 		_init = true;
 	}
 	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
-			throw Crypt_error(_dir == DIR_ENCRYPT ?
-			    "no encryption key set" :
-			    "no decryption key set");
+			throw Crypt_error("no en/decryption key set");
 		if (_dir == DIR_ENCRYPT)
 			AES_encrypt(in, out, &_key);
 		else
@@ -206,6 +206,62 @@ public:
 
 private:
 	AES_KEY			_key;
+	enum crypt_direction	_dir;
+	bool			_init;
+};
+
+class Crypt_blowfish : public Crypt {
+public:
+	Crypt_blowfish() : _init(false) {}
+	~Crypt_blowfish() throw () {}
+
+	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
+	    throw ()
+	{
+		_init = true;
+		_dir = dir;
+		BF_set_key(&_key, sz, key);
+	}
+	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no en/decryption key set");
+		BF_ecb_encrypt(in, out, &_key, _dir == DIR_ENCRYPT ?
+		    BF_ENCRYPT : BF_DECRYPT);
+	}
+	size_t block_size() const throw ()
+	{	return BF_BLOCK; }
+
+private:
+	BF_KEY			_key;
+	enum crypt_direction	_dir;
+	bool			_init;
+};
+
+class Crypt_cast5 : public Crypt {
+public:
+	Crypt_cast5() : _init(false) {}
+	~Crypt_cast5() throw () {}
+
+	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
+	    throw ()
+	{
+		_init = true;
+		_dir = dir;
+		CAST_set_key(&_key, sz, key);
+	}
+	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no en/decryption key set");
+		CAST_ecb_encrypt(in, out, &_key, _dir == DIR_ENCRYPT ?
+		    CAST_ENCRYPT : CAST_DECRYPT);
+	}
+	size_t block_size() const throw ()
+	{	return CAST_BLOCK; }
+
+private:
+	CAST_KEY		_key;
 	enum crypt_direction	_dir;
 	bool			_init;
 };

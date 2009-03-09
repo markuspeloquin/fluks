@@ -38,16 +38,21 @@ Lookup::Lookup()
 {
 	type2str[CT_AES] = (cipher_stat){ "aes", 16, 16, 32, 8 };
 	type2str[CT_BLOWFISH] = (cipher_stat){ "blowfish", 8, 4, 56, 1 };
-	type2str[CT_DES3] = (cipher_stat){ "des3_ede", 8, 24, 24, 0 };
+	type2str[CT_CAST5] = (cipher_stat){ "cast5", 8, 5, 16, 1 };
+	type2str[CT_CAST6] = (cipher_stat){ "cast5", 8, 16, 32, 8 };
+//	type2str[CT_DES3] = (cipher_stat){ "des3_ede", 8, 24, 24, 0 };
 	type2str[CT_SERPENT] = (cipher_stat){ "serpent", 16, 0, 32, 8 };
 	type2str[CT_TWOFISH] = (cipher_stat){ "twofish", 16, 16, 32, 8 };
 
 	str2type["aes"] = CT_AES;
 	str2type["blowfish"] = CT_BLOWFISH;
-	str2type["des3"] = CT_DES3;
-	str2type["3des"] = CT_DES3;
-	str2type["des3_ede"] = CT_DES3;
-	str2type["3des_ede"] = CT_DES3;
+	str2type["cast5"] = CT_CAST5;
+	str2type["cast6"] = CT_CAST6;
+//	str2type["des3"] = CT_DES3;
+//	str2type["3des"] = CT_DES3;
+//	str2type["des3_ede"] = CT_DES3;
+//	str2type["3des_ede"] = CT_DES3;
+	str2type["serpent"] = CT_SERPENT;
 	str2type["twofish"] = CT_TWOFISH;
 }
 

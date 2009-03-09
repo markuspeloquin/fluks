@@ -34,11 +34,19 @@ luks::Crypt::create(enum cipher_type type)
 	switch (type) {
 	case CT_AES:
 		return std::tr1::shared_ptr<Crypt>(new Crypt_aes);
-/*
 	case CT_BLOWFISH:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_blowfish);
+	case CT_CAST5:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_cast5);
+/*
+	case CT_CAST6:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_cast6);
 	case CT_DES3:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_des3);
 	case CT_TWOFISH:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_twofish);
 	case CT_SERPENT:
+		return std::tr1::shared_ptr<Crypt>(new Crypt_serpent);
 */
 	default:
 		return std::tr1::shared_ptr<Crypt>();
