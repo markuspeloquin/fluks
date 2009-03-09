@@ -1,6 +1,7 @@
 /* The following code was written by Drew Csillag.  It was modified so
  * as to not memcpy functions and subsequently modify them.  That's too
  * much voodoo for my tastes. */
+
 /*
    compiler is gcc(egcs-2.91.66)
    flags are -O3 -fomit-frame-pointer -Wall
