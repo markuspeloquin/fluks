@@ -6,9 +6,10 @@ Header include order:
    - sys/*
    - networking
  - Group 2
-   - headers directly in /usr/include (e.g. string.h, unistd.h, stdint.h)
+   - headers directly in /usr/include (e.g. stdint.h, unistd.h)
  - Group 3
    - Standard C++ headers
+   - TR1 headers (e.g. tr1/memory)
    - Boost headers
  - Group 4
    - external libraries (e.g. OpenSSL), grouped by library
