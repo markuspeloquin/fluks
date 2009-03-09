@@ -2,7 +2,7 @@
 
 #include <openssl/rand.h>
 
-namespace luks {
+namespace fluks {
 namespace {
 
 // I repeated each so that the length of the string is a multiple of four
@@ -74,7 +74,7 @@ void write_pattern(Fstream &file, off_t pos,
 
 template <class Fstream>
 Fstream &
-luks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
+fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
     throw (Disk_error)
 {
 	char buf[bytes];

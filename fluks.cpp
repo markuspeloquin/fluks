@@ -16,7 +16,7 @@
 
 char *prog;
 
-namespace luks {
+namespace fluks {
 namespace {
 
 void
@@ -159,7 +159,7 @@ usage(const boost::program_options::options_description &desc)
 int
 main(int argc, char **argv)
 {
-	using namespace luks;
+	using namespace fluks;
 
 	namespace fs = boost::filesystem;
 	namespace po = boost::program_options;

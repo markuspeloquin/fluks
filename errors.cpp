@@ -20,7 +20,7 @@ inline void ssl_load_errors()
 
 }
 
-luks::Ssl_error::Ssl_error()
+fluks::Ssl_error::Ssl_error()
 {
 	// '120' comes from ERR_error_string(3); seems like an
 	// oversight on their part
@@ -30,7 +30,7 @@ luks::Ssl_error::Ssl_error()
 	_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
 }
 
-luks::Unix_error::Unix_error(int _errno)
+fluks::Unix_error::Unix_error(int _errno)
 {
 	if (!_errno) _errno = errno;
 	std::ostringstream out;

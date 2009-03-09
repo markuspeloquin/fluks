@@ -1,7 +1,7 @@
 #include "hash.hpp"
 
-std::tr1::shared_ptr<luks::Hash_function>
-luks::Hash_function::create(enum hash_type type)
+std::tr1::shared_ptr<fluks::Hash_function>
+fluks::Hash_function::create(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:

@@ -12,7 +12,7 @@
 #include "os.hpp"
 
 uint32_t
-luks::num_sectors(int fd) throw (Unix_error)
+fluks::num_sectors(int fd) throw (Unix_error)
 {
 	uint64_t sz;
 	int sz_sect = sector_size(fd);
@@ -25,7 +25,7 @@ luks::num_sectors(int fd) throw (Unix_error)
 }
 
 int
-luks::sector_size(int fd) throw (Unix_error)
+fluks::sector_size(int fd) throw (Unix_error)
 {
 	int sz_sect;
 	if (ioctl(fd, BLKSSZGET, &sz_sect) == -1) {
@@ -37,7 +37,7 @@ luks::sector_size(int fd) throw (Unix_error)
 }
 
 bool
-luks::term_echo() throw (Unix_error)
+fluks::term_echo() throw (Unix_error)
 {
 	struct termios term;
 	if (tcgetattr(STDIN_FILENO, &term) == -1) throw Unix_error();
@@ -45,7 +45,7 @@ luks::term_echo() throw (Unix_error)
 }
 
 bool
-luks::term_echo(bool enable) throw (Unix_error)
+fluks::term_echo(bool enable) throw (Unix_error)
 {
 	struct termios term;
 	bool old;

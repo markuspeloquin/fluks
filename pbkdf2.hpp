@@ -1,5 +1,5 @@
-#ifndef PBKDF2_HPP
-#define PBKDF2_HPP
+#ifndef FLUKS_PBKDF2_HPP
+#define FLUKS_PBKDF2_HPP
 
 #include <stdint.h>
 
@@ -8,7 +8,7 @@
 
 #include "luks.hpp"
 
-namespace luks {
+namespace fluks {
 
 /** Password-Based Key Derivation Function v2
  *

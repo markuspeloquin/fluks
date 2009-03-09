@@ -1,5 +1,5 @@
-#ifndef CRYPT_HPP
-#define CRYPT_HPP
+#ifndef FLUKS_CRYPT_HPP
+#define FLUKS_CRYPT_HPP
 
 #include <tr1/memory>
 
@@ -11,7 +11,7 @@
 #include "serpent.h"
 #include "twofish.h"
 
-namespace luks {
+namespace fluks {
 
 
 enum crypt_direction { DIR_ENCRYPT, DIR_DECRYPT };

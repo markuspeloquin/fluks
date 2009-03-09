@@ -1,5 +1,5 @@
-#ifndef DM_HPP
-#define DM_HPP
+#ifndef FLUKS_DM_HPP
+#define FLUKS_DM_HPP
 
 #include <stdint.h>
 
@@ -8,7 +8,7 @@
 
 #include "errors.hpp"
 
-namespace luks {
+namespace fluks {
 
 /** Remove the mapping for a DM device
  *

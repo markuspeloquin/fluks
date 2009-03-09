@@ -1,12 +1,12 @@
-#ifndef SUPPORT_HPP
-#define SUPPORT_HPP
+#ifndef FLUKS_SUPPORT_HPP
+#define FLUKS_SUPPORT_HPP
 
 #include <string>
 #include <vector>
 
 #include "luks.hpp"
 
-namespace luks {
+namespace fluks {
 namespace cipher_info {
 
 	/** Get the type of a cipher given a name.

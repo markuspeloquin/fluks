@@ -8,7 +8,7 @@
 #include "detect.hpp"
 #include "hash.hpp"
 
-namespace luks {
+namespace fluks {
 namespace {
 
 struct cipher_stats {
@@ -83,13 +83,13 @@ Crypto_detect Crypto_detect::_instance;
 
 
 const std::set<std::string> &
-luks::system_ciphers()
+fluks::system_ciphers()
 {
 	return Crypto_detect::instance()->ciphers;
 }
 
 const std::set<std::string> &
-luks::system_hashes()
+fluks::system_hashes()
 {
 	return Crypto_detect::instance()->hashes;
 }

@@ -2,7 +2,7 @@
 
 #include "support.hpp"
 
-namespace luks {
+namespace fluks {
 namespace {
 
 std::string blank = "";
@@ -212,14 +212,14 @@ Lookup::Lookup()
 } // end anon namespace
 }
 
-enum luks::cipher_type
-luks::cipher_info::type(const std::string &name)
+enum fluks::cipher_type
+fluks::cipher_info::type(const std::string &name)
 {
 	return Lookup::instance()->cipher_lookup(name);
 }
 
-std::vector<enum luks::cipher_type>
-luks::cipher_info::types()
+std::vector<enum fluks::cipher_type>
+fluks::cipher_info::types()
 {
 	std::vector<enum cipher_type> res;
 	Lookup::instance()->cipher_types(res);
@@ -227,21 +227,21 @@ luks::cipher_info::types()
 }
 
 const std::string &
-luks::cipher_info::name(enum cipher_type type)
+fluks::cipher_info::name(enum cipher_type type)
 {
 	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->kern_name : blank;
 }
 
 uint16_t
-luks::cipher_info::block_size(enum cipher_type type)
+fluks::cipher_info::block_size(enum cipher_type type)
 {
 	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->blocksize : 0;
 }
 
 std::vector<uint16_t>
-luks::cipher_info::key_sizes(enum cipher_type type)
+fluks::cipher_info::key_sizes(enum cipher_type type)
 {
 	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
 	if (!st) return std::vector<uint16_t>();
@@ -252,20 +252,20 @@ luks::cipher_info::key_sizes(enum cipher_type type)
 }
 
 uint16_t
-luks::cipher_info::version(enum cipher_type type)
+fluks::cipher_info::version(enum cipher_type type)
 {
 	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->version : 0;
 }
 
-enum luks::hash_type
-luks::hash_info::type(const std::string &name)
+enum fluks::hash_type
+fluks::hash_info::type(const std::string &name)
 {
 	return Lookup::instance()->hash_lookup(name);
 }
 
-std::vector<enum luks::hash_type>
-luks::hash_info::types()
+std::vector<enum fluks::hash_type>
+fluks::hash_info::types()
 {
 	std::vector<enum hash_type> res;
 	Lookup::instance()->hash_types(res);
@@ -273,41 +273,41 @@ luks::hash_info::types()
 }
 
 const std::string &
-luks::hash_info::name(enum hash_type type)
+fluks::hash_info::name(enum hash_type type)
 {
 	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->kern_name : blank;
 }
 
 size_t
-luks::hash_info::digest_size(enum hash_type type)
+fluks::hash_info::digest_size(enum hash_type type)
 {
 	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->digestsize : 0;
 }
 
 size_t
-luks::hash_info::block_size(enum hash_type type)
+fluks::hash_info::block_size(enum hash_type type)
 {
 	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->blocksize : 0;
 }
 
 uint16_t
-luks::hash_info::version(enum hash_type type)
+fluks::hash_info::version(enum hash_type type)
 {
 	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
 	return st ? st->version : 0;
 }
 
-enum luks::block_mode
-luks::block_mode_info::type(const std::string &name)
+enum fluks::block_mode
+fluks::block_mode_info::type(const std::string &name)
 {
 	return Lookup::instance()->block_mode_lookup(name);
 }
 
-std::vector<enum luks::block_mode>
-luks::block_mode_info::types()
+std::vector<enum fluks::block_mode>
+fluks::block_mode_info::types()
 {
 	std::vector<enum block_mode> res;
 	Lookup::instance()->block_mode_types(res);
@@ -315,27 +315,27 @@ luks::block_mode_info::types()
 }
 
 const std::string &
-luks::block_mode_info::name(enum block_mode mode)
+fluks::block_mode_info::name(enum block_mode mode)
 {
 	struct block_mode_stat *st = Lookup::instance()->stat_lookup(mode);
 	return st ? st->kern_name : blank;
 }
 
 uint16_t
-luks::block_mode_info::version(enum block_mode mode)
+fluks::block_mode_info::version(enum block_mode mode)
 {
 	struct block_mode_stat *st = Lookup::instance()->stat_lookup(mode);
 	return st ? st->version : 0;
 }
 
-enum luks::iv_mode
-luks::iv_mode_info::type(const std::string &name)
+enum fluks::iv_mode
+fluks::iv_mode_info::type(const std::string &name)
 {
 	return Lookup::instance()->iv_mode_lookup(name);
 }
 
-std::vector<enum luks::iv_mode>
-luks::iv_mode_info::types()
+std::vector<enum fluks::iv_mode>
+fluks::iv_mode_info::types()
 {
 	std::vector<enum iv_mode> res;
 	Lookup::instance()->iv_mode_types(res);
@@ -343,14 +343,14 @@ luks::iv_mode_info::types()
 }
 
 const std::string &
-luks::iv_mode_info::name(enum iv_mode mode)
+fluks::iv_mode_info::name(enum iv_mode mode)
 {
 	struct iv_mode_stat *st = Lookup::instance()->stat_lookup(mode);
 	return st ? st->kern_name : blank;
 }
 
 uint16_t
-luks::iv_mode_info::version(enum iv_mode mode)
+fluks::iv_mode_info::version(enum iv_mode mode)
 {
 	struct iv_mode_stat *st = Lookup::instance()->stat_lookup(mode);
 	return st ? st->version : 0;

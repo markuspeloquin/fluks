@@ -3,7 +3,7 @@
 // compute a ^ b, store in c; it does not matter if any of the following 
 // are true: a=b, a=c, b=c, a=b=c
 void
-luks::xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz, uint8_t *c)
+fluks::xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz, uint8_t *c)
 {
 	const uint64_t	*a64 = reinterpret_cast<const uint64_t *>(a);
 	const uint64_t	*b64 = reinterpret_cast<const uint64_t *>(b);
@@ -26,7 +26,7 @@ luks::xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz, uint8_t *c)
 }
 
 void
-luks::xor_buf_byte(const uint8_t *a, size_t sz, uint8_t b, uint8_t *c)
+fluks::xor_buf_byte(const uint8_t *a, size_t sz, uint8_t b, uint8_t *c)
 {
 	const uint64_t	*a64 = reinterpret_cast<const uint64_t *>(a);
 	uint64_t	*c64 = reinterpret_cast<uint64_t *>(c);

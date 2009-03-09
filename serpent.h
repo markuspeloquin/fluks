@@ -1,12 +1,12 @@
-#ifndef SERPENT_H
-#define SERPENT_H
+#ifndef FLUKS_SERPENT_H
+#define FLUKS_SERPENT_H
 
 #include <features.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 #include <cstddef>
-namespace luks {
+namespace fluks {
 #else
 #include <stddef.h>
 #endif

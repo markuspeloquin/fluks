@@ -1,11 +1,11 @@
-#ifndef TIGER_HPP
-#define TIGER_HPP
+#ifndef FLUKS_TIGER_HPP
+#define FLUKS_TIGER_HPP
 
 #include <stdint.h>
 
 #include <cstddef>
 
-namespace luks {
+namespace fluks {
 
 const size_t TIGER_SZ_BLOCK = 64;
 const size_t TIGER128_SZ_DIGEST = 16;

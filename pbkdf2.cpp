@@ -6,7 +6,7 @@
 #include "support.hpp"
 #include "util.hpp"
 
-namespace luks {
+namespace fluks {
 namespace {
 
 inline void	pbkdf2_f(Hmac_function *hmacfn, const uint8_t *, uint32_t,
@@ -63,7 +63,7 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 
 // Password-Based Key Derivation Function, version 2 (from PKCS #5 v2.0)
 uint32_t
-luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
+fluks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
     const uint8_t salt[SZ_SALT], uint32_t iterations, uint8_t *derived_key,
     uint32_t sz_key, bool benchmark)
 {

@@ -1,5 +1,5 @@
-#ifndef GUTMANN_HPP
-#define GUTMANN_HPP
+#ifndef FLUKS_GUTMANN_HPP
+#define FLUKS_GUTMANN_HPP
 
 #include <sys/types.h>
 
@@ -7,7 +7,7 @@
 
 #include "errors.hpp"
 
-namespace luks {
+namespace fluks {
 
 template <class Fstream>
 Fstream	&gutmann_erase(Fstream &file, off_t pos, size_t bytes)

@@ -18,7 +18,7 @@
 #include "os.hpp"
 #include "support.hpp"
 
-namespace luks {
+namespace fluks {
 namespace {
 
 std::string	make_mode(const std::string &, const std::string &,
@@ -99,18 +99,18 @@ void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
 }
 
 bool
-luks::check_magic(const struct phdr1 *header)
+fluks::check_magic(const struct phdr1 *header)
 {
 	return std::equal(MAGIC, MAGIC + sizeof(MAGIC), header->magic);
 }
 
 bool
-luks::check_version_1(const struct phdr1 *header)
+fluks::check_version_1(const struct phdr1 *header)
 {
 	return header->version == 1;
 }
 
-luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
+fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
     uint32_t sz_key, const std::string &cipher_spec,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
     throw (Bad_spec, Unix_error) :
@@ -171,7 +171,7 @@ luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	uuid_unparse(uuid, _hdr->uuid);
 }
 
-luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
+fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
     throw (Bad_spec, Disk_error, No_header, Unix_error, Unsupported_version) :
 	_device(device),
 	_hdr(new struct phdr1),
@@ -215,7 +215,7 @@ luks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
 }
 
 bool
-luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
+fluks::Luks_header::read_key(const std::string &passwd, int8_t hint)
     throw (Disk_error)
 {
 	if (_master_key)
@@ -257,7 +257,7 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 }
 
 void
-luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
+fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
     throw (No_private_key, Slots_full)
 {
 	struct key *avail = 0;
@@ -325,7 +325,7 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 }
 
 void
-luks::Luks_header::info() const
+fluks::Luks_header::info() const
 {
 	const_cast<Luks_header *>(this)->set_mach_end(true);
 
@@ -354,7 +354,7 @@ luks::Luks_header::info() const
 }
 
 void
-luks::Luks_header::revoke_slot(uint8_t which) throw (Safety)
+fluks::Luks_header::revoke_slot(uint8_t which) throw (Safety)
 {
 	if (!_master_key)
 		throw Safety("will not allow a revokation while the "
@@ -371,7 +371,7 @@ luks::Luks_header::revoke_slot(uint8_t which) throw (Safety)
 }
 
 void
-luks::Luks_header::save() throw (Disk_error)
+fluks::Luks_header::save() throw (Disk_error)
 {
 	if (!_dirty) return;
 
@@ -425,7 +425,7 @@ luks::Luks_header::save() throw (Disk_error)
 // strings in the LUKS header, and the sz_key value in the LUKS header,
 // throwing Bad_spec as necessary
 void
-luks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
+fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
     size_t sz_key)
 {
 	set_mach_end(true);
@@ -531,7 +531,7 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 }
 
 int8_t
-luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
+fluks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 {
 	set_mach_end(true);
 
@@ -553,7 +553,7 @@ luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 // key_digest should be as large as the digest size of the hash
 // master_key should be as large as _hdr->sz_key
 void
-luks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
+fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
     uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key)
 {
 	set_mach_end(true);

@@ -1,5 +1,5 @@
-#ifndef WHIRLPOOL_H
-#define WHIRLPOOL_H
+#ifndef FLUKS_WHIRLPOOL_H
+#define FLUKS_WHIRLPOOL_H
 
 #include <features.h>
 #include <stdint.h>
@@ -8,7 +8,7 @@
 // C++
 #include <cstddef>
 
-namespace luks {
+namespace fluks {
 
 // because I hate macros
 const size_t WHIRLPOOL256_SZ_DIGEST = 32;
@@ -53,7 +53,7 @@ void	whirlpool_end(struct whirlpool_ctx *const ctx, uint8_t *const buf);
 __END_DECLS
 
 #ifdef __cplusplus
-} // namespace luks
+} // namespace fluks
 #endif
 
 /* it gets redefined in whirlpool.c */

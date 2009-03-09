@@ -1,10 +1,10 @@
-#ifndef AF_HPP
-#define AF_HPP
+#ifndef FLUKS_AF_HPP
+#define FLUKS_AF_HPP
 
 #include <stdint.h>
 #include "luks.hpp"
 
-namespace luks {
+namespace fluks {
 
 /** Anti-forensic split.
  *

@@ -1,11 +1,8 @@
-#ifndef LUKS_PRIVATE_HPP
-#define LUKS_PRIVATE_HPP
-
 #include <arpa/inet.h>
 
 #include <endian.h>
 
-namespace luks {
+namespace fluks {
 
 inline void
 endian_switch(uint32_t &x)
@@ -18,7 +15,7 @@ endian_switch(uint16_t &x)
 }
 
 inline uint16_t
-luks::host_little(uint16_t x)
+fluks::host_little(uint16_t x)
 {
 #if BYTE_ORDER == BIG_ENDIAN
 	return (x & 0x00ff) << 8 | (x & 0xff00) >> 8;
@@ -28,7 +25,7 @@ luks::host_little(uint16_t x)
 }
 
 inline uint32_t
-luks::host_little(uint32_t x)
+fluks::host_little(uint32_t x)
 {
 #if BYTE_ORDER == BIG_ENDIAN
 	return
@@ -42,7 +39,7 @@ luks::host_little(uint32_t x)
 }
 
 inline void
-luks::endian_switch(struct phdr1 *h, bool process_keys)
+fluks::endian_switch(struct phdr1 *h, bool process_keys)
 {
 #if BYTE_ORDER == BIG_ENDIAN
 	// don't bother with the rest of the function, though the preprocessor
@@ -60,7 +57,7 @@ luks::endian_switch(struct phdr1 *h, bool process_keys)
 }
 
 inline void
-luks::endian_switch(struct key *k)
+fluks::endian_switch(struct key *k)
 {
 #if BYTE_ORDER == BIG_ENDIAN
 	return;
@@ -71,5 +68,3 @@ luks::endian_switch(struct key *k)
 	endian_switch(k->stripes);
 #endif
 }
-
-#endif

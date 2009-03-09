@@ -1,10 +1,10 @@
-#ifndef ERRORS_HPP
-#define ERRORS_HPP
+#ifndef FLUKS_ERRORS_HPP
+#define FLUKS_ERRORS_HPP
 
 #include <exception>
 #include <string>
 
-namespace luks {
+namespace fluks {
 
 
 /** Not to be caught */

@@ -1,5 +1,5 @@
-#ifndef LUKS_HASH_HPP
-#define LUKS_HASH_HPP
+#ifndef FLUKS_HASH_HPP
+#define FLUKS_HASH_HPP
 
 #include <stdint.h> // no cstdint yet
 
@@ -21,7 +21,7 @@
 #include "tiger.hpp"
 #include "whirlpool.h"
 
-namespace luks {
+namespace fluks {
 
 struct Hash_function {
 

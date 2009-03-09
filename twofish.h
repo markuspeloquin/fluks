@@ -1,12 +1,12 @@
-#ifndef TWOFISH_H
-#define TWOFISH_H
+#ifndef FLUKS_TWOFISH_H
+#define FLUKS_TWOFISH_H
 
 #include <features.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 #include <cstddef>
-namespace luks {
+namespace fluks {
 #else
 #include <stddef.h>
 #endif

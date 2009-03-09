@@ -5,7 +5,7 @@
 #include "os.hpp"
 
 void
-luks::make_backup(std::sys_fstream &device, const std::string &backup_path)
+fluks::make_backup(std::sys_fstream &device, const std::string &backup_path)
     throw (Disk_error, No_header, Unix_error, Unsupported_version)
 {
 	struct phdr1 hdr;

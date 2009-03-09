@@ -1,8 +1,8 @@
 #include "hmac.hpp"
 #include "util.hpp"
 
-std::tr1::shared_ptr<luks::Hmac_function>
-luks::Hmac_function::create(enum hash_type type)
+std::tr1::shared_ptr<fluks::Hmac_function>
+fluks::Hmac_function::create(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:
@@ -44,7 +44,7 @@ luks::Hmac_function::create(enum hash_type type)
 }
 
 void
-luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
+fluks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
 {
 	size_t sz_block = block_size();
 	if (sz > sz_block) {
@@ -75,7 +75,7 @@ luks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
 }
 
 void
-luks::Hmac_impl::end(uint8_t *out) throw ()
+fluks::Hmac_impl::end(uint8_t *out) throw ()
 {
 	size_t sz_block = block_size();
 	uint8_t key_opad[sz_block];

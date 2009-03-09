@@ -1,11 +1,11 @@
-#ifndef OS_HPP
-#define OS_HPP
+#ifndef FLUKS_OS_HPP
+#define FLUKS_OS_HPP
 
 #include <string>
 
 #include "errors.hpp"
 
-namespace luks {
+namespace fluks {
 
 /** Get the number of sectors in a device
  *

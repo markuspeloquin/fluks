@@ -117,7 +117,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 }
 
 void
-luks::tiger_init(struct tiger_ctx *ctx, int passes)
+fluks::tiger_init(struct tiger_ctx *ctx, int passes)
 {
 	ctx->res[0] = 0x0123456789ABCDEFLL;
 	ctx->res[1] = 0xFEDCBA9876543210LL;
@@ -129,7 +129,7 @@ luks::tiger_init(struct tiger_ctx *ctx, int passes)
 }
 
 void
-luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
+fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 {
 	ctx->length += sz;
 
@@ -184,7 +184,7 @@ luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 }
 
 void
-luks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
+fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 {
 	uint8_t temp[TIGER_SZ_BLOCK];
 	size_t i;
@@ -229,7 +229,7 @@ luks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 // style inflicted upon it
 #if 0
 void
-luks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
+fluks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
     uint64_t res[3])
 {
 	uint8_t			temp[TIGER_SZ_BLOCK];

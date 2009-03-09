@@ -1,5 +1,5 @@
-#ifndef HMAC_HPP
-#define HMAC_HPP
+#ifndef FLUKS_HMAC_HPP
+#define FLUKS_HMAC_HPP
 
 #include <stdint.h>
 
@@ -14,7 +14,7 @@
 #include "luks.hpp"
 #include "support.hpp"
 
-namespace luks {
+namespace fluks {
 
 struct Hmac_function {
 

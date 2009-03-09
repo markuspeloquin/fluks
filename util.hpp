@@ -1,10 +1,10 @@
-#ifndef UTIL_HPP
-#define UTIL_HPP
+#ifndef FLUKS_UTIL_HPP
+#define FLUKS_UTIL_HPP
 
 #include <stdint.h>
 #include <cstddef>
 
-namespace luks {
+namespace fluks {
 
 /** XOR two buffers together.
  *

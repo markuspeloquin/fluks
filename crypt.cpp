@@ -10,7 +10,7 @@
 #include "hash.hpp"
 #include "util.hpp"
 
-namespace luks {
+namespace fluks {
 namespace {
 
 inline std::tr1::shared_ptr<Crypt>
@@ -40,8 +40,8 @@ make_essiv_crypter(enum cipher_type cipher, enum hash_type hash,
 } // end anon namespace
 }
 
-std::tr1::shared_ptr<luks::Crypt> 
-luks::Crypt::create(enum cipher_type type)
+std::tr1::shared_ptr<fluks::Crypt> 
+fluks::Crypt::create(enum cipher_type type)
 {
 	switch (type) {
 	case CT_AES:
@@ -67,7 +67,7 @@ luks::Crypt::create(enum cipher_type type)
 }
 
 void
-luks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
 	uint8_t		buf[crypter->block_size()];
@@ -108,7 +108,7 @@ luks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
 	uint8_t		buf[crypter->block_size()];
@@ -145,7 +145,7 @@ luks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {
 	uint8_t		pre[crypter->block_size()];
@@ -185,7 +185,7 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
 	uint32_t	blocks = sz_plain / crypter->block_size();
@@ -210,7 +210,7 @@ luks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
 	uint32_t	blocks = sz_plain / crypter->block_size();
@@ -234,7 +234,7 @@ luks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
 	uint8_t		buf[crypter->block_size()];
@@ -275,7 +275,7 @@ luks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
-luks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+fluks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
 	uint32_t	blocks = sz_plain / crypter->block_size();
@@ -315,7 +315,7 @@ luks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 size_t
-luks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
+fluks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
     size_t sz_data)
 {
 	switch (block_mode) {
@@ -335,7 +335,7 @@ luks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
 }
 
 void
-luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
+fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
     enum iv_mode iv_mode, enum hash_type iv_hash,
     uint32_t start_sector, size_t sz_sector,
     const uint8_t *key, size_t sz_key,
@@ -410,7 +410,7 @@ luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 }
 
 void
-luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
+fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
     enum iv_mode iv_mode, enum hash_type iv_hash,
     uint32_t start_sector, size_t sz_sector,
     const uint8_t *key, size_t sz_key,

@@ -1,5 +1,5 @@
-#ifndef LUKS_HPP
-#define LUKS_HPP
+#ifndef FLUKS_LUKS_HPP
+#define FLUKS_LUKS_HPP
 
 #include <stdint.h> // no cstdint yet
 
@@ -14,7 +14,7 @@
 #include "os.hpp"
 #include "sys_fstream.hpp"
 
-namespace luks {
+namespace fluks {
 
 // header/key buffer sizes
 const size_t	NUM_KEYS = 8;
