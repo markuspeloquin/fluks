@@ -47,7 +47,7 @@ __BEGIN_DECLS
 
 void	whirlpool_init(struct whirlpool_ctx *const ctx);
 void	whirlpool_update(struct whirlpool_ctx *const ctx,
-	    const uint8_t *const buf, unsigned long sz);
+	    const uint8_t *const buf, size_t sz);
 void	whirlpool_end(struct whirlpool_ctx *const ctx, uint8_t *const buf);
 
 __END_DECLS

@@ -86,10 +86,10 @@ typedef uint64_t u64;
 
 #define ONE8    0xffU
 #define ONE16   0xffffU
-#if UINT_MAX >= 4294967295UL
-#   define ONE32   0xffffffffU
+#if UINT_MAX >=	    0xffffffffUL
+#   define ONE32    0xffffffffU
 #else
-#   define ONE32   0xffffffffUL
+#   define ONE32    0xffffffffUL
 #endif
 
 #define LL(v)	(v##ULL)
@@ -100,13 +100,15 @@ typedef uint64_t u64;
 #define T32(x)	((x) & ONE32)
 #define T64(x)	((x) & ONE64)
 
-#define ROTR64(v, n)   (((v) >> (n)) | T64((v) << (64 - (n))))
+#define ROTR64(v, n)	(		\
+    ((v) >> (n)) |			\
+    T64((v) << (64 - (n)))		)
 
 /*
  * U8TO32_BIG(c) returns the 32-bit value stored in big-endian convention
  * in the unsigned char array pointed to by c.
  */
-#define U8TO32_BIG(c)  (		\
+#define U8TO32_BIG(c)	(		\
     ((u32)T8(*(c)) << 24) |		\
     ((u32)T8(*((c) + 1)) << 16) |	\
     ((u32)T8(*((c) + 2)) << 8) |	\
@@ -1089,7 +1091,7 @@ whirlpool_init(struct whirlpool_ctx * const structpointer)
  */
 void
 whirlpool_update(struct whirlpool_ctx * const structpointer,
-    const unsigned char * const source, unsigned long sourceBits)
+    const unsigned char * const source, size_t sz)
 {
     /*
                        sourcePos
@@ -1103,6 +1105,7 @@ whirlpool_update(struct whirlpool_ctx * const structpointer,
                     |
                     bufferPos
     */
+    unsigned long sourceBits = sz * 8;
     int sourcePos    = 0; /* index of leftmost source u8 containing data (1 to 8 bits). */
     int sourceGap    = (8 - ((int)sourceBits & 7)) & 7; /* space on source[sourcePos]. */
     int bufferRem    = structpointer->bufferBits & 7; /* occupied bits on buffer[bufferPos]. */
