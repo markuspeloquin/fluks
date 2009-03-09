@@ -72,6 +72,16 @@ struct phdr1 {
 };
 
 
+/** Check if a header is version LUKS v1
+ *
+ * \param header	The header in machine-endian
+ * \retval true		The header is LUKS v1
+ * \retval false	The header is not LUKS v1
+ * \see endian_switch()
+ */
+bool	header_version_1(const struct phdr1 *header);
+
+
 /** Ciphers supported by <em>fluks</em> */
 enum cipher_type {
 	CT_UNDEFINED = 0,
@@ -173,7 +183,7 @@ public:
 	 * \param device	I don't know what to do with this yet.
 	 */
 	Luks_header(const std::string &device)
-	    throw (Bad_spec, Disk_error, Unix_error);
+	    throw (Bad_spec, Disk_error, Unix_error, Unsupported_version);
 
 	~Luks_header() {}
 
@@ -203,9 +213,9 @@ public:
 
 	/** Disable a password slot
 	 *
-	 * \param which	The index of the key slot to revoke.
+	 * \param which		The index of the key slot to revoke.
 	 */
-	void revoke_slot(uint8_t which) throw (Ssl_error);
+	void revoke_slot(uint8_t which);
 
 	/** Get the master key
 	 *
@@ -214,7 +224,7 @@ public:
 	uint8_t *master_key() const
 	{	return _master_key.get(); }
 
-	void save() throw (Unix_error);
+	void save() throw (Disk_error);
 
 private:
 	void ensure_mach_hdr(bool which)
@@ -246,10 +256,12 @@ private:
 	enum iv_mode			_iv_mode;
 	enum hash_type			_iv_hash;
 
+	boost::scoped_array<uint8_t>	_key_crypt[NUM_KEYS];
 	std::vector<bool>		_key_mach_end;
 	bool				_hdr_mach_end;
 	std::vector<bool>		_key_dirty;
 	bool				_hdr_dirty;
+	std::vector<bool>		_key_need_erase;
 };
 
 

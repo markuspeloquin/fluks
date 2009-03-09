@@ -106,6 +106,13 @@ struct Unix_error : std::exception {
 	std::string _msg;
 };
 
+
+struct Unsupported_version : std::exception {
+	~Unsupported_version() throw () {}
+	const char *what() const throw ()
+	{	return "unsupported LUKS header version"; }
+};
+
 }
 
 #endif

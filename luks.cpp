@@ -7,10 +7,13 @@
 
 #include <openssl/rand.h>
 
+#include <uuid/uuid.h>
+
 #include "af.hpp"
 #include "cipher.hpp"
 #include "crypt.hpp"
 #include "detect.hpp"
+#include "gutmann.hpp"
 #include "hash.hpp"
 #include "luks.hpp"
 #include "pbkdf2.hpp"
@@ -70,6 +73,14 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 } // end anon namespace
 }
 
+bool
+luks::header_version_1(const struct phdr1 *header)
+{
+	if (!std::equal(MAGIC, MAGIC + sizeof(MAGIC), header->magic))
+		return false;
+	return header->version == 1;
+}
+
 luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
     const std::string &cipher_spec, const std::string &hash_spec,
     uint32_t mk_iterations, uint32_t stripes)
@@ -82,7 +93,8 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_key_mach_end(NUM_KEYS, true),
 	_hdr_mach_end(true),
 	_key_dirty(NUM_KEYS, true),
-	_hdr_dirty(true)
+	_hdr_dirty(true),
+	_key_need_erase(NUM_KEYS, false)
 {
 	init_cipher_spec(cipher_spec);
 	if (_hash_type == HT_UNDEFINED)
@@ -125,18 +137,22 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	}
 
 	_hdr->off_payload = off_base;
-	//TODO hdr->uuid = generate_uuid()
+
+	uuid_t uuid; // actually a buffer
+	uuid_generate(uuid);
+	uuid_unparse(uuid, _hdr->uuid_part);
 }
 
 luks::Luks_header::Luks_header(const std::string &device)
-    throw (Bad_spec, Disk_error, Unix_error) :
+    throw (Bad_spec, Disk_error, Unix_error, Unsupported_version) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(device)),
 	_key_mach_end(NUM_KEYS, false),
 	_hdr_mach_end(false),
 	_key_dirty(NUM_KEYS, false),
-	_hdr_dirty(false)
+	_hdr_dirty(false),
+	_key_need_erase(NUM_KEYS, false)
 {
 	std::ifstream dev_in(_device.c_str(),
 	    std::ios_base::binary | std::ios_base::in);
@@ -150,6 +166,9 @@ luks::Luks_header::Luks_header(const std::string &device)
 
 	// big-endian -> machine-endian
 	ensure_mach_hdr(true);
+
+	if (!header_version_1(_hdr.get()))
+		throw Unsupported_version();
 
 	{
 		// recreate the cipher-spec string
@@ -293,58 +312,83 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    sizeof(pw_digest));
 
 	// encrypt the master key with pw_digest
-	uint8_t key_crypt[sizeof(split_key)];
+	_key_crypt[avail_idx].reset(new uint8_t[sizeof(split_key)]);
 	encrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
 	    avail->off_km, _sz_sect,
 	    pw_digest, sizeof(pw_digest),
 	    _master_key.get(), _hdr->sz_key,
-	    key_crypt);
-
-	std::ofstream dev_out(_device.c_str(),
-	    std::ios_base::binary | std::ios_base::in);
-	if (!dev_out)
-		throw Disk_error("failed to open device");
-
-	dev_out.seekp(avail->off_km * _sz_sect, std::ios_base::beg);
-	if (!dev_out)
-		throw Disk_error("seek error");
-
-	// write out the cipher text
-	dev_out.write(reinterpret_cast<char *>(key_crypt), sizeof(key_crypt));
-	if (!dev_out)
-		throw Disk_error("write error");
+	    _key_crypt[avail_idx].get());
 
 	avail->active = KEY_ENABLED;
+	_hdr_dirty = true;
 	_key_dirty[avail_idx] = true;
 }
 
 void
-luks::Luks_header::revoke_slot(uint8_t which) throw (Ssl_error)
+luks::Luks_header::revoke_slot(uint8_t which)
 {
+	ensure_mach_key(which, true);
+	_hdr->keys[which].active = KEY_DISABLED;
+	_hdr_dirty = true;
+	_key_dirty[which] = true;
+	_key_need_erase[which] = true;
+}
+
+void
+luks::Luks_header::save() throw (Disk_error)
+{
+	if (!_hdr_dirty) return;
+
 	std::ofstream dev_out(_device.c_str(),
 	    std::ios_base::binary | std::ios_base::in);
 	if (!dev_out)
 		throw Disk_error("failed to open device");
 
-	dev_out.seekp(_hdr->keys[which].off_km * _sz_sect, std::ios_base::beg);
-	if (!dev_out)
-		throw Disk_error("seek error");
+	// first erase old keys and then commit new keys
+	for (uint8_t i = 0; i < NUM_KEYS; i++) {
+		if (_key_dirty[i]) {
+			ensure_mach_key(i, true);
+			if (_key_need_erase[i]) {
+				gutmann_erase(dev_out,
+				    _hdr->keys[i].off_km * _sz_sect,
+				    _hdr->sz_key * _hdr->keys[i].stripes);
+				_key_need_erase[i] = false;
+			}
+			if (_hdr->keys[i].active == KEY_ENABLED) {
+				dev_out.seekp(_hdr->keys[i].off_km * _sz_sect,
+				    std::ios_base::beg);
+				if (!dev_out)
+					throw Disk_error("writing key "
+					    "material: seek error");
 
-	// TODO use Gutmann erase method instead, see:
-	// http://www.cs.auckland.ac.nz/~pgut001/pubs/secure_del.html
+				dev_out.write(reinterpret_cast<char *>(
+				    _key_crypt[i].get()),
+				    _hdr->keys[i].off_km * _sz_sect);
+				if (!dev_out)
+					throw Disk_error("writing key "
+					    "material: write error");
+				_key_crypt[i].reset();
+			}
+		}
+		// ensure big-endian
+		ensure_mach_key(i, false);
+	}
 
-	uint8_t random_data[_hdr->sz_key * _hdr->keys[which].stripes];
-	if (!RAND_bytes(random_data, sizeof(random_data)))
-		throw Ssl_error();
+	if (_hdr_dirty) {
+		// ensure big-endian
+		ensure_mach_hdr(false);
 
-	dev_out.write(reinterpret_cast<char *>(random_data),
-	    sizeof(random_data));
-	if (!dev_out)
-		throw Disk_error("failed to erase key material");
+		dev_out.seekp(0, std::ios_base::beg);
+		if (!dev_out)
+			throw Disk_error("writing header: seek error");
 
-	ensure_mach_key(which, true);
-	_hdr->keys[which].active = KEY_DISABLED;
-	_key_dirty[which] = true;
+		dev_out.write(reinterpret_cast<char *>(_hdr.get()),
+		    sizeof(_hdr));
+		if (!dev_out)
+			throw Disk_error("writing header: write error");
+
+		_hdr_dirty = false;
+	}
 }
 
 // initializes the values of the cipher-spec enums and the cipher-spec
