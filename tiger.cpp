@@ -7,7 +7,9 @@
 
 extern uint64_t table[4 * 256];
 
-// This is the official definition of 'round'
+// This is the official definition of 'round'.
+// Passing the arguments by reference is the reason I made this file C++.
+// Otherwise, registers couldn't be used (markus).
 inline void
 round(uint64_t &a, uint64_t &b, uint64_t &c, uint64_t x, uint8_t mul)
 {
@@ -159,9 +161,9 @@ luks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 		// context buffer now empty
 	}
 
-	// I suppose it's possible to see if buf is at an acceptable offset
-	// for 64bit integers, but I don't know what's really involved in
-	// that; instead, I'll have to copy all the bytes
+	// TODO I suppose it's possible to see if buf is at an acceptable
+	// offset for 64bit integers, but I don't know what's really
+	// involved in that; instead, I'll copy all the bytes
 	while (sz > TIGER_SZ_BLOCK) {
 #if BYTE_ORDER == BIG_ENDIAN
 		for (size_t i = 0; i < TIGER_SZ_BLOCK; i++)
