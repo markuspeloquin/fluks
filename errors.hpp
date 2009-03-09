@@ -44,6 +44,16 @@ struct Crypt_error : std::exception {
 };
 
 
+struct Disk_error : std::exception {
+	Disk_error(const std::string &msg) : _msg("Disk error:")
+	{	_msg += msg; }
+	~Disk_error() throw () {}
+	const char *what() const throw ()
+	{	return _msg.c_str(); }
+	std::string _msg;
+};
+
+
 struct Hash_error : virtual std::exception {
 };
 
@@ -77,7 +87,7 @@ struct Ssl_error : virtual std::exception {
 /** An SSL hashing error. */
 struct Ssl_hash_error : Hash_error, Ssl_error {
 	Ssl_hash_error() {}
-	~Ssl_hash_error() throw() {}
+	~Ssl_hash_error() throw () {}
 	using Ssl_error::what;
 };
 

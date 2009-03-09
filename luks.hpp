@@ -59,7 +59,7 @@ struct phdr1 {
 /*00*/	uint8_t		magic[sizeof(MAGIC)];
 /*06*/	uint16_t	version;
 /*08*/	char		cipher_name[SZ_CIPHER_NAME];
-/*28*/	char		block_mode[SZ_CIPHER_MODE];
+/*28*/	char		cipher_mode[SZ_CIPHER_MODE];
 /*48*/	char		hash_spec[SZ_HASH_SPEC];
 /*68*/	uint32_t	off_payload;	/**< Start sector of bulk data */
 /*6c*/	uint32_t	sz_key;		/**< Count of private key bytes */
@@ -164,13 +164,14 @@ public:
 	Luks_header(const std::string &device, uint32_t sz_key,
 	    const std::string &cipher_spec, const std::string &hash_spec,
 	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES)
-		throw (Bad_spec, Unix_error);
+	    throw (Bad_spec, Unix_error);
 
 	/** Read a header from the disk
 	 *
 	 * \param device	I don't know what to do with this yet.
 	 */
-	Luks_header(const std::string &device);
+	Luks_header(const std::string &device)
+	    throw (Bad_spec, Disk_error, Unix_error);
 
 	~Luks_header() {}
 
@@ -226,6 +227,7 @@ private:
 			_key_mach_end[i] = true;
 		}
 	}
+	void init_cipher_spec(const std::string &cipher_spec);
 
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
