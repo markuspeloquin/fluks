@@ -12,7 +12,7 @@ exe fluks
 	: af.cpp backup.cpp crypt.cpp
 	    detect.cpp errors.cpp fluks.cpp
 	    gutmann.cpp hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
-	    serpent.c support.cpp tiger.cpp
-	    tiger_sboxes.c twofish.c util.cpp whirlpool.c
+	    support.cpp tiger.cpp util.cpp
+	    serpent.c tiger_sboxes.c twofish.c whirlpool.c
 	    boost_program_options boost_regex ssl uuid
 	;
