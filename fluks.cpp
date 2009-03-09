@@ -57,7 +57,7 @@ list_modes()
 		    j != sizes.end(); ++j) {
 			if (j != sizes.begin())
 				std::cout << ' ';
-			std::cout << *j;
+			std::cout << *j * 8;
 		}
 		std::cout << ")\n";
 	}
@@ -73,7 +73,7 @@ list_modes()
 		std::cout << "] ";
 
 		std::cout << hash_info::name(*i) << " ("
-		    << hash_info::digest_size(*i) << ")\n";
+		    << hash_info::digest_size(*i) * 8 << ")\n";
 	}
 
 	std::cout << "block modes:\n";
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 
 	po::options_description create_desc("Creation Options");
 	create_desc.add_options()
-	    ("size,s", po::value<unsigned>(), "master key size")
+	    ("size,s", po::value<unsigned>(), "master key size (bits)")
 	    ("cipher,c", po::value<std::string>(),
 		"cipher spec, formatted as "
 		"CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]])\n"
@@ -212,8 +212,14 @@ main(int argc, char **argv)
 	if (!var_map["create"].empty()) {
 		// check for mandatory options
 		if (var_map["size"].empty()) {
+			std::cerr << "--create requires a --size option\n";
+			return 1;
 		} else if (var_map["cipher"].empty()) {
+			std::cerr << "--create requires a --cipher option\n";
+			return 1;
 		} else if (var_map["hash"].empty()) {
+			std::cerr << "--create requires a --hash option\n";
+			return 1;
 		}
 
 		unsigned sz_key = var_map["size"].as<unsigned>();
@@ -221,8 +227,18 @@ main(int argc, char **argv)
 		std::string hash = var_map["hash"].as<std::string>();
 		unsigned iter = var_map["iter"].as<unsigned>();
 		unsigned stripes = var_map["stripes"].as<unsigned>();
+
+		if (sz_key & 7) {
+			std::cerr << "--size argument must be a multiple "
+			    "of 8\n";
+			return 1;
+		}
+		sz_key /= 8;
+
 		header.reset(new Luks_header(device_path, sz_key,
 		    cipher, hash, iter, stripes));
+
+		header->add_passwd("password");
 	} else {
 		header.reset(new Luks_header(device_path));
 	}

@@ -71,7 +71,6 @@ luks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 	std::auto_ptr<boost::timer> timer;
 	if (benchmark)
 		timer.reset(new boost::timer);
-
 	uint32_t sz_hash = hash_info::digest_size(type);
 
 	// 1.

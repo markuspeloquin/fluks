@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iomanip>
+#include <iostream>
 
 #include "crypt.hpp"
 #include "errors.hpp"
@@ -160,7 +162,7 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
-		// pre = iv XOR counter
+		// in effect, pre = iv XOR counter
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
 		    htonl(i ^ iv_tail);
 
@@ -174,9 +176,8 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	// encrypt partial block
 	uint32_t left = sz % sz_blk;
 	if (left) {
-		uint8_t post[crypter->block_size()];
+		uint8_t post[sz_blk];
 
-		// pre = iv XOR counter
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
 		    htonl(blocks ^ iv_tail);
 
@@ -348,12 +349,13 @@ luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 	uint8_t		iv[encrypter->block_size()];
 
 	size_t		sz_blk = encrypter->block_size();
-	uint16_t	blk_per_sect = sz_sector / sz_blk;
+	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
 	encrypter->init(DIR_ENCRYPT, key, sz_key);
 
 	switch (iv_mode) {
 	case IM_PLAIN:
+	case IM_UNDEFINED:
 		std::fill(iv, iv + sz_blk, 0);
 		break;
 	case IM_ESSIV:
@@ -361,11 +363,7 @@ luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		pre_essiv.reset(new uint8_t[sz_blk]);
 		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
 		break;
-	default:
-		Assert(0, "encrypt() IV type undefined");
 	}
-
-	uint16_t num_sect = (sz_blk + blk_per_sect - 1) / blk_per_sect;
 
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
@@ -379,7 +377,9 @@ luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 			    host_little(start_sector + s);
 			iv_crypt->crypt(pre_essiv.get(), iv);
 			break;
-		default:;
+		case IM_UNDEFINED:
+			// IV never changes
+			break;
 		}
 
 		uint16_t by;
@@ -424,12 +424,25 @@ luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 	uint8_t		iv[decrypter->block_size()];
 
 	size_t		sz_blk = decrypter->block_size();
-	uint16_t	blk_per_sect = sz_sector / sz_blk;
+	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
+	enum crypt_direction dir;
 
-	decrypter->init(DIR_ENCRYPT, key, sz_key);
+	switch (block_mode) {
+	case BM_CTR:
+		// output feedback and cipher feedback are two others that
+		// only require a cipher's encryption algorithm
+		dir = DIR_ENCRYPT;
+		break;
+	default:
+		dir = DIR_DECRYPT;
+		break;
+	}
+
+	decrypter->init(dir, key, sz_key);
 
 	switch (iv_mode) {
 	case IM_PLAIN:
+	case IM_UNDEFINED:
 		std::fill(iv, iv + sz_blk, 0);
 		break;
 	case IM_ESSIV:
@@ -437,11 +450,7 @@ luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 		pre_essiv.reset(new uint8_t[sz_blk]);
 		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
 		break;
-	default:
-		Assert(0, "decrypt() IV type undefined");
 	}
-
-	uint16_t num_sect = (sz_blk + blk_per_sect - 1) / blk_per_sect;
 
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
@@ -455,7 +464,9 @@ luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 			    host_little(start_sector + s);
 			iv_crypt->crypt(pre_essiv.get(), iv);
 			break;
-		default:;
+		case IM_UNDEFINED:
+			// IV does not change
+			break;
 		}
 
 		uint16_t by;

@@ -101,13 +101,12 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_hdr_dirty(true),
 	_key_need_erase(NUM_KEYS, false)
 {
-	init_cipher_spec(cipher_spec);
+	init_cipher_spec(cipher_spec, sz_key);
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec("unrecognized hash");
 
 	// initialize LUKS header
 
-	_hdr->sz_key = sz_key;
 	if (!RAND_bytes(_master_key.get(), _hdr->sz_key))
 		throw Ssl_error();
 
@@ -122,7 +121,7 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_hdr->mk_iterations = mk_iterations;
 
 	// hash the master key
-	pbkdf2(_hash_type, _master_key.get(), sz_key, _hdr->mk_salt,
+	pbkdf2(_hash_type, _master_key.get(), _hdr->sz_key, _hdr->mk_salt,
 	    _hdr->mk_iterations, _hdr->mk_digest, SZ_MK_DIGEST);
 
 	// LUKS defines off_base as
@@ -186,7 +185,7 @@ luks::Luks_header::Luks_header(const std::string &device)
 			cipher_spec += '-';
 			cipher_spec += _hdr->cipher_mode;
 		}
-		init_cipher_spec(cipher_spec);
+		init_cipher_spec(cipher_spec, _hdr->sz_key);
 	}
 
 	_hash_type = hash_info::type(_hdr->hash_spec);
@@ -212,7 +211,7 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 
 	size_t i;
 	size_t max;
-	if (hint < 0) {
+	if (hint >= 0) {
 		i = hint;
 		max = hint + 1;
 	} else {
@@ -307,14 +306,13 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	uint8_t pw_digest[_hdr->sz_key];
 
 	// benchmark the PBKDF2 function
-	const uint32_t ITER = 100000;
+	const uint16_t ITER = 1000;
 	uint32_t micros = pbkdf2(_hash_type,
 	    reinterpret_cast<const uint8_t *>(passwd.c_str()),
 	    passwd.size(), avail->salt, ITER, pw_digest,
 	    sizeof(pw_digest), true);
 
-	avail->iterations = static_cast<uint32_t>(
-	    static_cast<uint64_t>(ITER) * check_time / micros);
+	avail->iterations = ITER * check_time / micros;
 
 	// compute digest for realsies
 	pbkdf2(_hash_type,
@@ -327,8 +325,19 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	encrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
 	    avail->off_km, _sz_sect,
 	    pw_digest, sizeof(pw_digest),
-	    _master_key.get(), _hdr->sz_key,
+	    split_key, sizeof(split_key),
 	    _key_crypt[avail_idx].get());
+
+	// verify that decryption works just as well
+	uint8_t crypt_check[sizeof(split_key)];
+	decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
+	    avail->off_km, _sz_sect,
+	    pw_digest, sizeof(pw_digest),
+	    _key_crypt[avail_idx].get(), sizeof(split_key),
+	    crypt_check);
+
+	Assert(std::equal(crypt_check, crypt_check + sizeof(crypt_check),
+	    split_key), "ciphertext couldn't be decrypted");
 
 	avail->active = KEY_ENABLED;
 	_hdr_dirty = true;
@@ -432,10 +441,12 @@ luks::Luks_header::save() throw (Disk_error)
 	}
 }
 
-// initializes the values of the cipher-spec enums and the cipher-spec
-// strings in the LUKS header, throwing Bad_spec as necessary
+// initializes the values of the cipher-spec enums, the cipher-spec
+// strings in the LUKS header, and the sz_key value in the LUKS header,
+// throwing Bad_spec as necessary
 void
-luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
+luks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
+    size_t sz_key)
 {
 	std::string cipher;
 	std::string block_mode;
@@ -483,9 +494,24 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
 	// XXX only *after* dm-crypt attempts to use them.
 
+	std::vector<uint16_t> sizes = cipher_info::key_sizes(_cipher_type);
+	if (std::find(sizes.begin(), sizes.end(), sz_key) == sizes.end()) {
+		// sz_key not compatible with the cipher
+		std::ostringstream out;
+		out << "cipher `" << cipher
+		    << "' only supports keys of sizes";
+		for (std::vector<uint16_t>::iterator i = sizes.begin();
+		    i != sizes.end(); ++i) {
+			if (i != sizes.begin()) out << ',';
+			out << ' ' << *i * 8;
+		}
+		throw Bad_spec(out.str());
+	}
+	_hdr->sz_key = sz_key;
+
 	// are the specs compatible?
-	if (_block_mode == BM_ECB && _iv_mode != IM_UNDEFINED)
-		throw Bad_spec("ECB mode cannot have an IV mode parameter");
+	if (_block_mode == BM_ECB && _iv_mode == IM_UNDEFINED)
+		throw Bad_spec("ECB mode requires an IV mode");
 	if (_iv_mode == IM_ESSIV && _iv_hash == HT_UNDEFINED)
 		throw Bad_spec("IV mode `essiv' requires an IV hash");
 	if (_iv_mode == IM_PLAIN && _iv_hash != HT_UNDEFINED)
@@ -493,19 +519,17 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec)
 	if (_iv_mode == IM_ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
-		std::vector<uint16_t> sizes = cipher_info::key_sizes(
-		    _cipher_type);
 		uint16_t size = hash_info::digest_size(_iv_hash);
 		if (std::find(sizes.begin(), sizes.end(), size) ==
 		    sizes.end()) {
-			typedef std::vector<uint16_t>::iterator Iter;
 			std::ostringstream out;
 			out << "cipher `" << cipher
 			    << "' only supports keys of sizes";
-			for (Iter i = sizes.begin(); i != sizes.end(); ++i) {
+			for (std::vector<uint16_t>::iterator i =
+			    sizes.begin(); i != sizes.end(); ++i) {
 				if (i != sizes.begin())
 					out << ',';
-				out << ' ' << *i;
+				out << ' ' << (*i * 8);
 			}
 			out << "; incompatible with hash `" << ivhash << '\'';
 			throw Bad_spec(out.str());

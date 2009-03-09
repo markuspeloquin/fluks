@@ -254,7 +254,7 @@ private:
 			_key_mach_end[i] = true;
 		}
 	}
-	void init_cipher_spec(const std::string &cipher_spec);
+	void init_cipher_spec(const std::string &cipher_spec, size_t sz_key);
 
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
