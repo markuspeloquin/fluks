@@ -46,8 +46,8 @@ luks::Crypt::create(enum cipher_type type)
 }
 
 void
-luks::cbc_encrypt(Crypt *crypter, const uint8_t *iv,
-    const uint8_t *in, size_t sz_in, uint8_t *out)
+luks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_in, uint8_t *out)
 {
 	uint8_t		buf[crypter->block_size()];
 	uint32_t	blocks = sz_in / crypter->block_size();
@@ -87,8 +87,8 @@ luks::cbc_encrypt(Crypt *crypter, const uint8_t *iv,
 }
 
 void
-luks::cbc_decrypt(Crypt *crypter, const uint8_t *iv,
-    const uint8_t *in, size_t sz_in, uint8_t *out)
+luks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_in, uint8_t *out)
 {
 	uint8_t		buf[crypter->block_size()];
 	uint32_t	blocks = sz_in / crypter->block_size();
@@ -124,8 +124,8 @@ luks::cbc_decrypt(Crypt *crypter, const uint8_t *iv,
 }
 
 void
-luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv,
-    const uint8_t *in, size_t sz_in, uint8_t *out)
+luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_in, uint8_t *out)
 {
 	uint8_t		pre[crypter->block_size()];
 	uint8_t		post[crypter->block_size()];
@@ -164,8 +164,8 @@ luks::ctr_encrypt(Crypt *crypter, const uint8_t *iv,
 }
 
 void
-luks::ecb_encrypt(enum cipher_type cipher, const uint8_t *iv,
-    const uint8_t *in, size_t sz_in, uint8_t *out)
+luks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_in, uint8_t *out)
 {
 	uint32_t	blocks = sz_in / crypter->block_size();
 	size_t		sz_blk = crypter->block_size();
@@ -183,14 +183,14 @@ luks::ecb_encrypt(enum cipher_type cipher, const uint8_t *iv,
 	if (left) {
 		uint8_t buf[crypter->block_size()];
 		std::copy(in, in + left, buf);
-		std::fill(in + left, in + sz_blk, 0);
+		std::fill(buf + left, buf + sz_blk, 0);
 		crypter->crypt(buf, out);
 	}
 }
 
 void
-luks::ecb_decrypt(enum cipher_type cipher, const uint8_t *iv,
-    const uint8_t *in, size_t sz_in, uint8_t *out)
+luks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_in, uint8_t *out)
 {
 	uint32_t	blocks = sz_in / crypter->block_size();
 	size_t		sz_blk = crypter->block_size();

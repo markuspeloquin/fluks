@@ -53,9 +53,9 @@ void		ecb_decrypt(Crypt *crypter, const uint8_t *iv,
 
 // the encryption and decryption work the same
 inline void
-ctr_decrypt(enum cipher_type cipher, const uint8_t *iv,
-    const uint8_t *in, size_t sz_in, uint8_t *out)
-{	ctr_encrypt(cipher, iv, in, sz_in, out); }
+ctr_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz_in, uint8_t *out)
+{	ctr_encrypt(crypter, iv, in, sz_in, out); }
 
 class Crypt_aes : public Crypt {
 public:
