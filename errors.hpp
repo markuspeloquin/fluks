@@ -17,7 +17,11 @@ struct Assertion : std::exception {
 };
 
 inline void	Assert(bool cond, const std::string &msg)
-{	if (!cond) throw Assertion(msg); }
+{
+#ifndef NDEBUG
+	if (!cond) throw Assertion(msg);
+#endif
+}
 
 struct Bad_spec : std::exception {
 	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
