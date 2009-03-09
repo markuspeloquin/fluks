@@ -74,15 +74,16 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
     const std::string &cipher_spec, const std::string &hash_spec,
     uint32_t mk_iterations, uint32_t stripes)
     throw (Bad_spec, Unix_error) :
+	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
 	_sz_sect(sector_size(device)),
 	_hash_type(get_hash_type(hash_spec)),
 	_key_mach_end(NUM_KEYS, true),
-	_hdr_mach_end(true)
+	_hdr_mach_end(true),
+	_key_dirty(NUM_KEYS, true),
+	_hdr_dirty(true)
 {
-	// TODO this function is very long, but then it is also very linear
-
 	init_cipher_spec(cipher_spec);
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec("unrecognized hash");
@@ -129,12 +130,15 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 
 luks::Luks_header::Luks_header(const std::string &device)
     throw (Bad_spec, Disk_error, Unix_error) :
+	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(device)),
 	_key_mach_end(NUM_KEYS, false),
-	_hdr_mach_end(false)
+	_hdr_mach_end(false),
+	_key_dirty(NUM_KEYS, false),
+	_hdr_dirty(false)
 {
-	std::ifstream dev_in(device.c_str(),
+	std::ifstream dev_in(_device.c_str(),
 	    std::ios_base::binary | std::ios_base::in);
 	if (!dev_in)
 		throw Disk_error("failed to open device");
@@ -165,6 +169,7 @@ luks::Luks_header::Luks_header(const std::string &device)
 
 bool
 luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
+    throw (Disk_error)
 {
 	uint8_t pw_digest[_hdr->sz_key];
 	uint8_t key_merged[_hdr->sz_key];
@@ -185,6 +190,11 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 		max = NUM_KEYS;
 	}
 
+	std::ifstream dev_in(_device.c_str(), 
+	    std::ios_base::binary | std::ios_base::in);
+	if (!dev_in)
+		throw Disk_error("failed to open device");
+
 	for (; i < max; i++) {
 		ensure_mach_key(i, true);
 		key = _hdr->keys + i;
@@ -199,7 +209,14 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 		    sizeof(pw_digest));
 
 		// disk => key_crypt
-		// TODO key_crypt = read(key->off_km, sizeof(pw_disk_crypt));
+		dev_in.seekg(key->off_km * _sz_sect, std::ios_base::beg);
+		if (!dev_in)
+			throw Disk_error("failed to seek to key material");
+
+		dev_in.read(reinterpret_cast<char *>(key_crypt),
+		    sizeof(key_crypt));
+		if (!dev_in)
+			throw Disk_error("failed to read key material");
 
 		// (pw_digest, key_crypt) => key_splitted
 		decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
@@ -233,6 +250,7 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
     throw (No_private_key, Slots_full)
 {
 	struct key *avail = 0;
+	size_t avail_idx = 0;
 
 	if (!_master_key) throw No_private_key();
 
@@ -243,6 +261,7 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 		ensure_mach_key(i, true);
 		if (_hdr->keys[i].active == KEY_DISABLED) {
 			avail = _hdr->keys + i;
+			avail_idx = i;
 			break;
 		}
 	}
@@ -273,6 +292,7 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    passwd.size(), avail->salt, avail->iterations, pw_digest,
 	    sizeof(pw_digest));
 
+	// encrypt the master key with pw_digest
 	uint8_t key_crypt[sizeof(split_key)];
 	encrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
 	    avail->off_km, _sz_sect,
@@ -280,9 +300,22 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    _master_key.get(), _hdr->sz_key,
 	    key_crypt);
 
-	// TODO do something with key_crypt
+	std::ofstream dev_out(_device.c_str(),
+	    std::ios_base::binary | std::ios_base::in);
+	if (!dev_out)
+		throw Disk_error("failed to open device");
+
+	dev_out.seekp(avail->off_km * _sz_sect, std::ios_base::beg);
+	if (!dev_out)
+		throw Disk_error("seek error");
+
+	// write out the cipher text
+	dev_out.write(reinterpret_cast<char *>(key_crypt), sizeof(key_crypt));
+	if (!dev_out)
+		throw Disk_error("write error");
 
 	avail->active = KEY_ENABLED;
+	_key_dirty[avail_idx] = true;
 }
 
 void
@@ -290,6 +323,7 @@ luks::Luks_header::revoke_slot(uint8_t which)
 {
 	ensure_mach_key(which, true);
 	_hdr->keys[which].active = KEY_DISABLED;
+	_key_dirty[which] = true;
 	// see http://www.cs.auckland.ac.nz/~pgut001/pubs/secure_del.html
 	// TODO gutmann_erase(key->off_km, hdr->sz_key * key->stripes);
 }

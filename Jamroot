@@ -1,6 +1,6 @@
 DEBUG = -DDEBUG ;
 using gcc
-	: # version
+	: # compiler version
 	: # c++ compile command
 	: <cxxflags>"-std=c++98 $(DEBUG)" <cflags>"-std=c99 $(DEBUG)"
 	;

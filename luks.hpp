@@ -160,6 +160,8 @@ public:
 	 * \param stripes	Dramatically increases the length and entropy
 	 *	of the master key before the digest is computed.
 	 * \throw Bad_spec	One of the cipher/hash specs is invalid.
+	 * \throw Unix_error	Error encountered determining the sector
+	 *	size.
 	 */
 	Luks_header(const std::string &device, uint32_t sz_key,
 	    const std::string &cipher_spec, const std::string &hash_spec,
@@ -182,8 +184,10 @@ public:
 	 * \retval true	The key was decrypted.
 	 * \retval false	The key was already decrypted, or it failed
 	 *			to decrypt.
+	 * \throw Disk_error	A device open/seek/read error occurred.
 	 */
-	bool read_key(const std::string &passwd, int8_t hint=-1);
+	bool read_key(const std::string &passwd, int8_t hint=-1)
+	    throw (Disk_error);
 
 	/** Add a password for the private key
 	 *
@@ -232,6 +236,7 @@ private:
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
+	std::string			_device;
 	boost::scoped_ptr<struct phdr1>	_hdr;
 	boost::scoped_array<uint8_t>	_master_key;
 	uint16_t			_sz_sect;
@@ -243,6 +248,8 @@ private:
 
 	std::vector<bool>		_key_mach_end;
 	bool				_hdr_mach_end;
+	std::vector<bool>		_key_dirty;
+	bool				_hdr_dirty;
 };
 
 
