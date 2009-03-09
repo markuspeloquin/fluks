@@ -1,9 +1,7 @@
 #include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <boost/regex.hpp>
 
 #include <openssl/rand.h>
@@ -95,10 +93,9 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	_master_key(new uint8_t[sz_key]),
 	_sz_sect(sector_size(device)),
 	_hash_type(hash_info::type(hash_spec)),
-	_key_mach_end(NUM_KEYS, true),
-	_hdr_mach_end(true),
-	_key_dirty(NUM_KEYS, true),
-	_hdr_dirty(true),
+	_proved_passwd(-1),
+	_mach_end(true),
+	_dirty(true),
 	_key_need_erase(NUM_KEYS, false)
 {
 	init_cipher_spec(cipher_spec, sz_key);
@@ -153,10 +150,9 @@ luks::Luks_header::Luks_header(const std::string &device)
 	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(device)),
-	_key_mach_end(NUM_KEYS, false),
-	_hdr_mach_end(false),
-	_key_dirty(NUM_KEYS, false),
-	_hdr_dirty(false),
+	_proved_passwd(-1),
+	_mach_end(false),
+	_dirty(false),
 	_key_need_erase(NUM_KEYS, false)
 {
 	std::ifstream dev_in(_device.c_str(),
@@ -170,7 +166,7 @@ luks::Luks_header::Luks_header(const std::string &device)
 		throw Disk_error("failed to read header");
 
 	// big-endian -> machine-endian
-	ensure_mach_hdr(true);
+	set_mach_end(true);
 
 	if (!check_magic(_hdr.get()))
 		throw No_header();
@@ -200,17 +196,16 @@ bool
 luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
     throw (Disk_error)
 {
-	uint8_t pw_digest[_hdr->sz_key];
-	uint8_t key_merged[_hdr->sz_key];
-	uint8_t key_digest[hash_info::digest_size(_hash_type)];
-	struct key *key;
-
 	if (_master_key)
 		return false;
-	ensure_mach_hdr(true);
 
+	set_mach_end(true);
+
+	uint8_t master_key[_hdr->sz_key];
+	uint8_t key_digest[hash_info::digest_size(_hash_type)];
 	size_t i;
 	size_t max;
+
 	if (hint >= 0) {
 		i = hint;
 		max = hint + 1;
@@ -224,49 +219,16 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 	if (!dev_in)
 		throw Disk_error("failed to open device");
 
+	// find a slot than can be decrypted with the password, copy the
+	// data to _master_key
 	for (; i < max; i++) {
-		ensure_mach_key(i, true);
-		key = _hdr->keys + i;
+		decrypt_key(dev_in, passwd, i, key_digest, master_key);
 
-		uint8_t key_crypt[_hdr->sz_key * key->stripes];
-		uint8_t key_splitted[sizeof(key_crypt)];
-
-		// password => pw_digest
-		pbkdf2(_hash_type,
-		    reinterpret_cast<const uint8_t *>(passwd.c_str()),
-		    passwd.size(), key->salt, key->iterations, pw_digest,
-		    sizeof(pw_digest));
-
-		// disk => key_crypt
-		dev_in.seekg(key->off_km * _sz_sect, std::ios_base::beg);
-		if (!dev_in)
-			throw Disk_error("failed to seek to key material");
-
-		dev_in.read(reinterpret_cast<char *>(key_crypt),
-		    sizeof(key_crypt));
-		if (!dev_in)
-			throw Disk_error("failed to read key material");
-
-		// (pw_digest, key_crypt) => key_splitted
-		decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
-		    key->off_km, _sz_sect,
-		    pw_digest, sizeof(pw_digest),
-		    key_crypt, sizeof(key_crypt),
-		    key_splitted);
-
-		// key_splitted => key_merged
-		af_merge(key_splitted, sizeof(key_splitted), key->stripes,
-		    _hash_type, key_merged);
-
-		// key_merged => key_digest
-		pbkdf2(_hash_type, key_merged, sizeof(key_merged),
-		    _hdr->mk_salt, _hdr->mk_iterations, key_digest,
-		    SZ_MK_DIGEST);
-
-		if (std::equal(pw_digest, key_digest + sizeof(key_digest),
+		if (std::equal(key_digest, key_digest + sizeof(key_digest),
 		    _hdr->mk_digest)) {
+			_proved_passwd = i;
 			_master_key.reset(new uint8_t[_hdr->sz_key]);
-			std::copy(key_merged, key_merged + sizeof(key_merged),
+			std::copy(master_key, master_key + sizeof(master_key),
 			    _master_key.get());
 			return true;
 		}
@@ -283,11 +245,10 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 
 	if (!_master_key) throw No_private_key();
 
-	ensure_mach_hdr(true);
+	set_mach_end(true);
 
 	// find an open slot
 	for (size_t i = 0; i < NUM_KEYS; i++) {
-		ensure_mach_key(i, true);
 		if (_hdr->keys[i].active == KEY_DISABLED) {
 			avail = _hdr->keys + i;
 			avail_idx = i;
@@ -340,14 +301,14 @@ luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    split_key), "ciphertext couldn't be decrypted");
 
 	avail->active = KEY_ENABLED;
-	_hdr_dirty = true;
-	_key_dirty[avail_idx] = true;
+	_dirty = true;
 }
 
 void
 luks::Luks_header::info() const
 {
-	const_cast<Luks_header *>(this)->ensure_mach_hdr(true);
+	const_cast<Luks_header *>(this)->set_mach_end(true);
+
 	std::cout
 	    <<   "device                              " << _device
 	    << "\nversion                             " << _hdr->version
@@ -359,7 +320,6 @@ luks::Luks_header::info() const
 	    << "\nmaster key iterations               " << _hdr->mk_iterations
 	    << "\nuuid                                " << _hdr->uuid_part;
 	for (size_t i = 0; i < NUM_KEYS; i++) {
-		const_cast<Luks_header *>(this)->ensure_mach_key(i, true);
 		std::cout
 		    << "\nkey " << i << " state                         "
 		    << (_hdr->keys[i].active == KEY_ENABLED ?
@@ -375,58 +335,63 @@ luks::Luks_header::info() const
 }
 
 void
-luks::Luks_header::revoke_slot(uint8_t which)
+luks::Luks_header::revoke_slot(uint8_t which) throw (Safety)
 {
-	ensure_mach_key(which, true);
+	if (!_master_key)
+		throw Safety("will not allow a revokation while the "
+		    "master key is unknown");
+	if (which == _proved_passwd)
+		throw Safety("only the passwords not used to decrypt the "
+		    "master key are allowed to be revoked");
+
+	set_mach_end(true);
+
 	_hdr->keys[which].active = KEY_DISABLED;
-	_hdr_dirty = true;
-	_key_dirty[which] = true;
+	_dirty = true;
 	_key_need_erase[which] = true;
 }
 
 void
 luks::Luks_header::save() throw (Disk_error)
 {
-	if (!_hdr_dirty) return;
+	if (!_dirty) return;
 
 	std::ofstream dev_out(_device.c_str(),
 	    std::ios_base::binary | std::ios_base::out);
 	if (!dev_out)
 		throw Disk_error("failed to open device");
 
+	set_mach_end(true);
+
 	// first erase old keys and then commit new keys
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
-		if (_key_dirty[i]) {
-			ensure_mach_key(i, true);
-			if (_key_need_erase[i]) {
-				gutmann_erase(dev_out,
-				    _hdr->keys[i].off_km * _sz_sect,
-				    _hdr->sz_key * _hdr->keys[i].stripes);
-				_key_need_erase[i] = false;
-			}
-			if (_hdr->keys[i].active == KEY_ENABLED) {
-				dev_out.seekp(_hdr->keys[i].off_km * _sz_sect,
-				    std::ios_base::beg);
-				if (!dev_out)
-					throw Disk_error("writing key "
-					    "material: seek error");
-
-				dev_out.write(reinterpret_cast<char *>(
-				    _key_crypt[i].get()),
-				    _hdr->keys[i].off_km * _sz_sect);
-				if (!dev_out)
-					throw Disk_error("writing key "
-					    "material: write error");
-				_key_crypt[i].reset();
-			}
+		if (_key_need_erase[i]) {
+			gutmann_erase(dev_out,
+			    _hdr->keys[i].off_km * _sz_sect,
+			    _hdr->sz_key * _hdr->keys[i].stripes);
+			_key_need_erase[i] = false;
 		}
-		// ensure big-endian
-		ensure_mach_key(i, false);
+
+		if (_key_crypt[i]) {
+			dev_out.seekp(_hdr->keys[i].off_km * _sz_sect,
+			    std::ios_base::beg);
+			if (!dev_out)
+				throw Disk_error("writing key "
+				    "material: seek error");
+
+			dev_out.write(reinterpret_cast<char *>(
+			    _key_crypt[i].get()),
+			    _hdr->keys[i].off_km * _sz_sect);
+			if (!dev_out)
+				throw Disk_error("writing key "
+				    "material: write error");
+			_key_crypt[i].reset();
+		}
 	}
 
-	if (_hdr_dirty) {
+	if (_dirty) {
 		// ensure big-endian
-		ensure_mach_hdr(false);
+		set_mach_end(false);
 
 		dev_out.seekp(0, std::ios_base::beg);
 		if (!dev_out)
@@ -437,7 +402,7 @@ luks::Luks_header::save() throw (Disk_error)
 		if (!dev_out)
 			throw Disk_error("writing header: write error");
 
-		_hdr_dirty = false;
+		_dirty = false;
 	}
 }
 
@@ -448,6 +413,8 @@ void
 luks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
     size_t sz_key)
 {
+	set_mach_end(true);
+
 	std::string cipher;
 	std::string block_mode;
 	std::string ivmode;
@@ -546,4 +513,74 @@ luks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	_hdr->cipher_name[cipher.size()] = '\0';
 	std::copy(mode.begin(), mode.end(), _hdr->cipher_mode);
 	_hdr->cipher_mode[mode.size()] = '\0';
+}
+
+int8_t
+luks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
+{
+	set_mach_end(true);
+
+	uint8_t key_digest[hash_info::digest_size(_hash_type)];
+	uint8_t master_key[_hdr->sz_key];
+
+	std::ifstream dev_in(_device.c_str(), 
+	    std::ios_base::binary | std::ios_base::in);
+	if (!dev_in)
+		throw Disk_error("failed to open device");
+
+	// find the first slot that can be decrypted with the password
+	for (uint8_t i = 0; i < NUM_KEYS; i++) {
+		decrypt_key(dev_in, passwd, i, key_digest, master_key);
+
+		if (std::equal(key_digest, key_digest + sizeof(key_digest),
+		    _hdr->mk_digest))
+			return i;
+	}
+	return -1;
+}
+
+// key_digest should be as large as the digest size of the hash
+// master_key should be as large as _hdr->sz_key
+void
+luks::Luks_header::decrypt_key(std::ifstream &dev, const std::string &passwd,
+    uint8_t slot, uint8_t *key_digest, uint8_t *master_key)
+{
+	set_mach_end(true);
+
+	uint8_t pw_digest[_hdr->sz_key];
+	struct key *key = _hdr->keys + slot;
+	uint8_t key_crypt[_hdr->sz_key * key->stripes];
+	uint8_t key_splitted[sizeof(key_crypt)];
+
+	// password => pw_digest
+	pbkdf2(_hash_type,
+	    reinterpret_cast<const uint8_t *>(passwd.c_str()),
+	    passwd.size(), key->salt, key->iterations, pw_digest,
+	    sizeof(pw_digest));
+
+	// disk => key_crypt
+	dev.seekg(key->off_km * _sz_sect, std::ios_base::beg);
+	if (!dev)
+		throw Disk_error("failed to seek to key material");
+
+	dev.read(reinterpret_cast<char *>(key_crypt),
+	    sizeof(key_crypt));
+	if (!dev)
+		throw Disk_error("failed to read key material");
+
+	// (pw_digest, key_crypt) => key_splitted
+	decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
+	    key->off_km, _sz_sect,
+	    pw_digest, sizeof(pw_digest),
+	    key_crypt, sizeof(key_crypt),
+	    key_splitted);
+
+	// key_splitted => master_key
+	af_merge(key_splitted, sizeof(key_splitted), key->stripes,
+	    _hash_type, master_key);
+
+	// master_key => key_digest
+	pbkdf2(_hash_type, master_key, _hdr->sz_key,
+	    _hdr->mk_salt, _hdr->mk_iterations, key_digest,
+	    SZ_MK_DIGEST);
 }

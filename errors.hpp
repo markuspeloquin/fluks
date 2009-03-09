@@ -73,6 +73,18 @@ struct No_private_key : std::exception {
 };
 
 
+struct Safety : std::exception {
+	Safety(const std::string &msg) : _msg("Safety error: ")
+	{
+		_msg += msg;
+	}
+	~Safety() throw () {}
+	const char *what() const throw ()
+	{	return _msg.c_str(); }
+	std::string _msg;
+};
+
+
 struct Slots_full : std::exception {
 	~Slots_full() throw() {}
 	const char *what() const throw ()

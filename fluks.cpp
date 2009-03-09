@@ -1,5 +1,3 @@
-#include <sys/stat.h>
-
 #include <ctime>
 #include <iostream>
 #include <boost/program_options/options_description.hpp>
@@ -18,16 +16,6 @@ char *prog;
 
 namespace luks {
 namespace {
-
-void	usage();
-bool	have_urandom();
-
-bool
-have_urandom()
-{
-	struct stat st;
-	return stat("/dev/urandom", &st) != -1;
-}
 
 void
 list_modes()
@@ -105,12 +93,13 @@ list_modes()
 
 /** Prompt for a password
  *
+ * \param msg	The prompt message.
  * \retval ""	The terminal echo couldn't be reenabled (sorry) or the
  *	passwords didn't match.
  * \return	The password the user entered
  */
 std::string
-prompt_passwd()
+prompt_passwd(const std::string &msg)
 {
 	bool echo;
 
@@ -124,7 +113,7 @@ prompt_passwd()
 		echo = true;
 	}
 
-	std::cout << "Enter a passphrase" << (echo ? ": " : " (no echo): ");
+	std::cout << msg << (echo ? ": " : " (no echo): ");
 	std::string pass;
 	std::getline(std::cin, pass);
 
@@ -171,16 +160,21 @@ main(int argc, char **argv)
 
 	prog = *argv;
 
-	po::options_description general_desc("General Options");
-	general_desc.add_options()
+	po::options_description commands_desc("Commands (exactly one)");
+	commands_desc.add_options()
 	    ("create", "create a LUKS partition header")
 	    ("dump", po::value<std::string>(),
 		"dump the header and key material to a file")
 	    ("help", "show this message")
-	    ("info,i", "print the information in the header")
 	    ("list-modes",
 		"prints supported ciphers, block modes, hashes, etc.")
 	    ("pass", "add a passphrase to a LUKS partition")
+	    ;
+
+	po::options_description general_desc("General Options");
+	general_desc.add_options()
+	    ("info,i", "print the information in the header")
+	    ("pretend,p", "do not commit the changes")
 	    ;
 
 	po::options_description create_desc("Creation Options");
@@ -211,7 +205,7 @@ main(int argc, char **argv)
 
 	// combine the visible option groups into 'visible_desc'
 	po::options_description visible_desc;
-	visible_desc.add(general_desc).add(create_desc);
+	visible_desc.add(commands_desc).add(general_desc).add(create_desc);
 
 	// combine visible and hidden option groups into 'desc'
 	po::options_description desc;
@@ -236,32 +230,86 @@ main(int argc, char **argv)
 		return 0;
 	}
 
+	enum { CREATE, DUMP, LIST_MODES,
+	    ADD_PASS, REVOKE_PASS } command;
+	uint8_t command_count = 0;
+
+	// get command
+	if (!var_map["create"].empty()) {
+		command = CREATE;
+		command_count++;
+	}
+	if (!var_map["dump"].empty()) {
+		command = DUMP;
+		command_count++;
+	}
 	if (!var_map["list-modes"].empty()) {
+		command = LIST_MODES;
+		command_count++;
+	}
+	if (!var_map["pass"].empty()) {
+		command = ADD_PASS;
+		command_count++;
+	}
+	if (!var_map["revoke"].empty()) {
+		command = REVOKE_PASS;
+		command_count++;
+	}
+
+	if (command_count != 1) {
+		std::cout << "must specify exactly one command\n";
+		return 1;
+	}
+
+	if (command == LIST_MODES) {
 		list_modes();
 		return 0;
 	}
 
-	if (var_map["device"].empty()) {
-		std::cerr << "must provide a device\n";
-		return 1;
+	// read device path if needed
+	std::string device_path;
+	switch (command) {
+	case CREATE:
+	case DUMP:
+	case ADD_PASS:
+	case REVOKE_PASS:
+		if (var_map["device"].empty()) {
+			std::cerr << "must provide a device\n";
+			return 1;
+		}
+		device_path = var_map["device"].as<std::string>();
+		break;
+	default:;
 	}
-	std::string device_path = var_map["device"].as<std::string>();
 
-	if (!var_map["dump"].empty()) {
+	bool pretend = !var_map["pretend"].empty();
+
+	if (command == DUMP) {
+		if (pretend)
+			std::cout << "(--dump command has no pretend mode, "
+			    "proceeding...)\n";
 		std::string backup_path = var_map["dump"].as<std::string>();
 		make_backup(device_path, backup_path);
 	}
 
-	if (!have_urandom()) {
-		std::cerr << "/dev/urandom not found, "
-		    "seeding PRNG with clock\n";
-		time_t now = time(0);
-		RAND_seed(&now, sizeof(now));
+	// check urandom if needed, seed the random number generator if it
+	// doesn't exist
+	switch (command) {
+	case CREATE:
+	case ADD_PASS:
+		if (!have_urandom()) {
+			std::cerr << "/dev/urandom not found, "
+			    "seeding PRNG with clock\n";
+			time_t now = time(0);
+			RAND_seed(&now, sizeof(now));
+		}
+		break;
+	default:;
 	}
 
 	std::tr1::shared_ptr<Luks_header> header;
 
-	if (!var_map["create"].empty()) {
+	if (command == CREATE) {
 		// check for mandatory options
 		if (var_map["size"].empty()) {
 			std::cerr << "--create requires a --size option\n";
@@ -292,25 +340,38 @@ main(int argc, char **argv)
 		    cipher, hash, iter, stripes));
 
 		// get a password
-		std::string pass = prompt_passwd();
+		std::string pass = prompt_passwd("Initial passphrase");
 		if (pass.empty())
 			return 1;
 		header->add_passwd(pass);
 
 		// write to disk
-		header->save();
-	} else if (!var_map["pass"].empty()) {
+		if (!pretend) header->save();
+	} else if (command == ADD_PASS) {
 		// read existing header from disk
 		header.reset(new Luks_header(device_path));
 
 		// get a password
-		std::string pass = prompt_passwd();
+		std::string pass = prompt_passwd("New passphrase");
 		if (pass.empty())
 			return 1;
+
 		header->add_passwd(pass);
 
 		// write to disk
-		header->save();
+		if (!pretend) header->save();
+	} else if (command == REVOKE_PASS) {
+		header.reset(new Luks_header(device_path));
+		std::cout << "First enter a passphrase that will not "
+		    "be revoked\n";
+		std::string passwd = prompt_passwd("Existing passphrase");
+		if (passwd.empty())
+			return 1;
+
+		std::string revoke = prompt_passwd("Passphrase to revoke");
+
+		header->revoke_passwd(revoke);
+		if (!pretend) header->save();
 	}
 
 	if (!var_map["info"].empty())

@@ -4,6 +4,7 @@
 #include <stdint.h> // no cstdint yet
 
 #include <cstddef>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <boost/scoped_array.hpp>
@@ -222,39 +223,57 @@ public:
 	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
 	    throw (No_private_key, Slots_full);
 
+	/** Print the values in the header, except for the salts and digest. */
 	void info() const;
 
 	/** Disable a password slot
 	 *
 	 * \param which		The index of the key slot to revoke.
+	 * \throw Safety	Either the private key hasn't been decrypted
+	 *	yet or it was decrypted with the same password being deleted.
 	 */
-	void revoke_slot(uint8_t which);
+	void revoke_slot(uint8_t which) throw (Safety);
+
+	/** Disable a password
+	 *
+	 * \param passwd	The password to revoke.
+	 * \retval false	The password slot wasn't found.
+	 * \throw Disk_error	Failed to read key material.
+	 * \throw Safety	Either the private key hasn't been decrypted
+	 *	yet or it was decrypted with the same password being deleted.
+	 */
+	bool revoke_passwd(const std::string &passwd)
+	    throw (Disk_error, Safety)
+	{
+		int8_t which = locate_passwd(passwd);
+		if (which == -1) return false;
+		revoke_slot(which);
+		return true;
+	}
 
 	/** Get the master key
 	 *
 	 * \retval nullptr	The key hasn't been decrypted yet.
 	 */
-	uint8_t *master_key() const
+	const uint8_t *master_key() const
 	{	return _master_key.get(); }
 
 	void save() throw (Disk_error);
 
 private:
-	void ensure_mach_hdr(bool which)
+	void set_mach_end(bool which)
 	{
-		if (_hdr_mach_end != which) {
-			endian_switch(_hdr.get(), false);
-			_hdr_mach_end = true;
-		}
-	}
-	void ensure_mach_key(uint8_t i, bool which)
-	{
-		if (_key_mach_end[i] != which) {
-			endian_switch(_hdr->keys + i);
-			_key_mach_end[i] = true;
+		if (_mach_end != which) {
+			endian_switch(_hdr.get(), true);
+			_mach_end = which;
 		}
 	}
 	void init_cipher_spec(const std::string &cipher_spec, size_t sz_key);
+
+	int8_t locate_passwd(const std::string &passwd) throw (Disk_error);
+
+	void decrypt_key(std::ifstream &dev, const std::string &passwd,
+	    uint8_t slot, uint8_t *key_digest, uint8_t *master_key);
 
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
@@ -269,12 +288,16 @@ private:
 	enum iv_mode			_iv_mode;
 	enum hash_type			_iv_hash;
 
-	boost::scoped_array<uint8_t>	_key_crypt[NUM_KEYS];
-	std::vector<bool>		_key_mach_end;
-	bool				_hdr_mach_end;
-	std::vector<bool>		_key_dirty;
-	bool				_hdr_dirty;
+	// the index of the entered password (-1=invalid)
+	int8_t				_proved_passwd;
+	// the current endian the header (machine or big)
+	bool				_mach_end;
+	// has the header been changed
+	bool				_dirty;
+	// which keys need to be erased
 	std::vector<bool>		_key_need_erase;
+	// encrypted keys that need to be written to disk
+	boost::scoped_array<uint8_t>	_key_crypt[NUM_KEYS];
 };
 
 
