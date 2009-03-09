@@ -7,8 +7,6 @@
 
 namespace luks {
 
-bool	have_urandom();
-
 /** Get the sector size of a device.
  *
  * \param device	The device pathname.

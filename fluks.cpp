@@ -1,5 +1,6 @@
 #include <ctime>
 #include <iostream>
+#include <boost/filesystem.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -156,6 +157,7 @@ main(int argc, char **argv)
 {
 	using namespace luks;
 
+	namespace fs = boost::filesystem;
 	namespace po = boost::program_options;
 
 	prog = *argv;
@@ -289,7 +291,7 @@ main(int argc, char **argv)
 	switch (command) {
 	case CREATE:
 	case ADD_PASS:
-		if (!have_urandom()) {
+		if (!fs::exists(fs::path("/dev/urandom"))) {
 			std::cerr << "/dev/urandom not found, "
 			    "seeding PRNG with clock\n";
 			time_t now = time(0);

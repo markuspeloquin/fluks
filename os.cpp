@@ -11,14 +11,6 @@
 
 #include "os.hpp"
 
-bool
-luks::have_urandom()
-{
-	struct stat st;
-	return stat("/dev/urandom", &st) != -1;
-}
-
-
 int
 luks::sector_size(const std::string &device) throw (Unix_error)
 {
