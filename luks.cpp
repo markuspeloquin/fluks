@@ -390,7 +390,7 @@ luks::Luks_header::save() throw (Disk_error)
 	if (!_hdr_dirty) return;
 
 	std::ofstream dev_out(_device.c_str(),
-	    std::ios_base::binary | std::ios_base::in);
+	    std::ios_base::binary | std::ios_base::out);
 	if (!dev_out)
 		throw Disk_error("failed to open device");
 
@@ -433,7 +433,7 @@ luks::Luks_header::save() throw (Disk_error)
 			throw Disk_error("writing header: seek error");
 
 		dev_out.write(reinterpret_cast<char *>(_hdr.get()),
-		    sizeof(_hdr));
+		    sizeof(struct phdr1));
 		if (!dev_out)
 			throw Disk_error("writing header: write error");
 

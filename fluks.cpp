@@ -103,6 +103,55 @@ list_modes()
 	}
 }
 
+/** Prompt for a password
+ *
+ * \retval ""	The terminal echo couldn't be reenabled (sorry) or the
+ *	passwords didn't match.
+ * \return	The password the user entered
+ */
+std::string
+prompt_passwd()
+{
+	bool echo;
+
+	// disable echo
+	try {
+		term_echo(false);
+		echo = false;
+	} catch (const Unix_error &e) {
+		std::cerr << "could not disable terminal echo: "
+		    << e.what() << '\n';
+		echo = true;
+	}
+
+	std::cout << "Enter a passphrase" << (echo ? ": " : " (no echo): ");
+	std::string pass;
+	std::getline(std::cin, pass);
+
+	std::cout << "\nRepeat" << (echo ? ": " : " (no echo): ");
+	std::string pass2;
+	std::getline(std::cin, pass2);
+	std::cout << '\n';
+
+	// enable echo
+	if (!echo) {
+		try {
+			term_echo(true);
+		} catch (const Unix_error &e) {
+			std::cerr << "could not reenable terminal echo: "
+			    << e.what() << '\n';
+			return "";
+		}
+	}
+
+	if (pass != pass2) {
+		std::cerr << "Passphrases do not match\n";
+		return "";
+	}
+
+	return pass;
+}
+
 void
 usage(const boost::program_options::options_description &desc)
 {
@@ -131,6 +180,7 @@ main(int argc, char **argv)
 	    ("info,i", "print the information in the header")
 	    ("list-modes",
 		"prints supported ciphers, block modes, hashes, etc.")
+	    ("pass", "add a passphrase to a LUKS partition")
 	    ;
 
 	po::options_description create_desc("Creation Options");
@@ -167,10 +217,12 @@ main(int argc, char **argv)
 	po::options_description desc;
 	desc.add(visible_desc).add(hidden_desc);
 
+	// set up the parser
 	po::command_line_parser parser(argc, argv);
 	parser.options(desc);
 	parser.positional(pos_desc);
 
+	// finally parse the arguments, storing into var_map
 	po::variables_map var_map;
 	po::store(parser.run(), var_map);
 
@@ -235,12 +287,30 @@ main(int argc, char **argv)
 		}
 		sz_key /= 8;
 
+		// create the header
 		header.reset(new Luks_header(device_path, sz_key,
 		    cipher, hash, iter, stripes));
 
-		header->add_passwd("password");
-	} else {
+		// get a password
+		std::string pass = prompt_passwd();
+		if (pass.empty())
+			return 1;
+		header->add_passwd(pass);
+
+		// write to disk
+		header->save();
+	} else if (!var_map["pass"].empty()) {
+		// read existing header from disk
 		header.reset(new Luks_header(device_path));
+
+		// get a password
+		std::string pass = prompt_passwd();
+		if (pass.empty())
+			return 1;
+		header->add_passwd(pass);
+
+		// write to disk
+		header->save();
 	}
 
 	if (!var_map["info"].empty())

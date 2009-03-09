@@ -16,6 +16,21 @@ namespace luks {
  */
 int	sector_size(const std::string &device) throw (Unix_error);
 
+/** Get terminal echo state
+ *
+ * \return		The current value
+ * \throw Unix_error	The operation failed
+ */
+bool	term_echo() throw (Unix_error);
+
+/** Set terminal echo
+ *
+ * \param enable	The state to set the terminal to
+ * \return		The old value
+ * \throw Unix_error	The operation failed
+ */
+bool	term_echo(bool enable) throw (Unix_error);
+
 }
 
 #endif
