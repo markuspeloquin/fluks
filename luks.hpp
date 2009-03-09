@@ -203,7 +203,7 @@ public:
 
 	/** Get the full, canonized cipher spec
 	 *
-	 * \return  The cipher spec, for use by dm-crypt
+	 * \return  The cipher spec, for use by dm-crypt.
 	 */
 	const std::string cipher_spec() const
 	{
@@ -217,7 +217,9 @@ public:
 
 	/** Get the master key
 	 *
-	 * \retval nullptr	The key hasn't been decrypted yet.
+	 * \return	A pair containing the master key and its size.  If
+	 *	the master key hasn't been decrypted yet, the key will be
+	 *	nullptr.
 	 */
 	std::pair<const uint8_t *, size_t> master_key() const
 	{
@@ -232,8 +234,15 @@ public:
 	 * \return The size in sectors
 	 */
 	uint32_t sectors() const
-	{	return _hdr->off_payload; }
+	{
+		const_cast<Luks_header *>(this)->set_mach_end(true);
+		return _hdr->off_payload;
+	}
 
+	/** The UUID of the partition.
+	 *
+	 * \return  The UUID.
+	 */
 	std::string uuid() const
 	{	return std::string(_hdr->uuid); }
 
