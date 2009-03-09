@@ -28,34 +28,34 @@ public:
 };
 
 void		cbc_encrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 void		cbc_decrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 void		ctr_encrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz, uint8_t *out);
 
 inline void	ctr_decrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz, uint8_t *out);
 
 void		cts_encrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 void		cts_decrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 void		ecb_encrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 void		ecb_decrypt(Crypt *crypter, const uint8_t *iv,
-		    const uint8_t *in, size_t sz_in, uint8_t *out);
+		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 // the encryption and decryption work the same
 inline void
 ctr_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
-    size_t sz_in, uint8_t *out)
-{	ctr_encrypt(crypter, iv, in, sz_in, out); }
+    size_t sz, uint8_t *out)
+{	ctr_encrypt(crypter, iv, in, sz, out); }
 
 class Crypt_aes : public Crypt {
 public:
