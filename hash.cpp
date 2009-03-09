@@ -1,4 +1,3 @@
-#include <cassert>
 #include <map>
 
 #include "hash.hpp"
@@ -151,7 +150,7 @@ luks::Hash_function::create(enum hash_type type)
 		return std::tr1::shared_ptr<Hash_function>(
 		    new Hash_whirlpool(WHIRLPOOL_SZ_DIGEST));
 	default:
-		assert(0);
+		Assert(0, "Hash_function::create() bad hash type");
 		return std::tr1::shared_ptr<Hash_function>();
 	}
 }

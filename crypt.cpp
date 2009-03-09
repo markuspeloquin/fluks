@@ -62,6 +62,7 @@ luks::Crypt::create(enum cipher_type type)
 		return std::tr1::shared_ptr<Crypt>(new Crypt_serpent);
 */
 	default:
+		Assert(0, "Crypt::create() bad cipher type");
 		return std::tr1::shared_ptr<Crypt>();
 	}
 }
@@ -330,7 +331,8 @@ luks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
 	case BM_CTR:
 		return sz_data;
 	default:
-		throw Failure("ciphertext_size() block mode undefined");
+		Assert(0, "ciphertext_size() block mode undefined");
+		return 0;
 	}
 }
 
@@ -361,7 +363,7 @@ luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
 		break;
 	default:
-		throw Failure ("encrypt() IV type undefined");
+		Assert(0, "encrypt() IV type undefined");
 	}
 
 	uint16_t num_sect = (sz_blk + blk_per_sect - 1) / blk_per_sect;
@@ -402,7 +404,7 @@ luks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 			pcbc_encrypt(encrypter.get(), iv, data, by, out);
 			break;
 		default:
-			throw Failure("encrypt() block mode undefined");
+			Assert(0, "encrypt() block mode undefined");
 		}
 
 		data += sz_sector;
@@ -437,7 +439,7 @@ luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
 		break;
 	default:
-		throw Failure ("decrypt() IV type undefined");
+		Assert(0, "decrypt() IV type undefined");
 	}
 
 	uint16_t num_sect = (sz_blk + blk_per_sect - 1) / blk_per_sect;
@@ -478,7 +480,7 @@ luks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 			pcbc_decrypt(decrypter.get(), iv, data, by, out);
 			break;
 		default:
-			throw Failure("decrypt() block mode undefined");
+			Assert(0, "decrypt() block mode undefined");
 		}
 
 		data += sz_sector;

@@ -8,13 +8,16 @@ namespace luks {
 
 
 /** Not to be caught */
-struct Failure : std::exception {
-	Failure(const std::string &msg) : _msg(msg) {}
-	~Failure() throw () {}
+struct Assertion : std::exception {
+	Assertion(const std::string &msg) : _msg(msg) {}
+	~Assertion() throw () {}
 	const char *what() const throw ()
 	{	return _msg.c_str(); }
 	std::string _msg;
 };
+
+inline void	Assert(bool cond, const std::string &msg)
+{	if (!cond) throw Assertion(msg); }
 
 struct Bad_spec : std::exception {
 	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
@@ -38,6 +41,14 @@ struct Crypt_error : std::exception {
 
 
 struct Hash_error : virtual std::exception {
+};
+
+
+struct No_private_key : std::exception {
+	No_private_key() {}
+	~No_private_key() throw () {}
+	const char *what() const throw ()
+	{	return "The private key hasn't been decrypted yet"; }
 };
 
 

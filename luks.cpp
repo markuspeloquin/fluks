@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -127,10 +126,12 @@ luks::Luks_header::Luks_header(const std::string &device, uint32_t sz_key,
 	// XXX only *after* fluks attempts to use them.
 
 	// are the specs compatible?
+	if (_block_mode == BM_ECB && _iv_mode != IM_UNDEFINED)
+		throw Bad_spec("ECB mode cannot have an IV mode parameter");
 	if (_iv_mode == IM_ESSIV && _iv_hash == HT_UNDEFINED)
-		throw Bad_spec("IV opts `essiv' requires an IV hash");
+		throw Bad_spec("IV mode `essiv' requires an IV hash");
 	if (_iv_mode == IM_PLAIN && _iv_hash != HT_UNDEFINED)
-		throw Bad_spec("IV opts `plain' cannot use an IV hash");
+		throw Bad_spec("IV mode `plain' cannot use an IV hash");
 	if (_iv_mode == IM_ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
@@ -273,11 +274,12 @@ luks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 
 void
 luks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
-	throw (Slots_full)
+    throw (No_private_key, Slots_full)
 {
 	struct key *avail = 0;
 
-	assert(_master_key);
+	if (!_master_key) throw No_private_key();
+
 	ensure_mach_hdr(true);
 
 	// find an open slot

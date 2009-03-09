@@ -38,7 +38,7 @@ luks::Hmac_function::create(enum hash_type type)
 		return std::tr1::shared_ptr<Hmac_function>(
 		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL512)));
 	default:
-		assert(0);
+		Assert(0, "Hmac_function::create() bad hash type");
 		return std::tr1::shared_ptr<Hmac_function>();
 	}
 }

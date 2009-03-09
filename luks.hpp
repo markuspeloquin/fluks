@@ -189,10 +189,12 @@ public:
 	 * \param passwd	The password to encrypt the key with.
 	 * \param check_time	The time (in microseconds) to check the key
 	 *	for.
+	 * \throw No_private_key	The private key hasn't been
+	 *	decrypted yet.
 	 * \throw Slots_full	All slots are enabled already.
 	 */
 	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
-		throw (Slots_full);
+	    throw (No_private_key, Slots_full);
 
 	/** Disable a password slot
 	 *
