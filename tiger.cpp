@@ -19,6 +19,9 @@
 
 #include "tiger.hpp"
 
+// ensure ENDIAN macros exist
+#include "endian_check.h"
+
 extern uint64_t table[4 * 256];
 
 // This is the official definition of 'round'.

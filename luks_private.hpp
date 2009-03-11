@@ -16,6 +16,9 @@
 
 #include <endian.h>
 
+// ensure ENDIAN macros exist
+#include "endian_check.h"
+
 namespace fluks {
 
 inline void

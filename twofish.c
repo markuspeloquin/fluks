@@ -29,6 +29,7 @@
 
 */
 
+#include <endian.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,9 @@
 #define RHO 0x01010101L
 
 #define TWOFISH_TESTING 0
+
+/* ensure ENDIAN macros exist */
+#include "endian_check.h"
 
 #if 0
 static unsigned int here(unsigned int x)
@@ -57,10 +61,10 @@ static unsigned int here(unsigned int x)
 #define ROL(x,n) (((x) << ((n) & 0x1F)) | ((x) >> (32-((n) & 0x1F))))
 #define ROR(x,n) (((x) >> ((n) & 0x1F)) | ((x) << (32-((n) & 0x1F))))
 
-#if BIG_ENDIAN == 1
-#define BSWAP(x) (((ROR(x,8) & 0xFF00FF00) | (ROL(x,8) & 0x00FF00FF)))
+#if BYTE_ORDER == BIG_ENDIAN
+#	define BSWAP(x) (((ROR(x,8) & 0xFF00FF00) | (ROL(x,8) & 0x00FF00FF)))
 #else
-#define BSWAP(x) (x)
+#	define BSWAP(x) (x)
 #endif
 
 #define _b(x, N) (((x) >> (N*8)) & 0xFF)
