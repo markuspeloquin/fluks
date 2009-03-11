@@ -21,6 +21,7 @@
 #include <openssl/blowfish.h>
 #include <openssl/cast.h>
 
+#include "cast6.h"
 #include "luks.hpp"
 #include "serpent.h"
 #include "twofish.h"
@@ -50,9 +51,10 @@ public:
 	 *	<code>DIR_DECRYPT</code>}
 	 * \param key		The encryption key
 	 * \param sz_key	The size of the encryption key in bytes
+	 * \param Crypt_error	Probably the key size is bad
 	 */
 	virtual void init(enum crypt_direction dir, const uint8_t *key,
-	    size_t sz_key) throw () = 0;
+	    size_t sz_key) throw (Crypt_error) = 0;
 
 	/** En/Decrypt a block of data
 	 *
@@ -255,13 +257,15 @@ public:
 	~Crypt_aes() throw () {}
 
 	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw ()
+	    throw (Crypt_error)
 	{
 		_dir = dir;
-		if (_dir == DIR_ENCRYPT)
-			AES_set_encrypt_key(key, sz * 8, &_key);
-		else
-			AES_set_decrypt_key(key, sz * 8, &_key);
+		if (_dir == DIR_ENCRYPT) {
+			if (!AES_set_encrypt_key(key, sz * 8, &_key))
+				throw Ssl_crypt_error();
+		} else
+			if (!AES_set_decrypt_key(key, sz * 8, &_key))
+				throw Ssl_crypt_error();
 		_init = true;
 	}
 	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
@@ -338,17 +342,48 @@ private:
 	bool			_init;
 };
 
-class Crypt_serpent : public Crypt {
+class Crypt_cast6 : public Crypt {
 public:
-	Crypt_serpent() : _init(false) {}
-	~Crypt_serpent() throw () {}
+	Crypt_cast6() : _init(false) {}
+	~Crypt_cast6() throw () {}
 
 	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
 	    throw ()
 	{
 		_init = true;
 		_dir = dir;
-		serpent_set_key(&_key, key, sz);
+		cast6_init(&_ctx, key, sz);
+	}
+	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no en/decryption key set");
+		if (_dir == DIR_ENCRYPT)
+			cast6_encrypt(&_ctx, in, out);
+		else
+			cast6_decrypt(&_ctx, in, out);
+	}
+	size_t block_size() const throw ()
+	{	return CAST6_BLOCK; }
+
+private:
+	struct cast6_ctx	_ctx;
+	enum crypt_direction	_dir;
+	bool			_init;
+};
+
+class Crypt_serpent : public Crypt {
+public:
+	Crypt_serpent() : _init(false) {}
+	~Crypt_serpent() throw () {}
+
+	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
+	    throw (Crypt_error)
+	{
+		_init = true;
+		_dir = dir;
+		if (serpent_set_key(&_key, key, sz) == SERPENT_BAD_KEY_MAT)
+			throw Crypt_error("bad key size");
 	}
 	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{

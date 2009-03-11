@@ -48,13 +48,15 @@ struct Bad_spec : std::exception {
 };
 
 
-struct Crypt_error : std::exception {
+struct Crypt_error : virtual std::exception {
 	Crypt_error(const std::string &msg) : _msg("Crypto error:")
 	{	_msg += msg; }
 	~Crypt_error() throw () {}
 	const char *what() const throw ()
 	{	return _msg.c_str(); }
 	std::string _msg;
+protected:
+	Crypt_error() {}
 };
 
 
@@ -124,6 +126,14 @@ struct Ssl_error : virtual std::exception {
 	{	return _msg.c_str(); }
 
 	std::string _msg;
+};
+
+
+/** An SSL crypto error. */
+struct Ssl_crypt_error : Crypt_error, Ssl_error {
+	Ssl_crypt_error() {}
+	~Ssl_crypt_error() throw () {}
+	using Ssl_error::what;
 };
 
 

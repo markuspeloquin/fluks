@@ -152,7 +152,7 @@ Lookup::Lookup()
 	cipher_stat_map[CT_AES] = (cipher_stat){ "aes", 16, 16, 32, 8, 1 };
 	cipher_stat_map[CT_BLOWFISH] = (cipher_stat){ "blowfish", 8, 4, 56, 1, 0 };
 	cipher_stat_map[CT_CAST5] = (cipher_stat){ "cast5", 8, 5, 16, 1, 1 };
-//	cipher_stat_map[CT_CAST6] = (cipher_stat){ "cast6", 8, 16, 32, 8, 1 };
+	cipher_stat_map[CT_CAST6] = (cipher_stat){ "cast6", 16, 16, 32, 4, 1 };
 //	cipher_stat_map[CT_DES3] = (cipher_stat){ "des3_ede", 8, 24, 24, 0, 0 };
 	cipher_stat_map[CT_SERPENT] = (cipher_stat){ "serpent", 16, 0, 32, 8, 1 };
 	cipher_stat_map[CT_TWOFISH] = (cipher_stat){ "twofish", 16, 16, 32, 8, 1 };
@@ -160,7 +160,7 @@ Lookup::Lookup()
 	cipher_name_map["aes"] = CT_AES;
 	cipher_name_map["blowfish"] = CT_BLOWFISH;
 	cipher_name_map["cast5"] = CT_CAST5;
-//	cipher_name_map["cast6"] = CT_CAST6;
+	cipher_name_map["cast6"] = CT_CAST6;
 //	cipher_name_map["des3"] = CT_DES3;
 //	cipher_name_map["3des"] = CT_DES3;
 //	cipher_name_map["des3_ede"] = CT_DES3;
