@@ -1,0 +1,16 @@
+#summary How to build fluks.
+
+= Introduction =
+
+fluks depends on a few libraries: libdevmapper, libuuid, and boost.  It also uses an obscure build system called bjam (with other names, as well).
+
+
+= Details =
+
+_I'll clean this up later, as I learn the way of the wiki:_
+
+libdevmapper comes with device-mapper at http://sources.redhat.com/dm/
+libuuid is part of e2fsprogs at http://e2fsprogs.sourceforge.net/
+boost is at http://boost.org/
+
+After the libraries are installed, you can run bjam from the directory with the Jamroot file in it.  bjam goes by other names like Boost.Build or Boost.Jam.
