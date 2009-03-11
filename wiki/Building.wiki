@@ -9,9 +9,9 @@ fluks depends on a few libraries: libdevmapper, libuuid, and boost.  It also use
 
 _I'll clean this up later, as I learn the way of the wiki:_
 
-libdevmapper comes with device-mapper at http://sources.redhat.com/dm/
+libdevmapper comes with Device-mapper from http://sources.redhat.com/dm/
 
-libuuid is part of e2fsprogs at http://e2fsprogs.sourceforge.net/
+libuuid is part of e2fsprogs from http://e2fsprogs.sourceforge.net/
 
 boost is at http://boost.org/ .  If you use C++ but not boost, then your life must be miserable.
 
