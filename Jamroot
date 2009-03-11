@@ -22,7 +22,7 @@ exe fluks
 	    support.cpp tiger.cpp util.cpp
 
 	    # plain C
-	    cast6.c serpent.c tiger_sboxes.c twofish.c whirlpool.c
+	    cast6.c serpent.c twofish.c whirlpool.c
 
 	    # libraries
 	    boost_filesystem boost_program_options
