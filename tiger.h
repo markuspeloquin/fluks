@@ -12,14 +12,18 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#ifndef FLUKS_TIGER_HPP
-#define FLUKS_TIGER_HPP
+#ifndef FLUKS_TIGER_H
+#define FLUKS_TIGER_H
 
+#include <features.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
 #include <cstddef>
-
 namespace fluks {
+#else
+#include <stddef.h>
+#endif
 
 const size_t TIGER_SZ_BLOCK = 64;
 const size_t TIGER128_SZ_DIGEST = 16;
@@ -28,19 +32,22 @@ const size_t TIGER_SZ_DIGEST = 24;
 
 /** Context structure for the Tiger hash function */
 struct tiger_ctx {
-	uint64_t	buf[TIGER_SZ_BLOCK/8];
+	uint64_t	buf[8];
 	uint64_t	res[3];
 	uint64_t	length;
 	size_t		sz;
 	int		passes;
 };
 
+__BEGIN_DECLS
+
 /** Initializes the context structure
  *
  * This function should be called before each hash computation.
  *
- * \param ctx	The hash context.
- * \param passes	The number of passes to take on the data.
+ * \param ctx		The hash context.
+ * \param passes	The number of passes to take on the data, though this
+ *	should probably always be 3.
  */
 void	tiger_init(struct tiger_ctx *ctx, int passes=3);
 
@@ -59,6 +66,10 @@ void	tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz);
  */
 void	tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST]);
 
-}
+__END_DECLS
+
+#ifdef __cplusplus
+} // end fluks namespace
+#endif
 
 #endif

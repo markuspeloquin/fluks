@@ -32,7 +32,7 @@
 #include "errors.hpp"
 #include "luks.hpp"
 #include "support.hpp"
-#include "tiger.hpp"
+#include "tiger.h"
 #include "whirlpool.h"
 
 namespace fluks {

@@ -17,10 +17,15 @@
 
 #include <algorithm>
 
-#include "tiger.hpp"
+#include "tiger.h"
 
 // ensure ENDIAN macros exist
-#include "endian_check.h"
+#ifndef BYTE_ORDER
+#	error "BYTE_ORDER undefined"
+#endif
+#ifndef BIG_ENDIAN
+#	error "BIG_ENDIAN undefined"
+#endif
 
 uint64_t t1[0x100] = {
     0x02AAB17CF7E90C5ELL, 0xAC424B03E243A8ECLL,
@@ -662,7 +667,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 	state[2] = c;
 }
 
-void
+extern "C" void
 fluks::tiger_init(struct tiger_ctx *ctx, int passes)
 {
 	ctx->res[0] = 0x0123456789ABCDEFLL;
@@ -674,7 +679,7 @@ fluks::tiger_init(struct tiger_ctx *ctx, int passes)
 	ctx->passes = passes;
 }
 
-void
+extern "C" void
 fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 {
 	ctx->length += sz;
@@ -720,7 +725,7 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	ctx->sz = sz;
 }
 
-void
+extern "C" void
 fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 {
 	uint64_t temp[TIGER_SZ_BLOCK/8];
@@ -762,7 +767,7 @@ fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 // the original implementation of tiger(), with my annotations and coding
 // style inflicted upon it
 #if 0
-void
+extern "C" void
 fluks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
     uint64_t res[3])
 {
