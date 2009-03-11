@@ -23,6 +23,7 @@
 #include <tr1/memory>
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/system/system_error.hpp>
 
 #include "errors.hpp"
 #include "os.hpp"
@@ -196,22 +197,22 @@ public:
 	 * \param stripes	Dramatically increases the length and entropy
 	 *	of the master key before the digest is computed.
 	 * \throw Bad_spec	One of the cipher/hash specs is invalid.
-	 * \throw Unix_error	Error encountered determining the sector
-	 *	size.
+	 * \throw boost::system::system_error	Error encountered
+	 *	determining the sector size.
 	 */
 	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	    uint32_t sz_key, const std::string &cipher_spec,
 	    const std::string &hash_spec, uint32_t mk_iterations=NUM_MK_ITER,
 	    uint32_t stripes=NUM_STRIPES)
-	    throw (Bad_spec, Unix_error);
+	    throw (boost::system::system_error, Bad_spec);
 
 	/** Read a header from the disk
 	 *
 	 * \param device	The device to read/write
 	 */
 	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
-	    throw (Bad_spec, Disk_error, No_header, Unix_error,
-		Unsupported_version);
+	    throw (boost::system::system_error, Bad_spec, Disk_error,
+	    No_header, Unsupported_version);
 
 	~Luks_header() {}
 

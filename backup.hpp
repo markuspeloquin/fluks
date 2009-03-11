@@ -16,6 +16,7 @@
 #define FLUKS_BACKUP_HPP
 
 #include <string>
+#include <boost/system/system_error.hpp>
 
 #include "errors.hpp"
 #include "sys_fstream.hpp"
@@ -23,7 +24,8 @@
 namespace fluks {
 
 void	make_backup(std::sys_fstream &device, const std::string &backup_path)
-	    throw (Disk_error, No_header, Unix_error, Unsupported_version);
+	    throw (boost::system::system_error, Disk_error, No_header,
+	    Unsupported_version);
 
 }
 

@@ -22,54 +22,70 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <boost/system/linux_error.hpp>
 
 #include "os.hpp"
 
+namespace {
+
+void
+throw_errno(int e) throw (boost::system::system_error)
+{
+	// wow
+	throw boost::system::system_error(
+	    boost::system::linux_error::make_error_code(
+	    static_cast<boost::system::linux_error::linux_errno>(e)));
+}
+
+}
+
 uint32_t
-fluks::num_sectors(int fd) throw (Unix_error)
+fluks::num_sectors(int fd) throw (boost::system::system_error)
 {
 	uint64_t sz;
 	int sz_sect = sector_size(fd);
 	if (ioctl(fd, BLKGETSIZE64, &sz) == -1) {
 		int e = errno;
 		close(fd);
-		throw Unix_error(e);
+		throw_errno(e);
 	}
 	return static_cast<uint32_t>(sz / sz_sect);
 }
 
 int
-fluks::sector_size(int fd) throw (Unix_error)
+fluks::sector_size(int fd) throw (boost::system::system_error)
 {
 	int sz_sect;
 	if (ioctl(fd, BLKSSZGET, &sz_sect) == -1) {
 		int e = errno;
 		close(fd);
-		throw Unix_error(e);
+		throw_errno(e);
 	}
 	return sz_sect;
 }
 
 bool
-fluks::term_echo() throw (Unix_error)
+fluks::term_echo() throw (boost::system::system_error)
 {
 	struct termios term;
-	if (tcgetattr(STDIN_FILENO, &term) == -1) throw Unix_error();
+	if (tcgetattr(STDIN_FILENO, &term) == -1)
+		throw_errno(errno);
 	return term.c_lflag & ECHO;
 }
 
 bool
-fluks::term_echo(bool enable) throw (Unix_error)
+fluks::term_echo(bool enable) throw (boost::system::system_error)
 {
 	struct termios term;
 	bool old;
-	if (tcgetattr(STDIN_FILENO, &term) == -1) throw Unix_error();
+	if (tcgetattr(STDIN_FILENO, &term) == -1)
+		throw_errno(errno);
 	old = term.c_lflag & ECHO;
 	if (enable)
 		term.c_lflag |= ECHO;
 	else
 		term.c_lflag &= ~ECHO;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
-		throw Unix_error();
+		throw_errno(errno);
 	return old;
 }

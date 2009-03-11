@@ -43,11 +43,3 @@ fluks::Ssl_error::Ssl_error()
 	_msg = "OpenSSL error: ";
 	_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
 }
-
-fluks::Unix_error::Unix_error(int _errno)
-{
-	if (!_errno) _errno = errno;
-	std::ostringstream out;
-	out << "Unix error (" << _errno << "): " << strerror(_errno);
-	_msg = out.str();
-}

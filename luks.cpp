@@ -127,7 +127,7 @@ fluks::check_version_1(const struct phdr1 *header)
 fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
     uint32_t sz_key, const std::string &cipher_spec,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
-    throw (Bad_spec, Unix_error) :
+    throw (boost::system::system_error, Bad_spec) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
@@ -186,7 +186,8 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 }
 
 fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
-    throw (Bad_spec, Disk_error, No_header, Unix_error, Unsupported_version) :
+    throw (boost::system::system_error, Bad_spec, Disk_error, No_header,
+    Unsupported_version) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(*device)),

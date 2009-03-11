@@ -20,7 +20,8 @@
 
 void
 fluks::make_backup(std::sys_fstream &device, const std::string &backup_path)
-    throw (Disk_error, No_header, Unix_error, Unsupported_version)
+    throw (boost::system::system_error, Disk_error, No_header,
+    Unsupported_version)
 {
 	struct phdr1 hdr;
 

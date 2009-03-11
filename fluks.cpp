@@ -123,7 +123,7 @@ prompt_passwd(const std::string &msg)
 	try {
 		term_echo(false);
 		echo = false;
-	} catch (const Unix_error &e) {
+	} catch (const boost::system::system_error &e) {
 		std::cerr << "could not disable terminal echo: "
 		    << e.what() << '\n';
 		echo = true;
@@ -142,7 +142,7 @@ prompt_passwd(const std::string &msg)
 	if (!echo) {
 		try {
 			term_echo(true);
-		} catch (const Unix_error &e) {
+		} catch (const boost::system::system_error &e) {
 			std::cerr << "could not reenable terminal echo: "
 			    << e.what() << '\n';
 			return "";
