@@ -671,7 +671,8 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 		return;
 	}
 
-	uint8_t temp[TIGER_SZ_BLOCK];
+	uint64_t temp[TIGER_SZ_BLOCK/8];
+	uint8_t *temp8 = reinterpret_cast<uint8_t *>(temp);
 
 	// if data remaining in ctx
 	if (ctx->sz) {
@@ -680,9 +681,8 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 #if BYTE_ORDER == BIG_ENDIAN
 		// switch each 64bit word from big- to little-endian
 		for (size_t i = 0; i < TIGER_SZ_BLOCK ; i++)
-			temp[i ^ 7] = ctx->buf[i];
-		tiger_compress(reinterpret_cast<uint64_t *>(temp),
-		    ctx->passes, ctx->res);
+			temp8[i ^ 7] = ctx->buf[i];
+		tiger_compress(temp, ctx->passes, ctx->res);
 #else
 		tiger_compress(reinterpret_cast<uint64_t *>(ctx->buf),
 		    ctx->passes, ctx->res);
@@ -698,12 +698,11 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	while (sz > TIGER_SZ_BLOCK) {
 #if BYTE_ORDER == BIG_ENDIAN
 		for (size_t i = 0; i < TIGER_SZ_BLOCK; i++)
-			temp[i ^ 7] = ctx->buf[i];
+			temp8[i ^ 7] = ctx->buf[i];
 #else
-		std::copy(buf, buf + TIGER_SZ_BLOCK, temp);
+		std::copy(buf, buf + TIGER_SZ_BLOCK, temp8);
 #endif
-		tiger_compress(reinterpret_cast<uint64_t *>(temp),
-		    ctx->passes, ctx->res);
+		tiger_compress(temp, ctx->passes, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
 	}
@@ -717,21 +716,22 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 void
 fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 {
-	uint8_t temp[TIGER_SZ_BLOCK];
+	uint64_t temp[TIGER_SZ_BLOCK/8];
+	uint8_t *temp8 = reinterpret_cast<uint8_t *>(temp);
 	size_t i;
 
 	// (switch endian if necessary;) copy into the context buffer 0x01,
 	// then pad with zeros until the number of bytes is 0 mod 8
 #if BYTE_ORDER == BIG_ENDIAN
 	for (i = 0; i < ctx->sz; i++)
-		temp[i ^ 7] = reinterpret_cast<const uint8_t *>(ctx->buf)[i];
-	temp[i++ ^ 7] = 0x01;
-	while (i & 7) temp[i++ ^ 7] = 0;
+		temp8[i ^ 7] = reinterpret_cast<const uint8_t *>(ctx->buf)[i];
+	temp8[i++ ^ 7] = 0x01;
+	while (i & 7) temp8[i++ ^ 7] = 0;
 #else
-	std::copy(ctx->buf, ctx->buf + ctx->sz, temp);
+	std::copy(ctx->buf, ctx->buf + ctx->sz, temp8);
 	i = ctx->sz;
-	temp[i++] = 0x01;
-	while (i & 7) temp[i++] = 0;
+	temp8[i++] = 0x01;
+	while (i & 7) temp8[i++] = 0;
 #endif
 
 	// if number of bytes in temp is 64 (it is 0 mod 8, and so if it is
@@ -739,19 +739,17 @@ fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	// buffer with zeros and compress the block
 	if (i > 56) {
 		// I really doubt this loop does anything
-		while (i < TIGER_SZ_BLOCK) temp[i++] = 0;
-		tiger_compress(reinterpret_cast<uint64_t *>(temp),
-		    ctx->passes, ctx->res);
+		while (i < TIGER_SZ_BLOCK) temp8[i++] = 0;
+		tiger_compress(temp, ctx->passes, ctx->res);
 		i = 0;
 	}
 
 	// zero out all bytes from the first unused byte (at position i) to
 	// 8 before the end; length*8 is written to the final 64 bits of
 	// the buffer; then compress this final buffer
-	while (i < 56) temp[i++] = 0;
-	reinterpret_cast<uint64_t *>(temp + 56)[0] = ctx->length << 3;
-	tiger_compress(reinterpret_cast<uint64_t *>(temp),
-	    ctx->passes, ctx->res);
+	while (i < 56) temp8[i++] = 0;
+	temp[7] = ctx->length << 3;
+	tiger_compress(temp, ctx->passes, ctx->res);
 
 	std::copy(ctx->res, ctx->res + 3, reinterpret_cast<uint64_t *>(res));
 }
