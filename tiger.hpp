@@ -28,7 +28,7 @@ const size_t TIGER_SZ_DIGEST = 24;
 
 /** Context structure for the Tiger hash function */
 struct tiger_ctx {
-	uint8_t		buf[TIGER_SZ_BLOCK];
+	uint64_t	buf[TIGER_SZ_BLOCK/8];
 	uint64_t	res[3];
 	uint64_t	length;
 	size_t		sz;

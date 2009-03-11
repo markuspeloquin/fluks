@@ -546,6 +546,21 @@ uint64_t t4[0x100] = {
     0xC83223F1720AEF96LL, 0xC3A0396F7363A51FLL
 };
 
+// same syntax as memcpy(); copies between a buffer of uint8_t and a buffer
+// of LE uint64_t as efficiently as possible
+inline void
+copy_mach_little_64(void *out, const void *in, size_t sz)
+{
+	const uint8_t	*in8 = reinterpret_cast<const uint8_t *>(in);
+	uint8_t		*out8 = reinterpret_cast<uint8_t *>(out);
+#if BYTE_ORDER == BIG_ENDIAN
+	for (size_t i = 0; i < sz; i++)
+		out8[i ^ 7] = in8[i];
+#else
+	std::copy(in8, in8 + sz, out8);
+#endif
+}
+
 // This is the official definition of 'round'.
 // Passing the arguments by reference is the reason I made this file C++.
 // Otherwise, registers couldn't be used (markus).
@@ -663,45 +678,37 @@ void
 fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 {
 	ctx->length += sz;
+	register uint8_t *ctxbuf8 = reinterpret_cast<uint8_t *>(ctx->buf);
 
 	if (ctx->sz + sz < TIGER_SZ_BLOCK) {
 		// buffer won't fill
-		std::copy(buf, buf + sz, ctx->buf + ctx->sz);
+		std::copy(buf, buf + sz, ctxbuf8 + ctx->sz);
 		ctx->sz += sz;
 		return;
 	}
 
 	uint64_t temp[TIGER_SZ_BLOCK/8];
-	uint8_t *temp8 = reinterpret_cast<uint8_t *>(temp);
 
 	// if data remaining in ctx
 	if (ctx->sz) {
 		size_t bytes = TIGER_SZ_BLOCK - ctx->sz;
-		std::copy(buf, buf + bytes, ctx->buf + ctx->sz);
+		std::copy(buf, buf + bytes, ctxbuf8 + ctx->sz);
 #if BYTE_ORDER == BIG_ENDIAN
-		// switch each 64bit word from big- to little-endian
-		for (size_t i = 0; i < TIGER_SZ_BLOCK ; i++)
-			temp8[i ^ 7] = ctx->buf[i];
+		copy_mach_little_64(temp, ctx->buf, TIGER_SZ_BLOCK);
 		tiger_compress(temp, ctx->passes, ctx->res);
 #else
-		tiger_compress(reinterpret_cast<uint64_t *>(ctx->buf),
-		    ctx->passes, ctx->res);
+		// LE can run straight off ctx->buf
+		tiger_compress(ctx->buf, ctx->passes, ctx->res);
 #endif
 		buf += bytes;
 		sz -= bytes;
 		// context buffer now empty
 	}
 
-	// TODO I suppose it's possible to see if buf is at an acceptable
-	// offset for 64bit integers, but I don't know what's really
-	// involved in that; instead, I'll copy all the bytes
 	while (sz > TIGER_SZ_BLOCK) {
-#if BYTE_ORDER == BIG_ENDIAN
-		for (size_t i = 0; i < TIGER_SZ_BLOCK; i++)
-			temp8[i ^ 7] = ctx->buf[i];
-#else
-		std::copy(buf, buf + TIGER_SZ_BLOCK, temp8);
-#endif
+		// LE needs to copy for alignment issues, and BE needs to
+		// both copy (for alignment) and swith endians
+		copy_mach_little_64(temp, buf, TIGER_SZ_BLOCK);
 		tiger_compress(temp, ctx->passes, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
@@ -709,7 +716,7 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 
 	if (sz)
 		// fill context buffer with the remaining bytes
-		std::copy(buf, buf + sz, ctx->buf);
+		std::copy(buf, buf + sz, ctxbuf8);
 	ctx->sz = sz;
 }
 
@@ -722,14 +729,12 @@ fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 
 	// (switch endian if necessary;) copy into the context buffer 0x01,
 	// then pad with zeros until the number of bytes is 0 mod 8
+	copy_mach_little_64(temp, ctx->buf, ctx->sz);
+	i = ctx->sz;
 #if BYTE_ORDER == BIG_ENDIAN
-	for (i = 0; i < ctx->sz; i++)
-		temp8[i ^ 7] = reinterpret_cast<const uint8_t *>(ctx->buf)[i];
 	temp8[i++ ^ 7] = 0x01;
 	while (i & 7) temp8[i++ ^ 7] = 0;
 #else
-	std::copy(ctx->buf, ctx->buf + ctx->sz, temp8);
-	i = ctx->sz;
 	temp8[i++] = 0x01;
 	while (i & 7) temp8[i++] = 0;
 #endif
