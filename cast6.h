@@ -16,9 +16,15 @@
 #define CAST6_H
 
 #include <features.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+#include <cstddef>
+namespace fluks {
+#else
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+#endif
 
 /** Size of a CAST-256 block (bytes) */
 static const size_t CAST6_BLOCK = 16;
@@ -71,5 +77,9 @@ void	cast6_decrypt(const struct cast6_ctx *ctx,
 	    uint8_t plaintext[CAST6_BLOCK]);
 
 __END_DECLS
+
+#ifdef __cplusplus
+} // end namespace
+#endif
 
 #endif
