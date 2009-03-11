@@ -19,11 +19,11 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-#include <cstddef>
+#	include <cstddef>
 namespace fluks {
 #else
-#include <stdbool.h>
-#include <stddef.h>
+#	include <stdbool.h>
+#	include <stddef.h>
 #endif
 
 /** Size of a CAST-256 block (bytes) */
@@ -79,7 +79,7 @@ void	cast6_decrypt(const struct cast6_ctx *ctx,
 __END_DECLS
 
 #ifdef __cplusplus
-} // end namespace
+} // end fluks
 #endif
 
 #endif

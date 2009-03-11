@@ -373,13 +373,12 @@ ROL(uint32_t x, uint8_t bits)
 
 /* only really needed for LE machines; copy a byte array to/from a word array
  * reordering bytes so that the first byte in the uint8_t array is
- * the most significant byte of the first word in the uint32_t array */
+ * the most significant byte of the first word in the uint32_t array;
+ * it should be ensured that whichever is the 32-bit array must be at a
+ * correct alignment */
 static inline void
 copy_switch32(void *out, const void *in, size_t sz)
 {
-	/* make alignment checks */
-	assert(!((long)out & 3));
-	assert(!((long)in & 3));
 #if BYTE_ORDER == BIG_ENDIAN
 	memcpy(out, in, sz);
 #else
@@ -479,122 +478,50 @@ kappa_km(uint32_t *Kmi, const uint32_t K[8])
 	Kmi[3] = K[1];
 }
 
+/* encrypt in place */
 static inline void
-encrypt(const struct cast6_ctx *ctx,
-    const uint32_t plaintext[4], uint32_t ciphertext[4])
+encrypt(const struct cast6_ctx *ctx, uint32_t block[4])
 {
 	uint8_t i = 0;
-	memcpy(ciphertext, plaintext, 16);
 	for (; i < 6; i++)
-		beta_q(ciphertext, ctx->Kr[i], ctx->Km[i]);
+		beta_q(block, ctx->Kr[i], ctx->Km[i]);
 	for (; i < 12; i++)
-		beta_qbar(ciphertext, ctx->Kr[i], ctx->Km[i]);
+		beta_qbar(block, ctx->Kr[i], ctx->Km[i]);
 }
 
+/* decrypt in place */
 static inline void
-decrypt(const struct cast6_ctx *ctx,
-    const uint32_t plaintext[4], uint32_t ciphertext[4])
+decrypt(const struct cast6_ctx *ctx, uint32_t block[4])
 {
 	uint8_t i = 0;
-	memcpy(ciphertext, plaintext, 16);
 	for (; i < 6; i++)
-		beta_q(ciphertext, ctx->Kr[11-i], ctx->Km[11-i]);
+		beta_q(block, ctx->Kr[11-i], ctx->Km[11-i]);
 	for (; i < 12; i++)
-		beta_qbar(ciphertext, ctx->Kr[11-i], ctx->Km[11-i]);
+		beta_qbar(block, ctx->Kr[11-i], ctx->Km[11-i]);
 }
 
 void
 cast6_encrypt(const struct cast6_ctx *ctx,
     const uint8_t plaintext[16], uint8_t ciphertext[16])
 {
-	uint32_t c[4];
-	uint32_t p[4];
-#if BYTE_ORDER == BIG_ENDIAN
-	uint32_t *c2;
-	const uint32_t *p2;
-	if ((unsigned)ciphertext & 3) {
-		/* fix alignment */
-		memcpy(c, ciphertext, 16);
-		c2 = c;
-	} else
-		c2 = (uint32_t *)ciphertext;
-	if ((unsigned)plaintext & 3) {
-		/* fix alignment */
-		memcpy(p, plaintext, 16);
-		p2 = p;
-	} else
-		p2 = (const uint32_t *)plaintext;
-
-	encrypt(ctx, p2, c2);
-
-	if ((uint32_t *)ciphertext != c2)
-		memcpy(ciphertext, c2, 16);
-#else
-	uint32_t tmp[4];
-
-	if ((unsigned)plaintext & 3) {
-		/* fix alignment */
-		memcpy(tmp, plaintext, 16);
-		copy_switch32(p, tmp, 16);
-	} else
-		copy_switch32(p, plaintext, 16);
-
-	encrypt(ctx, p, c);
-
-	if ((unsigned)ciphertext & 3) {
-		/* fix alignment */
-		copy_switch32(tmp, c, 16);
-		memcpy(ciphertext, tmp, 16);
-	} else
-		copy_switch32(ciphertext, c, 16);
-#endif
+	/* copy to a 32-bit block, fixing any potential alignment or endian
+	 * issues */
+	uint32_t block[4];
+	copy_switch32(block, plaintext, 16);
+	encrypt(ctx, block);
+	copy_switch32(ciphertext, block, 16);
 }
 
 void
 cast6_decrypt(const struct cast6_ctx *ctx,
     const uint8_t ciphertext[16], uint8_t plaintext[16])
 {
-	uint32_t c[4];
-	uint32_t p[4];
-#if BYTE_ORDER == BIG_ENDIAN
-	const uint32_t *c2;
-	uint32_t *p2;
-	if ((unsigned)ciphertext & 3) {
-		/* fix alignment */
-		memcpy(c, ciphertext, 16);
-		c2 = c;
-	} else
-		c2 = (const uint32_t *)ciphertext;
-	if ((unsigned)plaintext & 3) {
-		/* fix alignment */
-		memcpy(p, plaintext, 16);
-		p2 = p;
-	} else
-		p2 = (uint32_t *)plaintext;
-
-	encrypt(ctx, c2, p2);
-
-	if ((uint32_t *)plaintext != p2)
-		memcpy(plaintext, p2, 16);
-#else
-	uint32_t tmp[4];
-
-	if ((unsigned)ciphertext & 3) {
-		/* fix alignment */
-		memcpy(tmp, ciphertext, 16);
-		copy_switch32(c, tmp, 16);
-	} else
-		copy_switch32(c, ciphertext, 16);
-
-	decrypt(ctx, c, p);
-
-	if ((unsigned)plaintext & 3) {
-		/* fix alignment */
-		copy_switch32(tmp, p, 16);
-		memcpy(plaintext, tmp, 16);
-	} else
-		copy_switch32(plaintext, p, 16);
-#endif
+	/* copy to a 32-bit block, fixing any potential alignment or endian
+	 * issues */
+	uint32_t block[4];
+	copy_switch32(block, ciphertext, 16);
+	decrypt(ctx, block);
+	copy_switch32(plaintext, block, 16);
 }
 
 #ifdef GEN_TABLES
@@ -673,16 +600,9 @@ bool
 cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz)
 {
 	uint32_t kappa[8];
-	uint32_t tmp[8];
 
 	if (sz & 0x3 || sz < 16 || sz > 32)
 		return false;
-
-	if ((unsigned)key & 3) {
-		/* fix alignment */
-		memcpy(tmp, key, sz);
-		key = (const uint8_t *)tmp;
-	}
 
 	/* sizes are multiples of 4, so this works fine:
 	 * copy key (switching endian) into kappa, then fill rest with 0 */
