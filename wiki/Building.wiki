@@ -13,6 +13,6 @@ libdevmapper comes with device-mapper at http://sources.redhat.com/dm/
 
 libuuid is part of e2fsprogs at http://e2fsprogs.sourceforge.net/
 
-boost is at http://boost.org/
+boost is at http://boost.org/ .  If you use C++ but not boost, then your life must be miserable.
 
 After the libraries are installed, you can run bjam from the directory with the Jamroot file in it.  bjam goes by other names like Boost.Build or Boost.Jam.
