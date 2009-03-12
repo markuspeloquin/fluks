@@ -102,9 +102,7 @@ fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
 		// swap value at order[i] with order[r], where r is random
 		// in [i:NUM_PATTERNS)
 		uint8_t r = i + rand_index(NUM_PATTERNS - i);
-		uint8_t t = order[i];
-		order[i] = order[r];
-		order[r] = t;
+		std::swap(order[i], order[r]);
 	}
 
 	for (uint8_t i = 0; i < 4; i++) {
