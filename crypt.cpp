@@ -317,6 +317,48 @@ fluks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 }
 
 void
+fluks::ofb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz, uint8_t *out)
+{
+	// need two buffers because cannot encrypt in place
+	uint8_t		buf1[crypter->block_size()];
+	uint8_t		buf2[crypter->block_size()];
+	uint32_t	blocks = sz / crypter->block_size();
+	size_t		sz_blk = crypter->block_size();
+	uint8_t		*buf_this = buf1;
+	uint8_t		*buf_prev = buf2;
+
+	// encrypt whole blocks
+	for (uint32_t i = 0; i < blocks; i++) {
+		// first block:
+		//   tmp = E(IV)
+		//   out = tmp XOR in
+		// for rest:
+		//   tmp = E(tmp)
+		//   out = tmp XOR in
+		if (i)
+			crypter->crypt(buf_prev, buf_this);
+		else
+			crypter->crypt(iv, buf_this);
+		xor_bufs(in, buf_this, sz_blk, out);
+
+		in += sz_blk;
+		out += sz_blk;
+		std::swap(buf_this, buf_prev);
+	}
+
+	// encrypt partial block
+	uint32_t left = sz % sz_blk;
+	if (left) {
+		if (blocks)
+			crypter->crypt(buf_prev, buf_this);
+		else
+			crypter->crypt(iv, buf_this);
+		xor_bufs(in, buf_this, left, out);
+	}
+}
+
+void
 fluks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
@@ -411,6 +453,7 @@ fluks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
 	}
 	case BM_CFB:
 	case BM_CTR:
+	case BM_OFB:
 		return sz_data;
 	default:
 		Assert(0, "ciphertext_size() block mode undefined");
@@ -484,6 +527,9 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		case BM_ECB:
 			ecb_encrypt(encrypter.get(), iv, data, by, out);
 			break;
+		case BM_OFB:
+			ofb_encrypt(encrypter.get(), iv, data, by, out);
+			break;
 		case BM_PCBC:
 			pcbc_encrypt(encrypter.get(), iv, data, by, out);
 			break;
@@ -515,8 +561,8 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 	switch (block_mode) {
 	case BM_CFB:
 	case BM_CTR:
-		// cipher feedback is another that only requires a cipher's
-		// encryption algorithm
+	case BM_OFB:
+		// encrypt to decrypt :)
 		dir = DIR_ENCRYPT;
 		break;
 	default:
@@ -574,6 +620,9 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 			break;
 		case BM_ECB:
 			ecb_decrypt(decrypter.get(), iv, data, by, out);
+			break;
+		case BM_OFB:
+			ofb_decrypt(decrypter.get(), iv, data, by, out);
 			break;
 		case BM_PCBC:
 			pcbc_decrypt(decrypter.get(), iv, data, by, out);

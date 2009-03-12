@@ -210,12 +210,14 @@ Lookup::Lookup()
 	block_mode_stat_map[BM_CFB] = (block_mode_stat){ "cfb", 0 };
 	block_mode_stat_map[BM_CTR] = (block_mode_stat){ "ctr", 0 };
 	block_mode_stat_map[BM_ECB] = (block_mode_stat){ "ecb", 1 };
+	block_mode_stat_map[BM_OFB] = (block_mode_stat){ "ofb", 0 };
 	block_mode_stat_map[BM_PCBC] = (block_mode_stat){ "pcbc", 0 };
 
 	block_mode_name_map["cbc"] = BM_CBC;
 	block_mode_name_map["cfb"] = BM_CFB;
 	block_mode_name_map["ctr"] = BM_CTR;
 	block_mode_name_map["ecb"] = BM_ECB;
+	block_mode_name_map["ofb"] = BM_OFB;
 	block_mode_name_map["pcbc"] = BM_PCBC;
 
 	iv_mode_stat_map[IM_ESSIV] = (iv_mode_stat){ "essiv", 1 };

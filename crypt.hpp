@@ -59,9 +59,11 @@ public:
 	/** En/Decrypt a block of data
 	 *
 	 * \param in	The data to be en/decrypted
-	 * \param out	The output of the en/decryption
-	 * \throw Crypt_error	Typically, this will occur only if the
-	 *	init() function was not first called.
+	 * \param out	The output of the en/decryption, usually cannot be
+	 *	equal to <code>in</code>.
+	 * \throw Crypt_error	This will occur if the init() function was
+	 *	not first called or if <code>in<code> cannot be equal to
+	 *	</code>out</code>.
 	 */
 	virtual void crypt(const uint8_t *in, uint8_t *out)
 	    throw (Crypt_error) = 0;
@@ -168,7 +170,7 @@ void		cbc_decrypt(Crypt *crypter, const uint8_t *iv,
 void		cfb_encrypt(Crypt *crypter, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
-/** Decrypt using Cyclic Block Chaining mode
+/** Decrypt using Cipher feedback
  *
  * \param[in] crypter	Block decrypter
  * \param[in] iv	Initialization Vector
@@ -240,6 +242,30 @@ void		ecb_encrypt(Crypt *crypter, const uint8_t *iv,
 void		ecb_decrypt(Crypt *crypter, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
+/** Encrypt using Output feedback
+ *
+ * \param[in] crypter	Block encrypter
+ * \param[in] iv	Initialization Vector
+ * \param[in] in	Plaintext
+ * \param[in] sz	The size of the plaintext and resulting ciphertext
+ * \param[out] out	The ciphertext.  It should be at least as big as the
+ *	plaintext buffer.
+ */
+void		ofb_encrypt(Crypt *crypter, const uint8_t *iv,
+		    const uint8_t *in, size_t sz, uint8_t *out);
+
+/** Decrypt using Output feedback
+ *
+ * \param[in] crypter	Block decrypter
+ * \param[in] iv	Initialization Vector
+ * \param[in] in	Ciphertext
+ * \param[in] sz	The size of the plaintext and ciphertext
+ * \param[out] out	Plaintext.  It should be at least as big as the
+ *	ciphertext buffer.
+ */
+void		ofb_decrypt(Crypt *crypter, const uint8_t *iv,
+		    const uint8_t *in, size_t sz, uint8_t *out);
+
 /** Encrypt using Propagating Cyclic Block Chaining mode
  *
  * The final block is padded as necessary so that the size of the plaintext
@@ -268,11 +294,17 @@ void		pcbc_encrypt(Crypt *crypter, const uint8_t *iv,
 void		pcbc_decrypt(Crypt *crypter, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
-// the encryption and decryption work the same
+
+// the encryption and decryption work the same for these
 inline void
 ctr_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {	ctr_encrypt(crypter, iv, in, sz, out); }
+inline void
+ofb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz, uint8_t *out)
+{	ofb_encrypt(crypter, iv, in, sz, out); }
+
 
 /** AES encryption, using OpenSSL */
 class Crypt_aes : public Crypt {
@@ -296,6 +328,10 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for AES
+			throw Crypt_error("for AES, input and output buffers "
+			    "should be different");
 		if (_dir == DIR_ENCRYPT)
 			AES_encrypt(in, out, &_key);
 		else
@@ -326,6 +362,10 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for blowfish
+			throw Crypt_error("for Blowfish, input and output "
+			    "buffers should be different");
 		BF_ecb_encrypt(in, out, &_key, _dir == DIR_ENCRYPT ?
 		    BF_ENCRYPT : BF_DECRYPT);
 	}
@@ -354,6 +394,10 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for cast5
+			throw Crypt_error("for CAST5, input and output "
+			    "buffers should be different");
 		CAST_ecb_encrypt(in, out, &_key, _dir == DIR_ENCRYPT ?
 		    CAST_ENCRYPT : CAST_DECRYPT);
 	}
@@ -382,6 +426,9 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
+		// CAST6 encryption works by copying the plaintext data
+		// to the ciphertext buffer, then modifies it; so in can
+		// be equal to out
 		if (_dir == DIR_ENCRYPT)
 			cast6_encrypt(&_ctx, in, out);
 		else
@@ -413,6 +460,10 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for serpent
+			throw Crypt_error("for Serpent, input and output "
+			    "buffers should be different");
 		if (_dir == DIR_ENCRYPT)
 			serpent_encrypt(&_key, in, out);
 		else
@@ -443,6 +494,10 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for twofish
+			throw Crypt_error("for Twofish, input and output "
+			    "buffers should be different");
 		if (_dir == DIR_ENCRYPT)
 			twofish_encrypt(&_key, in, out);
 		else

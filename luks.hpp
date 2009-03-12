@@ -132,6 +132,7 @@ enum block_mode {
 	 *
 	 * Described in RFC 2040, Section 8 */
 	BM_ECB, /**< Electronic codebook */
+	BM_OFB, /**< Output feedback */
 	BM_PCBC /**< Propogating cipher-block chaining */
 };
 
