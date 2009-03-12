@@ -63,7 +63,7 @@ uint8_t rand_index(uint8_t max)
 	do {
 		if (!RAND_bytes(&r, 1))
 			throw Ssl_error();
-	} while (r < max_accept);
+	} while (r >= max_accept);
 	return r % max;
 }
 
