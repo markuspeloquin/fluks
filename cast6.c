@@ -22,11 +22,6 @@
 #	include <stdio.h>
 #endif
 
-/* ensure assertions are off */
-#ifndef NDEBUG
-#	define NDEBUG
-#endif
-
 /* make sure we can tell the endian */
 #ifndef BYTE_ORDER
 #	error "BYTE_ORDER not defined"
