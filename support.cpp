@@ -207,11 +207,13 @@ Lookup::Lookup()
 	hash_name_map["wp512"] = HT_WHIRLPOOL512;
 
 	block_mode_stat_map[BM_CBC] = (block_mode_stat){ "cbc", 1 };
+	block_mode_stat_map[BM_CFB] = (block_mode_stat){ "cfb", 0 };
 	block_mode_stat_map[BM_CTR] = (block_mode_stat){ "ctr", 0 };
 	block_mode_stat_map[BM_ECB] = (block_mode_stat){ "ecb", 1 };
 	block_mode_stat_map[BM_PCBC] = (block_mode_stat){ "pcbc", 0 };
 
 	block_mode_name_map["cbc"] = BM_CBC;
+	block_mode_name_map["cfb"] = BM_CFB;
 	block_mode_name_map["ctr"] = BM_CTR;
 	block_mode_name_map["ecb"] = BM_ECB;
 	block_mode_name_map["pcbc"] = BM_PCBC;

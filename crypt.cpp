@@ -107,16 +107,13 @@ fluks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	// encrypt partial block
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
-		// write partial block into 'buf'
-		std::copy(in, in + left, buf);
-		std::fill(buf + left, buf + sz_blk, 0);
-
-		if (sz_plain > sz_blk)
+		if (blocks)
 			// not first block
-			xor_bufs(out - sz_blk, buf, sz_blk, buf);
+			xor_bufs(out - sz_blk, in, left, buf);
 		else
 			// first block
-			xor_bufs(iv, buf, sz_blk, buf);
+			xor_bufs(iv, in, left, buf);
+		std::fill(buf + left, buf + sz_blk, 0);
 		crypter->crypt(buf, out);
 	}
 }
@@ -149,12 +146,84 @@ fluks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
 		crypter->crypt(in, buf);
-		if (sz_plain > sz_blk)
+		if (blocks)
 			// not first block
 			xor_bufs(buf, in - sz_blk, left, out);
 		else
 			// first block
 			xor_bufs(buf, iv, left, out);
+	}
+}
+
+void
+fluks::cfb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz, uint8_t *out)
+{
+	uint32_t	blocks = sz / crypter->block_size();
+	size_t		sz_blk = crypter->block_size();
+
+	// encrypt whole blocks
+	for (uint32_t i = 0; i < blocks; i++) {
+		// first block:
+		//   out = E(IV) XOR in
+		// for rest:
+		//   out = E(out_prev) XOR in
+		if (i)
+			crypter->crypt(out - sz_blk, out);
+		else
+			crypter->crypt(iv, out);
+		xor_bufs(in, out, sz_blk, out);
+
+		in += sz_blk;
+		out += sz_blk;
+	}
+
+	// encrypt partial block
+	uint32_t left = sz % sz_blk;
+	if (left) {
+		uint8_t buf[crypter->block_size()];
+
+		if (blocks)
+			crypter->crypt(out - sz_blk, buf);
+		else
+			crypter->crypt(iv, buf);
+		xor_bufs(in, buf, left, out);
+	}
+}
+
+void
+fluks::cfb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+    size_t sz, uint8_t *out)
+{
+	uint32_t	blocks = sz / crypter->block_size();
+	size_t		sz_blk = crypter->block_size();
+
+	// decrypt whole blocks
+	for (uint32_t i = 0; i < blocks; i++) {
+		// first block:
+		//   out = E(IV) XOR in
+		// for rest:
+		//   out = E(in_prev) XOR in
+		if (i)
+			crypter->crypt(in - sz_blk, out);
+		else
+			crypter->crypt(iv, out);
+		xor_bufs(in, out, sz_blk, out);
+
+		in += sz_blk;
+		out += sz_blk;
+	}
+
+	// encrypt partial block
+	uint32_t left = sz % sz_blk;
+	if (left) {
+		uint8_t buf[crypter->block_size()];
+
+		if (blocks)
+			crypter->crypt(in - sz_blk, buf);
+		else
+			crypter->crypt(iv, buf);
+		xor_bufs(in, buf, left, out);
 	}
 }
 
@@ -340,6 +409,7 @@ fluks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
 		size_t numblocks = (sz_data + blocksize - 1) / blocksize;
 		return numblocks * blocksize;
 	}
+	case BM_CFB:
 	case BM_CTR:
 		return sz_data;
 	default:
@@ -405,6 +475,9 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		case BM_CBC:
 			cbc_encrypt(encrypter.get(), iv, data, by, out);
 			break;
+		case BM_CFB:
+			cfb_encrypt(encrypter.get(), iv, data, by, out);
+			break;
 		case BM_CTR:
 			ctr_encrypt(encrypter.get(), iv, data, by, out);
 			break;
@@ -440,9 +513,10 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 	enum crypt_direction dir;
 
 	switch (block_mode) {
+	case BM_CFB:
 	case BM_CTR:
-		// output feedback and cipher feedback are two others that
-		// only require a cipher's encryption algorithm
+		// cipher feedback is another that only requires a cipher's
+		// encryption algorithm
 		dir = DIR_ENCRYPT;
 		break;
 	default:
@@ -491,6 +565,9 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 		switch (block_mode) {
 		case BM_CBC:
 			cbc_decrypt(decrypter.get(), iv, data, by, out);
+			break;
+		case BM_CFB:
+			cfb_decrypt(decrypter.get(), iv, data, by, out);
 			break;
 		case BM_CTR:
 			ctr_decrypt(decrypter.get(), iv, data, by, out);

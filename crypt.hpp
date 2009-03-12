@@ -156,6 +156,30 @@ void		cbc_encrypt(Crypt *crypter, const uint8_t *iv,
 void		cbc_decrypt(Crypt *crypter, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
+/** Encrypt using Cipher feedback
+ *
+ * \param[in] crypter	Block encrypter
+ * \param[in] iv	Initialization Vector
+ * \param[in] in	Plaintext
+ * \param[in] sz	The size of the plaintext and resulting ciphertext
+ * \param[out] out	The ciphertext.  It should be at least as big as the
+ *	plaintext buffer.
+ */
+void		cfb_encrypt(Crypt *crypter, const uint8_t *iv,
+		    const uint8_t *in, size_t sz, uint8_t *out);
+
+/** Decrypt using Cyclic Block Chaining mode
+ *
+ * \param[in] crypter	Block decrypter
+ * \param[in] iv	Initialization Vector
+ * \param[in] in	Ciphertext
+ * \param[in] sz	The size of the plaintext and ciphertext
+ * \param[out] out	Plaintext.  It should be at least as big as the
+ *	ciphertext buffer.
+ */
+void		cfb_decrypt(Crypt *crypter, const uint8_t *iv,
+		    const uint8_t *in, size_t sz, uint8_t *out);
+
 /** Encrypt using Counter mode
  *
  * The plaintext and the ciphertext will have the same length, as counter

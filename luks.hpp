@@ -125,13 +125,14 @@ enum cipher_type {
 /** Cipher block modes supported by <em>fluks</em> */
 enum block_mode {
 	BM_UNDEFINED = 0,
-	BM_CBC, /**< Cipher Block Chaining */
+	BM_CBC, /**< Cipher-block chaining */
+	BM_CFB, /**< Cipher feedback */
 	BM_CTR, /**< Counter */
 	/** Cipher Text Stealing
 	 *
 	 * Described in RFC 2040, Section 8 */
-	BM_ECB,
-	BM_PCBC /**< Propogating Cipher Block Chaining */
+	BM_ECB, /**< Electronic codebook */
+	BM_PCBC /**< Propogating cipher-block chaining */
 };
 
 
