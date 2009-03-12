@@ -514,6 +514,7 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		break;
 	default:
 		Assert(0, "encrypt() block mode undefined");
+		return;
 	}
 
 	for (uint16_t s = 0; s < num_sect; s++) {
@@ -612,6 +613,7 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 		break;
 	default:
 		Assert(0, "decrypt() block mode undefined");
+		return;
 	}
 
 	for (uint16_t s = 0; s < num_sect; s++) {

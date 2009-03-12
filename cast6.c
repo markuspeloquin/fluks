@@ -23,7 +23,9 @@
 #endif
 
 /* ensure assertions are off */
-#define NDEBUG
+#ifndef NDEBUG
+#	define NDEBUG
+#endif
 
 /* make sure we can tell the endian */
 #ifndef BYTE_ORDER
