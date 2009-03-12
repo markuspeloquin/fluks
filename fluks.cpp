@@ -66,7 +66,7 @@ list_modes()
 		std::cout << ")\n";
 	}
 
-	std::cout << "hashes (with digest size):\n";
+	std::cout << "\nhashes (with digest size):\n";
 	for (std::vector<enum hash_type>::iterator i = hashes.begin();
 	    i != hashes.end(); ++i) {
 
@@ -80,7 +80,7 @@ list_modes()
 		    << hash_info::digest_size(*i) * 8 << ")\n";
 	}
 
-	std::cout << "block modes:\n";
+	std::cout << "\nblock modes:\n";
 	for (std::vector<enum block_mode>::iterator i = block_modes.begin();
 	    i != block_modes.end(); ++i) {
 
@@ -93,7 +93,7 @@ list_modes()
 		std::cout << block_mode_info::name(*i) << '\n';
 	}
 
-	std::cout << "IV generation modes:\n";
+	std::cout << "\nIV generation modes:\n";
 	for (std::vector<enum iv_mode>::iterator i = iv_modes.begin();
 	    i != iv_modes.end(); ++i) {
 
