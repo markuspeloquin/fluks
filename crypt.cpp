@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 
 #include "crypt.hpp"
 #include "errors.hpp"
@@ -490,6 +491,31 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		break;
 	}
 
+	void (*encrypt)(Crypt *, const uint8_t *, const uint8_t *, size_t,
+	    uint8_t *);
+	switch (block_mode) {
+	case BM_CBC:
+		encrypt = cbc_encrypt;
+		break;
+	case BM_CFB:
+		encrypt = cfb_encrypt;
+		break;
+	case BM_CTR:
+		encrypt = ctr_encrypt;
+		break;
+	case BM_ECB:
+		encrypt = ecb_encrypt;
+		break;
+	case BM_OFB:
+		encrypt = ofb_encrypt;
+		break;
+	case BM_PCBC:
+		encrypt = pcbc_encrypt;
+		break;
+	default:
+		Assert(0, "encrypt() block mode undefined");
+	}
+
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
 		switch (iv_mode) {
@@ -514,28 +540,7 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 			by = sz_sector;
 		}
 
-		switch (block_mode) {
-		case BM_CBC:
-			cbc_encrypt(encrypter.get(), iv, data, by, out);
-			break;
-		case BM_CFB:
-			cfb_encrypt(encrypter.get(), iv, data, by, out);
-			break;
-		case BM_CTR:
-			ctr_encrypt(encrypter.get(), iv, data, by, out);
-			break;
-		case BM_ECB:
-			ecb_encrypt(encrypter.get(), iv, data, by, out);
-			break;
-		case BM_OFB:
-			ofb_encrypt(encrypter.get(), iv, data, by, out);
-			break;
-		case BM_PCBC:
-			pcbc_encrypt(encrypter.get(), iv, data, by, out);
-			break;
-		default:
-			Assert(0, "encrypt() block mode undefined");
-		}
+		encrypt(encrypter.get(), iv, data, by, out);
 
 		data += sz_sector;
 		out += sz_sector;
@@ -584,6 +589,31 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 		break;
 	}
 
+	void (*decrypt)(Crypt *, const uint8_t *, const uint8_t *, size_t,
+	    uint8_t *);
+	switch (block_mode) {
+	case BM_CBC:
+		decrypt = cbc_decrypt;
+		break;
+	case BM_CFB:
+		decrypt = cfb_decrypt;
+		break;
+	case BM_CTR:
+		decrypt = ctr_decrypt;
+		break;
+	case BM_ECB:
+		decrypt = ecb_decrypt;
+		break;
+	case BM_OFB:
+		decrypt = ofb_decrypt;
+		break;
+	case BM_PCBC:
+		decrypt = pcbc_decrypt;
+		break;
+	default:
+		Assert(0, "decrypt() block mode undefined");
+	}
+
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
 		switch (iv_mode) {
@@ -608,28 +638,7 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 			by = sz_sector;
 		}
 
-		switch (block_mode) {
-		case BM_CBC:
-			cbc_decrypt(decrypter.get(), iv, data, by, out);
-			break;
-		case BM_CFB:
-			cfb_decrypt(decrypter.get(), iv, data, by, out);
-			break;
-		case BM_CTR:
-			ctr_decrypt(decrypter.get(), iv, data, by, out);
-			break;
-		case BM_ECB:
-			ecb_decrypt(decrypter.get(), iv, data, by, out);
-			break;
-		case BM_OFB:
-			ofb_decrypt(decrypter.get(), iv, data, by, out);
-			break;
-		case BM_PCBC:
-			pcbc_decrypt(decrypter.get(), iv, data, by, out);
-			break;
-		default:
-			Assert(0, "decrypt() block mode undefined");
-		}
+		decrypt(decrypter.get(), iv, data, by, out);
 
 		data += sz_sector;
 		out += sz_sector;
