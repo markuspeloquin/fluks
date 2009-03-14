@@ -49,7 +49,7 @@ struct whirlpool_ctx {
 	int bufferPos;
 
 	/* the hashing state */
-	uint64_t hash[WHIRLPOOL_SZ_DIGEST / sizeof(uint64_t)];
+	uint64_t hash[WHIRLPOOL_SZ_DIGEST / 8];
 };
 
 __BEGIN_DECLS
