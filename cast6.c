@@ -376,6 +376,8 @@ ROL(uint32_t x, uint8_t bits)
 static inline void
 copy_switch32(void *out, const void *in, size_t sz)
 {
+	/* only should be called if sz = 0 mod 4 */
+	assert(!(sz & 3));
 #if BYTE_ORDER == BIG_ENDIAN
 	memcpy(out, in, sz);
 #else

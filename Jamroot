@@ -10,6 +10,7 @@ using gcc
 lib boost_filesystem ;
 lib boost_program_options ;
 lib boost_regex ;
+lib boost_system ;
 lib devmapper ;
 lib ssl ;
 lib uuid ;
@@ -27,4 +28,12 @@ exe fluks
 	    # libraries
 	    boost_filesystem boost_program_options
 	    boost_regex devmapper ssl uuid
+	;
+exe run_test
+	:
+	    run_test.cpp
+	    crypt.cpp errors.cpp hash.cpp hmac.cpp
+	    support.cpp tiger.cpp util.cpp
+	    cast6.c serpent.c twofish.c whirlpool.c
+	    boost_system ssl
 	;
