@@ -20,7 +20,6 @@
 
 #ifdef __cplusplus
 #	include <cstddef>
-namespace fluks {
 #else
 #	include <stdbool.h>
 #	include <stddef.h>
@@ -77,9 +76,5 @@ void	cast6_decrypt(const struct cast6_ctx *ctx,
 	    uint8_t plaintext[CAST6_BLOCK]);
 
 __END_DECLS
-
-#ifdef __cplusplus
-} // end fluks
-#endif
 
 #endif

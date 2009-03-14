@@ -19,10 +19,9 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-#include <cstddef>
-namespace fluks {
+#	include <cstddef>
 #else
-#include <stddef.h>
+#	include <stddef.h>
 #endif
 
 const size_t TIGER_SZ_BLOCK = 64;
@@ -67,9 +66,5 @@ void	tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz);
 void	tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST]);
 
 __END_DECLS
-
-#ifdef __cplusplus
-} // end fluks namespace
-#endif
 
 #endif

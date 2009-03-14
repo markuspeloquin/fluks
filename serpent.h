@@ -19,10 +19,9 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-#include <cstddef>
-namespace fluks {
+#	include <cstddef>
 #else
-#include <stddef.h>
+#	include <stddef.h>
 #endif
 
 const size_t SERPENT_BLOCK = 16;
@@ -48,9 +47,5 @@ void	serpent_decrypt(struct serpent_key *key, const uint8_t *input,
 	    uint8_t *out);
 
 __END_DECLS
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

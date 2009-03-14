@@ -19,10 +19,9 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-#include <cstddef>
-namespace fluks {
+#	include <cstddef>
 #else
-#include <stddef.h>
+#	include <stddef.h>
 #endif
 
 const size_t TWOFISH_BLOCK = 16;
@@ -68,9 +67,5 @@ void	twofish_decrypt(struct twofish_key *key, const uint8_t *in,
 	    uint8_t *out);
 
 __END_DECLS
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

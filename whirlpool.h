@@ -20,9 +20,7 @@
 
 #ifdef __cplusplus
 // C++
-#include <cstddef>
-
-namespace fluks {
+#	include <cstddef>
 
 // because I hate macros
 const size_t WHIRLPOOL256_SZ_DIGEST = 32;
@@ -32,17 +30,14 @@ const size_t WHIRLPOOL_SZ_BLOCK = 64;
 
 #else 
 /* C */
+#	include <stddef.h>
 #	define WHIRLPOOL_SZ_DIGEST	64
 #	define WHIRLPOOL_SZ_BLOCK	64
 #endif
 
-
-/* for internal use */
-#define LENGTHBYTES 32
-
 struct whirlpool_ctx {
 	/* global number of hashed bits (256-bit counter) */
-	uint8_t  bitLength[LENGTHBYTES];
+	uint8_t  bitLength[32];
 
 	/* buffer of data to hash */
 	uint8_t  buffer[WHIRLPOOL_SZ_BLOCK];
@@ -65,12 +60,5 @@ void	whirlpool_update(struct whirlpool_ctx *const ctx,
 void	whirlpool_end(struct whirlpool_ctx *const ctx, uint8_t *const buf);
 
 __END_DECLS
-
-#ifdef __cplusplus
-} // namespace fluks
-#endif
-
-/* it gets redefined in whirlpool.c */
-#undef LENGTHBYTES
 
 #endif
