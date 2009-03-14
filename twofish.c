@@ -322,7 +322,7 @@ static void keySched(const uint8_t M[], uint16_t N, uint32_t **S,
     uint8_t vector[8];
 
     *k = (N + 63) / 64;
-    *S = (uint32_t*)malloc(sizeof(uint32_t) * (*k));
+    *S = (uint32_t *)malloc(4 * *k);
 
     /* 2*i+1 gets as large as 127 */
     for (uint8_t i = 0; i < *k; i++)
