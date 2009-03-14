@@ -668,7 +668,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 }
 
 extern "C" void
-fluks::tiger_init(struct tiger_ctx *ctx, int passes)
+tiger_init(struct tiger_ctx *ctx, int passes)
 {
 	ctx->res[0] = 0x0123456789ABCDEFLL;
 	ctx->res[1] = 0xFEDCBA9876543210LL;
@@ -680,7 +680,7 @@ fluks::tiger_init(struct tiger_ctx *ctx, int passes)
 }
 
 extern "C" void
-fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
+tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 {
 	ctx->length += sz;
 	register uint8_t *ctxbuf8 = reinterpret_cast<uint8_t *>(ctx->buf);
@@ -726,7 +726,7 @@ fluks::tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 }
 
 extern "C" void
-fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
+tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 {
 	uint64_t temp[TIGER_SZ_BLOCK/8];
 	uint8_t *temp8 = reinterpret_cast<uint8_t *>(temp);
@@ -768,7 +768,7 @@ fluks::tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 // style inflicted upon it
 #if 0
 extern "C" void
-fluks::tiger_impl(const uint8_t *str8, uint64_t length, int passes,
+tiger_impl(const uint8_t *str8, uint64_t length, int passes,
     uint64_t res[3])
 {
 	uint8_t			temp[TIGER_SZ_BLOCK];
