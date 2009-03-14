@@ -29,21 +29,21 @@ const size_t SERPENT_BLOCK = 16;
 /** Key material not of correct length */
 const int SERPENT_BAD_KEY_MAT = -1;
 
-struct serpent_key {
-      int keyLen;
-      uint32_t key[8];
-      uint32_t subkeys[33][4];
+struct serpent_ctx {
+      uint32_t	key[8];
+      uint32_t	subkeys[33][4];
+      uint16_t	keyLen;
 };
 
 __BEGIN_DECLS
 
-int	serpent_set_key(struct serpent_key *key, const uint8_t *keydata,
+int	serpent_init(struct serpent_ctx *ctx, const uint8_t *key,
 	    size_t sz);
 
-void	serpent_encrypt(struct serpent_key *key, const uint8_t *input,
+void	serpent_encrypt(const struct serpent_ctx *ctx, const uint8_t *in,
 	    uint8_t *out);
 
-void	serpent_decrypt(struct serpent_key *key, const uint8_t *input,
+void	serpent_decrypt(const struct serpent_ctx *ctx, const uint8_t *in,
 	    uint8_t *out);
 
 __END_DECLS

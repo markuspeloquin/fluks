@@ -35,11 +35,13 @@
  * licence [including the GNU Public Licence.]
  */
 
+#include <stdint.h>
+
 /* S0:   3  8 15  1 10  6  5 11 14 13  4  2  7  0  9 12 */
 
 /* depth = 5,7,4,2, Total gates=18 */
 #define RND00(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t05, t06, t07, t08, t09, t11, t12, t13, t14, t15, t17, t01;\
+	{ register uint32_t t02, t03, t05, t06, t07, t08, t09, t11, t12, t13, t14, t15, t17, t01;\
 	t01 = b   ^ c  ; \
 	t02 = a   | d  ; \
 	t03 = a   ^ b  ; \
@@ -63,7 +65,7 @@
 
 /* depth = 8,4,3,6, Total gates=19 */
 #define InvRND00(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t08, t09, t10, t12, t13, t14, t15, t17, t18, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t08, t09, t10, t12, t13, t14, t15, t17, t18, t01;\
 	t01 = c   ^ d  ; \
 	t02 = a   | b  ; \
 	t03 = b   | c  ; \
@@ -88,7 +90,7 @@
 
 /* depth = 10,7,3,5, Total gates=18 */
 #define RND01(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t07, t08, t10, t11, t12, t13, t16, t17, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t07, t08, t10, t11, t12, t13, t16, t17, t01;\
 	t01 = a   | d  ; \
 	t02 = c   ^ d  ; \
 	t03 =     ~ b  ; \
@@ -112,7 +114,7 @@
 
 /* depth = 7,4,5,3, Total gates=18 */
 #define InvRND01(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t14, t15, t17, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t14, t15, t17, t01;\
 	t01 = a   ^ b  ; \
 	t02 = b   | d  ; \
 	t03 = a   & c  ; \
@@ -136,7 +138,7 @@
 
 /* depth = 3,8,11,7, Total gates=16 */
 #define RND02(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t05, t06, t07, t08, t09, t10, t12, t13, t14, t01;\
+	{ register uint32_t t02, t03, t05, t06, t07, t08, t09, t10, t12, t13, t14, t01;\
 	t01 = a   | c  ; \
 	t02 = a   ^ b  ; \
 	t03 = d   ^ t01; \
@@ -158,7 +160,7 @@
 
 /* depth = 3,6,8,3, Total gates=18 */
 #define InvRND02(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t06, t07, t08, t09, t10, t11, t12, t15, t16, t17, t01;\
+	{ register uint32_t t02, t03, t04, t06, t07, t08, t09, t10, t11, t12, t15, t16, t17, t01;\
 	t01 = a   ^ d  ; \
 	t02 = c   ^ d  ; \
 	t03 = a   & c  ; \
@@ -182,7 +184,7 @@
 
 /* depth = 8,3,5,5, Total gates=18 */
 #define RND03(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t13, t14, t15, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t13, t14, t15, t01;\
 	t01 = a   ^ c  ; \
 	t02 = a   | d  ; \
 	t03 = a   & d  ; \
@@ -206,7 +208,7 @@
 
 /* depth = 3,6,4,4, Total gates=17 */
 #define InvRND03(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t07, t09, t11, t12, t13, t14, t16, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t07, t09, t11, t12, t13, t14, t16, t01;\
 	t01 = c   | d  ; \
 	t02 = a   | d  ; \
 	t03 = c   ^ t02; \
@@ -229,7 +231,7 @@
 
 /* depth = 6,7,5,3, Total gates=19 */
 #define RND04(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t08, t09, t10, t11, t12, t13, t14, t15, t16, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t08, t09, t10, t11, t12, t13, t14, t15, t16, t01;\
 	t01 = a   | b  ; \
 	t02 = b   | c  ; \
 	t03 = a   ^ t02; \
@@ -254,7 +256,7 @@
 
 /* depth = 6,4,7,3, Total gates=17 */
 #define InvRND04(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t07, t09, t10, t11, t12, t13, t15, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t07, t09, t10, t11, t12, t13, t15, t01;\
 	t01 = b   | d  ; \
 	t02 = c   | d  ; \
 	t03 = a   & t01; \
@@ -277,7 +279,7 @@
 
 /* depth = 4,6,8,6, Total gates=17 */
 #define RND05(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t07, t08, t09, t10, t11, t12, t13, t14, t01;\
+	{ register uint32_t t02, t03, t04, t05, t07, t08, t09, t10, t11, t12, t13, t14, t01;\
 	t01 = b   ^ d  ; \
 	t02 = b   | d  ; \
 	t03 = a   & t01; \
@@ -300,7 +302,7 @@
 
 /* depth = 4,6,9,7, Total gates=17 */
 #define InvRND05(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t07, t08, t09, t10, t12, t13, t15, t16, t01;\
+	{ register uint32_t t02, t03, t04, t05, t07, t08, t09, t10, t12, t13, t15, t16, t01;\
 	t01 = a   & d  ; \
 	t02 = c   ^ t01; \
 	t03 = a   ^ d  ; \
@@ -323,7 +325,7 @@
 
 /* depth = 8,3,6,3, Total gates=19 */
 #define RND06(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t07, t08, t09, t10, t11, t12, t13, t15, t17, t18, t01;\
+	{ register uint32_t t02, t03, t04, t05, t07, t08, t09, t10, t11, t12, t13, t15, t17, t18, t01;\
 	t01 = a   & d  ; \
 	t02 = b   ^ c  ; \
 	t03 = a   ^ d  ; \
@@ -348,7 +350,7 @@
 
 /* depth = 5,3,8,6, Total gates=19 */
 #define InvRND06(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t07, t08, t09, t12, t13, t14, t15, t16, t17, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t07, t08, t09, t12, t13, t14, t15, t16, t17, t01;\
 	t01 = a   ^ c  ; \
 	t02 =     ~ c  ; \
 	t03 = b   & t01; \
@@ -373,7 +375,7 @@
 
 /* depth = 10,7,10,4, Total gates=19 */
 #define RND07(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t05, t06, t08, t09, t10, t11, t13, t14, t15, t16, t17, t01;\
+	{ register uint32_t t02, t03, t04, t05, t06, t08, t09, t10, t11, t13, t14, t15, t16, t17, t01;\
 	t01 = a   & c  ; \
 	t02 =     ~ d  ; \
 	t03 = a   & t02; \
@@ -398,7 +400,7 @@
 
 /* depth = 9,7,3,3, Total gates=18 */
 #define InvRND07(a,b,c,d,w,x,y,z) \
-	{ register unsigned long t02, t03, t04, t06, t07, t08, t09, t10, t11, t13, t14, t15, t16, t01;\
+	{ register uint32_t t02, t03, t04, t06, t07, t08, t09, t10, t11, t13, t14, t15, t16, t01;\
 	t01 = a   & b  ; \
 	t02 = a   | b  ; \
 	t03 = c   | t01; \
@@ -470,31 +472,31 @@
 
 /* Linear transformations and key mixing: */
 
-#define ROL(x,n) ((((unsigned long)(x))<<(n))| \
-                  (((unsigned long)(x))>>(32-(n))))
-#define ROR(x,n) ((((unsigned long)(x))<<(32-(n)))| \
-                  (((unsigned long)(x))>>(n)))
+#define ROL(x,n) ((((uint32_t)(x))<<(n))| \
+                  (((uint32_t)(x))>>(32-(n))))
+#define ROR(x,n) ((((uint32_t)(x))<<(32-(n)))| \
+                  (((uint32_t)(x))>>(n)))
 
 #define transform(x0, x1, x2, x3, y0, y1, y2, y3) \
       y0 = ROL(x0, 13); \
       y2 = ROL(x2, 3); \
       y1 = x1 ^ y0 ^ y2; \
-      y3 = x3 ^ y2 ^ ((unsigned long)y0)<<3; \
+      y3 = x3 ^ y2 ^ ((uint32_t)y0)<<3; \
       y1 = ROL(y1, 1); \
       y3 = ROL(y3, 7); \
       y0 = y0 ^ y1 ^ y3; \
-      y2 = y2 ^ y3 ^ ((unsigned long)y1<<7); \
+      y2 = y2 ^ y3 ^ ((uint32_t)y1<<7); \
       y0 = ROL(y0, 5); \
       y2 = ROL(y2, 22)
 
 #define inv_transform(x0, x1, x2, x3, y0, y1, y2, y3) \
       y2 = ROR(x2, 22);\
       y0 = ROR(x0, 5); \
-      y2 = y2 ^ x3 ^ ((unsigned long)x1<<7); \
+      y2 = y2 ^ x3 ^ ((uint32_t)x1<<7); \
       y0 = y0 ^ x1 ^ x3; \
       y3 = ROR(x3, 7); \
       y1 = ROR(x1, 1); \
-      y3 = y3 ^ y2 ^ ((unsigned long)y0)<<3; \
+      y3 = y3 ^ y2 ^ ((uint32_t)y0)<<3; \
       y1 = y1 ^ y0 ^ y2; \
       y2 = ROR(y2, 3); \
       y0 = ROR(y0, 13)
@@ -504,4 +506,4 @@
                          x2^=subkey[2];x3^=subkey[3]
 
 /* PHI: Constant used in the key schedule */
-#define PHI 0x9e3779b9L
+const uint32_t PHI = 0x9e3779b9UL;

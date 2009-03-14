@@ -453,27 +453,24 @@ public:
 	{
 		_init = true;
 		_dir = dir;
-		if (serpent_set_key(&_key, key, sz) == SERPENT_BAD_KEY_MAT)
+		if (serpent_init(&_ctx, key, sz) == SERPENT_BAD_KEY_MAT)
 			throw Crypt_error("bad key size");
 	}
 	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for serpent
-			throw Crypt_error("for Serpent, input and output "
-			    "buffers should be different");
+		// it's fine if in==out
 		if (_dir == DIR_ENCRYPT)
-			serpent_encrypt(&_key, in, out);
+			serpent_encrypt(&_ctx, in, out);
 		else
-			serpent_decrypt(&_key, in, out);
+			serpent_decrypt(&_ctx, in, out);
 	}
 	size_t block_size() const throw ()
 	{	return SERPENT_BLOCK; }
 
 private:
-	struct serpent_key	_key;
+	struct serpent_ctx	_ctx;
 	enum crypt_direction	_dir;
 	bool			_init;
 };
