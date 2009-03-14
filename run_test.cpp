@@ -233,8 +233,10 @@ main(int argc, char **argv)
 			dir_ = DIR_ENCRYPT;
 		else if (dir == "decrypt")
 			dir_ = DIR_DECRYPT;
-		else
+		else {
 			Assert(0, "undefined crypt direction: " + dir);
+			return 1; // won't return
+		}
 		uint8_t keybuf[key.size()/2];
 		dehex(key, keybuf);
 		uint8_t databuf[data.size()];
