@@ -35,23 +35,16 @@
 #include <string.h>
 #include "twofish.h"
 #include "twofish_tables.h"
-#define u32 uint32_t
-#define BYTE uint8_t
+#define uint32_t uint32_t
+#define uint8_t uint8_t
 #define RS_MOD 0x14D
-#define RHO 0x01010101L
+
+const uint32_t RHO = 0x01010101UL;
 
 #define TWOFISH_TESTING 0
 
 /* ensure ENDIAN macros exist */
 #include "endian_check.h"
-
-#if 0
-static unsigned int here(unsigned int x)
-{
-    unsigned int mask=~0U;
-    return (* (((unsigned int *)&x)-1)) & mask;
-}
-#endif
 
 /*
    gcc is smart enough to convert these to roll instructions.  If you want
@@ -61,46 +54,37 @@ static unsigned int here(unsigned int x)
 #define ROL(x,n) (((x) << ((n) & 0x1F)) | ((x) >> (32-((n) & 0x1F))))
 #define ROR(x,n) (((x) >> ((n) & 0x1F)) | ((x) << (32-((n) & 0x1F))))
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if uint8_t_ORDER == BIG_ENDIAN
 #	define BSWAP(x) (((ROR(x,8) & 0xFF00FF00) | (ROL(x,8) & 0x00FF00FF)))
 #else
 #	define BSWAP(x) (x)
 #endif
 
-#define _b(x, N) (((x) >> (N*8)) & 0xFF)
+/* get byte N of x, where 0 is the least significant byte */
+#define _b(x, N) ((uint8_t)((x) >> (N)*8))
 
 /* just casting to byte (instead of masking with 0xFF saves *tons* of clocks
    (around 50) */
-#define b0(x) ((BYTE)(x))
+#define b0(x) ((uint8_t)(x))
 /* this saved 10 clocks */
-#define b1(x) ((BYTE)((x) >> 8))
+#define b1(x) ((uint8_t)((x) >> 8))
 /* use byte cast here saves around 10 clocks */
-#define b2(x) (BYTE)((x) >> 16)
+#define b2(x) (uint8_t)((x) >> 16)
 /* don't need to mask since all bits are in lower 8 - byte cast here saves
    nothing, but hey, what the hell, it doesn't hurt any */
-#define b3(x) (BYTE)((x) >> 24)
+#define b3(x) (uint8_t)((x) >> 24)
 
-#define BYTEARRAY_TO_U32(r) ((r[0] << 24) ^ (r[1] << 16) ^ (r[2] << 8) ^ r[3])
-#define BYTES_TO_U32(r0, r1, r2, r3) ((r0 << 24) ^ (r1 << 16) ^ (r2 << 8) ^ r3)
-
-#if 0
-static void printSubkeys(u32 K[40])
-{
-    int i;
-    printf("round subkeys\n");
-    for (i=0;i<40;i+=2)
-	printf("%08X %08X\n", K[i], K[i+1]);
-}
-#endif
+#define uint8_tARRAY_TO_U32(r) ((r[0] << 24) ^ (r[1] << 16) ^ (r[2] << 8) ^ r[3])
+#define uint8_tS_TO_U32(r0, r1, r2, r3) ((r0 << 24) ^ (r1 << 16) ^ (r2 << 8) ^ r3)
 
 /*
-   multiply two polynomials represented as u32's, actually called with BYTES,
+   multiply two polynomials represented as uint32_t's, actually called with uint8_tS,
    but since I'm not really going to too much work to optimize key setup (since
    raw encryption speed is what I'm after), big deal.
 */
-static u32 polyMult(u32 a, u32 b)
+static uint32_t polyMult(uint32_t a, uint32_t b)
 {
-    u32 t=0;
+    uint32_t t = 0;
     while (a)
     {
 	/*printf("A=%X  B=%X  T=%X\n", a, b, t);*/
@@ -112,13 +96,12 @@ static u32 polyMult(u32 a, u32 b)
 }
 
 /* take the polynomial t and return the t % modulus in GF(256) */
-static u32 gfMod(u32 t, u32 modulus)
+static uint32_t gfMod(uint32_t t, uint32_t modulus)
 {
-    int i;
-    u32 tt;
+    uint32_t tt;
 
     modulus <<= 7;
-    for (i = 0; i < 8; i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
 	tt = t ^ modulus;
 	if (tt < t) t = tt;
@@ -130,33 +113,30 @@ static u32 gfMod(u32 t, u32 modulus)
 /*multiply a and b and return the modulus */
 #define gfMult(a, b, modulus) gfMod(polyMult(a, b), modulus)
 
-/* return a u32 containing the result of multiplying the RS Code matrix
+/* return a uint32_t containing the result of multiplying the RS Code matrix
    by the sd matrix
 */
-static u32 RSMatrixMultiply(BYTE sd[8])
+static uint32_t RSMatrixMultiply(uint8_t sd[8])
 {
-    int j, k;
-    BYTE t;
-    BYTE result[4];
+    uint8_t result[4];
 
-    for (j = 0; j < 4; j++)
+    for (uint8_t j = 0; j < 4; j++)
     {
-	t = 0;
-	for (k = 0; k < 8; k++)
+	uint8_t t = 0;
+	for (uint8_t k = 0; k < 8; k++)
 	{
-	    /*printf("t=%X  %X\n", t, gfMult(RS[j][k], sd[k], RS_MOD));*/
 	    t ^= gfMult(RS[j][k], sd[k], RS_MOD);
 	}
 	result[3-j] = t;
     }
-    return BYTEARRAY_TO_U32(result);
+    return uint8_tARRAY_TO_U32(result);
 }
 
 /* the Zero-keyed h function (used by the key setup routine) */
-static u32 h(u32 X, u32 L[4], int k)
+static uint32_t h(uint32_t X, uint32_t L[4], uint8_t k)
 {
-    BYTE y0, y1, y2, y3;
-    BYTE z0, z1, z2, z3;
+    uint8_t y0, y1, y2, y3;
+    uint8_t z0, z1, z2, z3;
     y0 = b0(X);
     y1 = b1(X);
     y2 = b2(X);
@@ -187,21 +167,19 @@ static u32 h(u32 X, u32 L[4], int k)
     z2 = mult5B[y0] ^ multEF[y1] ^ multEF[y2] ^ y3;
     z3 = y0 ^         multEF[y1] ^ mult5B[y2] ^ mult5B[y3];
 
-    return BYTES_TO_U32(z0, z1, z2, z3);
+    return uint8_tS_TO_U32(z0, z1, z2, z3);
 }
 
 /* given the Sbox keys, create the fully keyed QF */
-static void fullKey(u32 L[4], int k, u32 QF[4][256])
+static void fullKey(uint32_t L[4], uint8_t k, uint32_t QF[4][256])
 {
-    BYTE y0, y1, y2, y3;
-
-    int i;
+    uint8_t y0, y1, y2, y3;
 
     /* for all input values to the Q permutations */
-    for (i=0; i<256; i++)
+    for (uint16_t i=0; i<256; i++)
     {
 	/* run the Q permutations */
-	y0 = i; y1=i; y2=i; y3=i;
+	y0 = y1 = y2 = y3 = i;
 	switch(k)
     	{
     	    case 4:
@@ -241,41 +219,29 @@ static void fullKey(u32 L[4], int k, u32 QF[4][256])
     }
 }
 
-#if 0
-static void printRound(
-    int round, u32 R0, u32 R1, u32 R2, u32 R3, u32 K1, u32 K2)
-{
-    printf("round[%d] ['0x%08XL', '0x%08XL', '0x%08XL', '0x%08XL']\n",
-	   round, R0, R1, R2, R3);
-
-}
-#endif
-
 /* fully keyed h (aka g) function */
 #define fkh(X) (S[0][b0(X)]^S[1][b1(X)]^S[2][b2(X)]^S[3][b3(X)])
 
 /* one encryption round */
-#define ENC_ROUND(R0, R1, R2, R3, round) \
-    T0 = fkh(R0); \
-    T1 = fkh(ROL(R1, 8)); \
-    R2 = ROR(R2 ^ (T1 + T0 + K[2*round+8]), 1); \
-    R3 = ROL(R3, 1) ^ (2*T1 + T0 + K[2*round+9]);
+#define ENC_ROUND(R0, R1, R2, R3, round)		do \
+{							\
+	T0 = fkh(R0);					\
+	T1 = fkh(ROL(R1, 8));				\
+	R2 = ROR(R2 ^ (T1 + T0 + K[2*round+8]), 1);	\
+	R3 = ROL(R3, 1) ^ (2*T1 + T0 + K[2*round+9]);	\
+}							while(0)
 
-#if 0
-void encryptionCodeStart() { }
-#endif
-
-static inline void encrypt(u32 K[40], u32 S[4][256], const BYTE PT[16],
-    BYTE CT[16])
+static inline void encrypt(uint32_t K[40], uint32_t S[4][256],
+    const uint8_t PT[16], uint8_t CT[16])
 {
-    u32 R0, R1, R2, R3;
-    u32 T0, T1;
+    uint32_t R0, R1, R2, R3;
+    uint32_t T0, T1;
 
     /* load/byteswap/whiten input */
-    R3 = K[3] ^ BSWAP(((u32*)PT)[3]);
-    R2 = K[2] ^ BSWAP(((u32*)PT)[2]);
-    R1 = K[1] ^ BSWAP(((u32*)PT)[1]);
-    R0 = K[0] ^ BSWAP(((u32*)PT)[0]);
+    R3 = K[3] ^ BSWAP(((uint32_t *)PT)[3]);
+    R2 = K[2] ^ BSWAP(((uint32_t *)PT)[2]);
+    R1 = K[1] ^ BSWAP(((uint32_t *)PT)[1]);
+    R0 = K[0] ^ BSWAP(((uint32_t *)PT)[0]);
 
     ENC_ROUND(R0, R1, R2, R3, 0);
     ENC_ROUND(R2, R3, R0, R1, 1);
@@ -295,35 +261,32 @@ static inline void encrypt(u32 K[40], u32 S[4][256], const BYTE PT[16],
     ENC_ROUND(R2, R3, R0, R1, 15);
 
     /* load/byteswap/whiten output */
-    ((u32*)CT)[3] = BSWAP(R1 ^ K[7]);
-    ((u32*)CT)[2] = BSWAP(R0 ^ K[6]);
-    ((u32*)CT)[1] = BSWAP(R3 ^ K[5]);
-    ((u32*)CT)[0] = BSWAP(R2 ^ K[4]);
+    ((uint32_t *)CT)[3] = BSWAP(R1 ^ K[7]);
+    ((uint32_t *)CT)[2] = BSWAP(R0 ^ K[6]);
+    ((uint32_t *)CT)[1] = BSWAP(R3 ^ K[5]);
+    ((uint32_t *)CT)[0] = BSWAP(R2 ^ K[4]);
 }
 
-#if 0
-void encryptionCodeEnd () {}
-unsigned int encryptionCodeSize() { encryptionCodeStart(); encryptionCodeEnd(); return encryptionCodeEnd - encryptionCodeStart; }
-#endif
-
 /* one decryption round */
-#define DEC_ROUND(R0, R1, R2, R3, round) \
-    T0 = fkh(R0); \
-    T1 = fkh(ROL(R1, 8)); \
-    R2 = ROL(R2, 1) ^ (T0 + T1 + K[2*round+8]); \
-    R3 = ROR(R3 ^ (T0 + 2*T1 + K[2*round+9]), 1);
+#define DEC_ROUND(R0, R1, R2, R3, round)		do \
+{							\
+	T0 = fkh(R0);					\
+	T1 = fkh(ROL(R1, 8));				\
+	R2 = ROL(R2, 1) ^ (T0 + T1 + K[2*round+8]);	\
+	R3 = ROR(R3 ^ (T0 + 2*T1 + K[2*round+9]), 1);	\
+}							while(0)
 
-static inline void decrypt(u32 K[40], u32 S[4][256], const BYTE CT[16],
-    BYTE PT[16])
+static inline void decrypt(uint32_t K[40], uint32_t S[4][256],
+    const uint8_t CT[16], uint8_t PT[16])
 {
-    u32 T0, T1;
-    u32 R0, R1, R2, R3;
+    uint32_t T0, T1;
+    uint32_t R0, R1, R2, R3;
 
     /* load/byteswap/whiten input */
-    R3 = K[7] ^ BSWAP(((u32*)CT)[3]);
-    R2 = K[6] ^ BSWAP(((u32*)CT)[2]);
-    R1 = K[5] ^ BSWAP(((u32*)CT)[1]);
-    R0 = K[4] ^ BSWAP(((u32*)CT)[0]);
+    R3 = K[7] ^ BSWAP(((uint32_t *)CT)[3]);
+    R2 = K[6] ^ BSWAP(((uint32_t *)CT)[2]);
+    R1 = K[5] ^ BSWAP(((uint32_t *)CT)[1]);
+    R0 = K[4] ^ BSWAP(((uint32_t *)CT)[0]);
 
     DEC_ROUND(R0, R1, R2, R3, 15);
     DEC_ROUND(R2, R3, R0, R1, 14);
@@ -343,40 +306,41 @@ static inline void decrypt(u32 K[40], u32 S[4][256], const BYTE CT[16],
     DEC_ROUND(R2, R3, R0, R1, 0);
 
     /* load/byteswap/whiten output */
-    ((u32*)PT)[3] = BSWAP(R1 ^ K[3]);
-    ((u32*)PT)[2] = BSWAP(R0 ^ K[2]);
-    ((u32*)PT)[1] = BSWAP(R3 ^ K[1]);
-    ((u32*)PT)[0] = BSWAP(R2 ^ K[0]);
+    ((uint32_t *)PT)[3] = BSWAP(R1 ^ K[3]);
+    ((uint32_t *)PT)[2] = BSWAP(R0 ^ K[2]);
+    ((uint32_t *)PT)[1] = BSWAP(R3 ^ K[1]);
+    ((uint32_t *)PT)[0] = BSWAP(R2 ^ K[0]);
 
 }
 
 /* the key schedule routine */
-static void keySched(const BYTE M[], int N, u32 **S, u32 K[40], int *k)
+static void keySched(const uint8_t M[], uint16_t N, uint32_t **S,
+    uint32_t K[40], uint8_t *k)
 {
-    u32 Mo[4], Me[4];
-    int i, j;
-    BYTE vector[8];
-    u32 A, B;
+    uint32_t Me[4];
+    uint32_t Mo[4];
+    uint8_t vector[8];
 
     *k = (N + 63) / 64;
-    *S = (u32*)malloc(sizeof(u32) * (*k));
+    *S = (uint32_t*)malloc(sizeof(uint32_t) * (*k));
 
-    for (i = 0; i < *k; i++)
+    /* 2*i+1 gets as large as 127 */
+    for (uint8_t i = 0; i < *k; i++)
     {
-	Me[i] = BSWAP(((const u32*)M)[2*i]);
-	Mo[i] = BSWAP(((const u32*)M)[2*i+1]);
+	Me[i] = BSWAP(((const uint32_t*)M)[2*i]);
+	Mo[i] = BSWAP(((const uint32_t*)M)[2*i+1]);
     }
 
-    for (i = 0; i < *k; i++)
+    for (uint8_t i = 0; i < *k; i++)
     {
-	for (j = 0; j < 4; j++) vector[j] = _b(Me[i], j);
-	for (j = 0; j < 4; j++) vector[j+4] = _b(Mo[i], j);
+	for (uint8_t j = 0; j < 4; j++) vector[j] = _b(Me[i], j);
+	for (uint8_t j = 0; j < 4; j++) vector[j+4] = _b(Mo[i], j);
 	(*S)[(*k)-i-1] = RSMatrixMultiply(vector);
     }
-    for (i = 0; i < 20; i++)
+    for (uint8_t i = 0; i < 20; i++)
     {
-	A = h(2*i*RHO, Me, *k);
-	B = ROL(h(2*i*RHO + RHO, Mo, *k), 8);
+	uint32_t A = h(2*i*RHO, Me, *k);
+	uint32_t B = ROL(h(2*i*RHO + RHO, Mo, *k), 8);
 	K[2*i] = A+B;
 	K[2*i+1] = ROL(A + 2*B, 9);
     }
@@ -386,24 +350,24 @@ static void keySched(const BYTE M[], int N, u32 **S, u32 K[40], int *k)
 /***********************************************************************
   TESTING FUNCTIONS AND STUFF STARTS HERE
 ***********************************************************************/
-static void printHex(BYTE b[], int lim)
+static void printHex(uint8_t b[], int lim)
 {
     int i;
     for (i=0; i<lim;i++)
-	printf("%02X", (u32)b[i]);
+	printf("%02X", (uint32_t)b[i]);
 }
 
 
 /* the ECB tests */
-static void Itest(int n)
+static void Itest(uint16_t n)
 {
-    BYTE ct[16], nct[16], k1[16], k2[16], k[32];
+    uint8_t ct[16], nct[16], k1[16], k2[16], k[32];
 
-    u32 QF[4][256];
+    uint32_t QF[4][256];
+    uint32_t *KS;
+    uint32_t K[40];
     int i;
-    u32 *KS;
-    u32 K[40];
-    int Kk;
+    uint8_t Kk;
 
     memset(ct, 0, 16);
     memset(nct, 0, 16);
@@ -456,15 +420,15 @@ static double getTimeDiff(struct timeval t1, struct timeval t2)
 #define NUMTIMES 1000000
 static void bench()
 {
-    u32 *S;
-    u32 K[40];
-    int k;
-    int i;
     struct timeval tv_start, tv_end;
+    uint32_t K[40];
+    uint32_t QF[4][256];
+    uint8_t text[16];
+    uint8_t key[32];
     double diff;
-    u32 QF[4][256];
-    BYTE text[16];
-    BYTE key[32];
+    uint32_t *S;
+    int i;
+    uint8_t k;
 
     memset(text, 0, 16);
     memset(key, 0, 32);
@@ -487,12 +451,12 @@ static void bench()
 
 int main()
 {
-    u32 *S;
-    u32 K[40];
-    int k;
-    u32 QF[4][256];
-    BYTE text[16];
-    BYTE key[32];
+    uint32_t K[40];
+    uint32_t QF[4][256];
+    uint8_t text[16];
+    uint8_t key[32];
+    uint32_t *S;
+    uint8_t k;
 
     /* a few tests to make sure we didn't break anything */
 #if 1
@@ -536,7 +500,7 @@ void
 twofish_set_key(struct twofish_key *key, const uint8_t *keydata, size_t sz)
 {
 	uint32_t *S;
-	int k;
+	uint8_t k;
 	keySched(keydata, sz * 8, &S, key->K, &k);
 	fullKey(S, k, key->QF);
 	free(S);
