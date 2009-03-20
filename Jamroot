@@ -1,6 +1,5 @@
 DEBUG = -DDEBUG ;
-using gcc
-	: # compiler version
+using gcc : # compiler version
 	: # c++ compile command
 	:
 	    # -D_BSD_SOURCE needed for proper endian macros
@@ -14,26 +13,27 @@ lib boost_system ;
 lib devmapper ;
 lib ssl ;
 lib uuid ;
-exe fluks
-	:
-	    # C++
+lib fluks_crypto :
+	    tiger.cpp
+	    cast6.c serpent.c twofish.c whirlpool.c
+	;
+exe fluks :
 	    af.cpp backup.cpp crypt.cpp
 	    detect.cpp dm.cpp errors.cpp fluks.cpp
 	    hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
-	    support.cpp tiger.cpp util.cpp
-
-	    # plain C
-	    cast6.c serpent.c twofish.c whirlpool.c
+	    support.cpp util.cpp
 
 	    # libraries
+	    fluks_crypto/<link>static
 	    boost_filesystem boost_program_options
 	    boost_regex devmapper ssl uuid
 	;
-exe run_test
-	:
+exe run_test :
 	    run_test.cpp
 	    crypt.cpp errors.cpp hash.cpp hmac.cpp
-	    support.cpp tiger.cpp util.cpp
-	    cast6.c serpent.c twofish.c whirlpool.c
+	    support.cpp util.cpp
+
+	    # libraries
+	    fluks_crypto/<link>static
 	    boost_system ssl
 	;
