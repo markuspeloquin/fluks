@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "crypto_ops.h"
 #include "twofish.h"
 #include "twofish_tables.h"
 #define uint32_t uint32_t
@@ -45,20 +47,6 @@ const uint32_t RHO = 0x01010101UL;
 
 /* ensure ENDIAN macros exist */
 #include "endian_check.h"
-
-/*
-   gcc is smart enough to convert these to roll instructions.  If you want
-   to see for yourself, either do gcc -O3 -S, or change the |'s to +'s and
-   see how slow things get (you lose about 30-50 clocks) :).
-*/
-#define ROL(x,n) (((x) << ((n) & 0x1F)) | ((x) >> (32-((n) & 0x1F))))
-#define ROR(x,n) (((x) >> ((n) & 0x1F)) | ((x) << (32-((n) & 0x1F))))
-
-#if uint8_t_ORDER == BIG_ENDIAN
-#	define BSWAP(x) (((ROR(x,8) & 0xFF00FF00) | (ROL(x,8) & 0x00FF00FF)))
-#else
-#	define BSWAP(x) (x)
-#endif
 
 /* get byte N of x, where 0 is the least significant byte */
 #define _b(x, N) ((uint8_t)((x) >> (N)*8))
@@ -73,9 +61,6 @@ const uint32_t RHO = 0x01010101UL;
 /* don't need to mask since all bits are in lower 8 - byte cast here saves
    nothing, but hey, what the hell, it doesn't hurt any */
 #define b3(x) (uint8_t)((x) >> 24)
-
-#define uint8_tARRAY_TO_U32(r) ((r[0] << 24) ^ (r[1] << 16) ^ (r[2] << 8) ^ r[3])
-#define uint8_tS_TO_U32(r0, r1, r2, r3) ((r0 << 24) ^ (r1 << 16) ^ (r2 << 8) ^ r3)
 
 /*
    multiply two polynomials represented as uint32_t's, actually called with uint8_tS,
@@ -129,7 +114,7 @@ static uint32_t RSMatrixMultiply(uint8_t sd[8])
 	}
 	result[3-j] = t;
     }
-    return uint8_tARRAY_TO_U32(result);
+    return be32toh(*(uint32_t *)(result));
 }
 
 /* the Zero-keyed h function (used by the key setup routine) */
@@ -167,7 +152,7 @@ static uint32_t h(uint32_t X, uint32_t L[4], uint8_t k)
     z2 = mult5B[y0] ^ multEF[y1] ^ multEF[y2] ^ y3;
     z3 = y0 ^         multEF[y1] ^ mult5B[y2] ^ mult5B[y3];
 
-    return uint8_tS_TO_U32(z0, z1, z2, z3);
+    return z0 << 24 | z1 << 16 | z2 << 8 | z3;
 }
 
 /* given the Sbox keys, create the fully keyed QF */
@@ -238,10 +223,10 @@ static inline void encrypt(uint32_t K[40], uint32_t S[4][256],
     uint32_t T0, T1;
 
     /* load/byteswap/whiten input */
-    R3 = K[3] ^ BSWAP(((uint32_t *)PT)[3]);
-    R2 = K[2] ^ BSWAP(((uint32_t *)PT)[2]);
-    R1 = K[1] ^ BSWAP(((uint32_t *)PT)[1]);
-    R0 = K[0] ^ BSWAP(((uint32_t *)PT)[0]);
+    R3 = K[3] ^ htole32(((uint32_t *)PT)[3]);
+    R2 = K[2] ^ htole32(((uint32_t *)PT)[2]);
+    R1 = K[1] ^ htole32(((uint32_t *)PT)[1]);
+    R0 = K[0] ^ htole32(((uint32_t *)PT)[0]);
 
     ENC_ROUND(R0, R1, R2, R3, 0);
     ENC_ROUND(R2, R3, R0, R1, 1);
@@ -261,10 +246,10 @@ static inline void encrypt(uint32_t K[40], uint32_t S[4][256],
     ENC_ROUND(R2, R3, R0, R1, 15);
 
     /* load/byteswap/whiten output */
-    ((uint32_t *)CT)[3] = BSWAP(R1 ^ K[7]);
-    ((uint32_t *)CT)[2] = BSWAP(R0 ^ K[6]);
-    ((uint32_t *)CT)[1] = BSWAP(R3 ^ K[5]);
-    ((uint32_t *)CT)[0] = BSWAP(R2 ^ K[4]);
+    ((uint32_t *)CT)[3] = le32toh(R1 ^ K[7]);
+    ((uint32_t *)CT)[2] = le32toh(R0 ^ K[6]);
+    ((uint32_t *)CT)[1] = le32toh(R3 ^ K[5]);
+    ((uint32_t *)CT)[0] = le32toh(R2 ^ K[4]);
 }
 
 /* one decryption round */
@@ -283,10 +268,10 @@ static inline void decrypt(uint32_t K[40], uint32_t S[4][256],
     uint32_t R0, R1, R2, R3;
 
     /* load/byteswap/whiten input */
-    R3 = K[7] ^ BSWAP(((uint32_t *)CT)[3]);
-    R2 = K[6] ^ BSWAP(((uint32_t *)CT)[2]);
-    R1 = K[5] ^ BSWAP(((uint32_t *)CT)[1]);
-    R0 = K[4] ^ BSWAP(((uint32_t *)CT)[0]);
+    R3 = K[7] ^ htole32(((uint32_t *)CT)[3]);
+    R2 = K[6] ^ htole32(((uint32_t *)CT)[2]);
+    R1 = K[5] ^ htole32(((uint32_t *)CT)[1]);
+    R0 = K[4] ^ htole32(((uint32_t *)CT)[0]);
 
     DEC_ROUND(R0, R1, R2, R3, 15);
     DEC_ROUND(R2, R3, R0, R1, 14);
@@ -306,10 +291,10 @@ static inline void decrypt(uint32_t K[40], uint32_t S[4][256],
     DEC_ROUND(R2, R3, R0, R1, 0);
 
     /* load/byteswap/whiten output */
-    ((uint32_t *)PT)[3] = BSWAP(R1 ^ K[3]);
-    ((uint32_t *)PT)[2] = BSWAP(R0 ^ K[2]);
-    ((uint32_t *)PT)[1] = BSWAP(R3 ^ K[1]);
-    ((uint32_t *)PT)[0] = BSWAP(R2 ^ K[0]);
+    ((uint32_t *)PT)[3] = le32toh(R1 ^ K[3]);
+    ((uint32_t *)PT)[2] = le32toh(R0 ^ K[2]);
+    ((uint32_t *)PT)[1] = le32toh(R3 ^ K[1]);
+    ((uint32_t *)PT)[0] = le32toh(R2 ^ K[0]);
 
 }
 
@@ -327,8 +312,8 @@ static void keySched(const uint8_t M[], uint16_t N, uint32_t **S,
     /* 2*i+1 gets as large as 127 */
     for (uint8_t i = 0; i < *k; i++)
     {
-	Me[i] = BSWAP(((const uint32_t*)M)[2*i]);
-	Mo[i] = BSWAP(((const uint32_t*)M)[2*i+1]);
+	Me[i] = htole32(((const uint32_t*)M)[2*i]);
+	Mo[i] = htole32(((const uint32_t*)M)[2*i+1]);
     }
 
     for (uint8_t i = 0; i < *k; i++)

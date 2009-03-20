@@ -35,7 +35,6 @@ struct tiger_ctx {
 	uint64_t	res[3];
 	uint64_t	length;
 	size_t		sz;
-	int		passes;
 };
 
 __BEGIN_DECLS
@@ -45,10 +44,8 @@ __BEGIN_DECLS
  * This function should be called before each hash computation.
  *
  * \param ctx		The hash context.
- * \param passes	The number of passes to take on the data, though this
- *	should probably always be 3.
  */
-void	tiger_init(struct tiger_ctx *ctx, int passes=3);
+void	tiger_init(struct tiger_ctx *ctx);
 
 /** Update a hash with new data
  *

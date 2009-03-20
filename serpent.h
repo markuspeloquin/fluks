@@ -25,26 +25,33 @@
 #endif
 
 const size_t SERPENT_BLOCK = 16;
+const size_t SERPENT_KEYMIN = 16;
+const size_t SERPENT_KEYMAX = 32;
+const size_t SERPENT_KEYSTEP = 8;
 
 /** Key material not of correct length */
-const int SERPENT_BAD_KEY_MAT = -1;
+enum serpent_return {
+	SERPENT_BAD_KEY_MAT = -1,
+	SERPENT_OKAY = 0
+};
 
 struct serpent_ctx {
-      uint32_t	key[8];
       uint32_t	subkeys[33][4];
-      uint16_t	keyLen;
 };
 
 __BEGIN_DECLS
 
-int	serpent_init(struct serpent_ctx *ctx, const uint8_t *key,
-	    size_t sz);
+enum serpent_return
+	serpent_init(struct serpent_ctx *ctx,
+	    const uint8_t *key, size_t sz);
 
-void	serpent_encrypt(const struct serpent_ctx *ctx, const uint8_t *in,
-	    uint8_t *out);
+void	serpent_encrypt(const struct serpent_ctx *ctx,
+	    const uint8_t plaintext[SERPENT_BLOCK],
+	    uint8_t ciphertext[SERPENT_BLOCK]);
 
-void	serpent_decrypt(const struct serpent_ctx *ctx, const uint8_t *in,
-	    uint8_t *out);
+void	serpent_decrypt(const struct serpent_ctx *ctx,
+	    const uint8_t ciphertext[SERPENT_BLOCK],
+	    uint8_t plaintext[SERPENT_BLOCK]);
 
 __END_DECLS
 

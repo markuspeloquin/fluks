@@ -153,18 +153,15 @@ public:
 	 *	of { \link TIGER128_SZ_DIGEST\endlink,
 	 *	\link TIGER160_SZ_DIGEST\endlink,
 	 *	\link TIGER_SZ_DIGEST\endlink }.
-	 * \param passes	The number of passes to take in the Tiger
-	 *	compression function.  Minumum value is 3.
 	 */
-	Hash_tiger(size_t sz_digest, unsigned passes=3) :
-		_passes(passes < 3 ? 3 : passes),
+	Hash_tiger(size_t sz_digest) :
 		_sz(sz_digest)
 	{}
 	~Hash_tiger() throw () {}
 
 	void init() throw ()
 	{
-		tiger_init(&_ctx, _passes);
+		tiger_init(&_ctx);
 	}
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{
@@ -187,7 +184,6 @@ public:
 
 private:
 	tiger_ctx	_ctx;
-	unsigned	_passes;
 	size_t		_sz;
 };
 

@@ -12,20 +12,14 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <endian.h>
 #include <stdint.h>
 
 #include <algorithm>
 
+#include "endian.h"
 #include "tiger.h"
 
-// ensure ENDIAN macros exist
-#ifndef BYTE_ORDER
-#	error "BYTE_ORDER undefined"
-#endif
-#ifndef BIG_ENDIAN
-#	error "BIG_ENDIAN undefined"
-#endif
+const uint8_t NUM_PASSES = 3;
 
 uint64_t t1[0x100] = {
     0x02AAB17CF7E90C5ELL, 0xAC424B03E243A8ECLL,
@@ -551,21 +545,6 @@ uint64_t t4[0x100] = {
     0xC83223F1720AEF96LL, 0xC3A0396F7363A51FLL
 };
 
-// same syntax as memcpy(); copies between a buffer of uint8_t and a buffer
-// of LE uint64_t as efficiently as possible
-inline void
-copy_mach_little_64(void *out, const void *in, size_t sz)
-{
-	const uint8_t	*in8 = reinterpret_cast<const uint8_t *>(in);
-	uint8_t		*out8 = reinterpret_cast<uint8_t *>(out);
-#if BYTE_ORDER == BIG_ENDIAN
-	for (size_t i = 0; i < sz; i++)
-		out8[i ^ 7] = in8[i];
-#else
-	std::copy(in8, in8 + sz, out8);
-#endif
-}
-
 // This is the official definition of 'round'.
 // Passing the arguments by reference is the reason I made this file C++.
 // Otherwise, registers couldn't be used (markus).
@@ -574,27 +553,26 @@ round(uint64_t &a, uint64_t &b, uint64_t &c, uint64_t x, uint8_t mul)
 {
 	c ^= x;
 	a -=
-	    t1[(c >> 0 * 8) & 0xFF] ^
-	    t2[(c >> 2 * 8) & 0xFF] ^
-	    t3[(c >> 4 * 8) & 0xFF] ^
-	    t4[(c >> 6 * 8) & 0xFF];
+	    t1[static_cast<uint8_t>(c >> 0 * 8)] ^
+	    t2[static_cast<uint8_t>(c >> 2 * 8)] ^
+	    t3[static_cast<uint8_t>(c >> 4 * 8)] ^
+	    t4[static_cast<uint8_t>(c >> 6 * 8)];
 	b +=
-	    t4[(c >> 1 * 8) & 0xFF] ^
-	    t3[(c >> 3 * 8) & 0xFF] ^
-	    t2[(c >> 5 * 8) & 0xFF] ^
-	    t1[(c >> 7 * 8) & 0xFF];
+	    t4[static_cast<uint8_t>(c >> 1 * 8)] ^
+	    t3[static_cast<uint8_t>(c >> 3 * 8)] ^
+	    t2[static_cast<uint8_t>(c >> 5 * 8)] ^
+	    t1[static_cast<uint8_t>(c >> 7 * 8)];
 	b *= mul;
 }
 
 inline void
-tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
+tiger_compress(const uint64_t *str, uint64_t state[3])
 {
 	// 'register' probably gets ignored by the compiler, but it's a
 	// hint from the original C89 macro-powered source
 	register uint64_t a, b, c, tmpa;
 	uint64_t aa, bb, cc;
 	register uint64_t x0, x1, x2, x3, x4, x5, x6, x7;
-	int pass_no;
 
 	a = state[0];
 	b = state[1];
@@ -609,15 +587,14 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 	x6 = str[6];
 	x7 = str[7];
 
-	// begin old 'compress' macro
-
+	// 'save_abc'
 	aa = a;
 	bb = b;
 	cc = c;
 
-	for (pass_no = 0; pass_no < passes; pass_no++) {
+	for (int pass_no = 0; pass_no < NUM_PASSES; pass_no++) {
 		if (pass_no) {
-			// old macro 'key_schedule'
+			// 'key_schedule'
 			x0 -= x7 ^ 0xA5A5A5A5A5A5A5A5LL;
 			x1 ^= x0;
 			x2 += x1;
@@ -636,7 +613,7 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 			x7 -= x6 ^ 0x0123456789ABCDEFLL;
 		}
 
-		// old macro 'pass'
+		// 'pass'
 		register uint8_t mul =
 		    pass_no == 0 ? 5 :
 		    pass_no == 1 ? 7 : 9;
@@ -655,12 +632,10 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 		b = tmpa;
 	}
 
-	// old macro 'feed forward'
+	// 'feed forward'
 	a ^= aa;
 	b -= bb;
 	c += cc;
-
-	// end old 'compress' macro
 
 	state[0] = a;
 	state[1] = b;
@@ -668,15 +643,13 @@ tiger_compress(const uint64_t *str, int passes, uint64_t state[3])
 }
 
 extern "C" void
-tiger_init(struct tiger_ctx *ctx, int passes)
+tiger_init(struct tiger_ctx *ctx)
 {
 	ctx->res[0] = 0x0123456789ABCDEFLL;
 	ctx->res[1] = 0xFEDCBA9876543210LL;
 	ctx->res[2] = 0xF096A5B4C3B2E187LL;
 	ctx->length = 0;
 	ctx->sz = 0;
-	if (passes < 1) passes = 1;
-	ctx->passes = passes;
 }
 
 extern "C" void
@@ -699,11 +672,11 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 		size_t bytes = TIGER_SZ_BLOCK - ctx->sz;
 		std::copy(buf, buf + bytes, ctxbuf8 + ctx->sz);
 #if BYTE_ORDER == BIG_ENDIAN
-		copy_mach_little_64(temp, ctx->buf, TIGER_SZ_BLOCK);
-		tiger_compress(temp, ctx->passes, ctx->res);
+		be_to_le64(temp, ctx->buf, TIGER_SZ_BLOCK);
+		tiger_compress(temp, ctx->res);
 #else
 		// LE can run straight off ctx->buf
-		tiger_compress(ctx->buf, ctx->passes, ctx->res);
+		tiger_compress(ctx->buf, ctx->res);
 #endif
 		buf += bytes;
 		sz -= bytes;
@@ -713,8 +686,8 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	while (sz > TIGER_SZ_BLOCK) {
 		// LE needs to copy for alignment issues, and BE needs to
 		// both copy (for alignment) and swith endians
-		copy_mach_little_64(temp, buf, TIGER_SZ_BLOCK);
-		tiger_compress(temp, ctx->passes, ctx->res);
+		be_to_le64(temp, buf, TIGER_SZ_BLOCK);
+		tiger_compress(temp, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
 	}
@@ -734,13 +707,13 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 
 	// (switch endian if necessary;) copy into the context buffer 0x01,
 	// then pad with zeros until the number of bytes is 0 mod 8
-	copy_mach_little_64(temp, ctx->buf, ctx->sz);
+	be_to_le64(temp, ctx->buf, ctx->sz);
 	i = ctx->sz;
 #if BYTE_ORDER == BIG_ENDIAN
-	temp8[i++ ^ 7] = 0x01;
+	temp8[i++ ^ 7] = 1;
 	while (i & 7) temp8[i++ ^ 7] = 0;
 #else
-	temp8[i++] = 0x01;
+	temp8[i++] = 1;
 	while (i & 7) temp8[i++] = 0;
 #endif
 
@@ -750,7 +723,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	if (i > 56) {
 		// I really doubt this loop does anything
 		while (i < TIGER_SZ_BLOCK) temp8[i++] = 0;
-		tiger_compress(temp, ctx->passes, ctx->res);
+		tiger_compress(temp, ctx->res);
 		i = 0;
 	}
 
@@ -759,7 +732,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	// the buffer; then compress this final buffer
 	while (i < 56) temp8[i++] = 0;
 	temp[7] = ctx->length << 3;
-	tiger_compress(temp, ctx->passes, ctx->res);
+	tiger_compress(temp, ctx->res);
 
 	std::copy(ctx->res, ctx->res + 3, reinterpret_cast<uint64_t *>(res));
 }
@@ -768,8 +741,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 // style inflicted upon it
 #if 0
 extern "C" void
-tiger_impl(const uint8_t *str8, uint64_t length, int passes,
-    uint64_t res[3])
+tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 {
 	uint8_t			temp[TIGER_SZ_BLOCK];
 	register uint64_t	i;
@@ -792,10 +764,9 @@ tiger_impl(const uint8_t *str8, uint64_t length, int passes,
 		for (j = 0; j < TIGER_SZ_BLOCK; j++)
 			temp[j ^ 7] =
 			    reinterpret_cast<const uint8_t *>(str)[j];
-		tiger_compress(reinterpret_cast<uint64_t *>(temp),
-		    passes, res);
+		tiger_compress(reinterpret_cast<uint64_t *>(temp), res);
 #else
-		tiger_compress(str, passes, res);
+		tiger_compress(str, res);
 #endif
 		str += 8;
 	}
@@ -822,7 +793,7 @@ tiger_impl(const uint8_t *str8, uint64_t length, int passes,
 	if (j > 56) {
 		// I really doubt this loop does anything
 		while (j < TIGER_SZ_BLOCK) temp[j++] = 0;
-		tiger_compress(reinterpret_cast<uint64_t *>(temp), passes, res);
+		tiger_compress(reinterpret_cast<uint64_t *>(temp), res);
 		j = 0;
 	}
 
@@ -831,6 +802,6 @@ tiger_impl(const uint8_t *str8, uint64_t length, int passes,
 	// the buffer; then compress this final buffer
 	while (j < 56) temp[j++] = 0;
 	reinterpret_cast<uint64_t *>(temp + 56)[0] = length << 3;
-	tiger_compress(reinterpret_cast<uint64_t *>(temp), passes, res);
+	tiger_compress(reinterpret_cast<uint64_t *>(temp), res);
 }
 #endif

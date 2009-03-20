@@ -13,7 +13,6 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include <assert.h>
-#include <endian.h>
 #include <features.h>
 #include <stdint.h>
 #include <string.h>
@@ -22,15 +21,9 @@
 #	include <stdio.h>
 #endif
 
-/* make sure we can tell the endian */
-#ifndef BYTE_ORDER
-#	error "BYTE_ORDER not defined"
-#endif
-#ifndef BIG_ENDIAN
-#	error "BIG_ENDIAN not defined"
-#endif
-
 #include "cast6.h"
+#include "crypto_ops.h"
+#include "endian.h"
 
 const uint32_t S1[0x100] = {
 	0x30fb40d4, 0x9fa0ff0b, 0x6beccd2f, 0x3f258c7a,
@@ -362,33 +355,6 @@ const uint8_t Tr[4][8] = {
 };
 
 static inline uint32_t
-ROL(uint32_t x, uint8_t bits)
-{
-	assert(bits < 32);
-	return x << bits | x >> (32 - bits);
-}
-
-/* only really needed for LE machines; copy a byte array to/from a word array
- * reordering bytes so that the first byte in the uint8_t array is
- * the most significant byte of the first word in the uint32_t array;
- * it should be ensured that whichever is the 32-bit array must be at a
- * correct alignment */
-static inline void
-copy_switch32(void *out, const void *in, size_t sz)
-{
-	/* only should be called if sz = 0 mod 4 */
-	assert(!(sz & 3));
-#if BYTE_ORDER == BIG_ENDIAN
-	memcpy(out, in, sz);
-#else
-	const uint8_t *in8 = (const uint8_t *)in;
-	uint8_t *out8 = (uint8_t *)out;
-	for (size_t i = 0; i < sz; i++)
-		out8[i ^ 3] = in8[i];
-#endif
-}
-
-static inline uint32_t
 f1(uint32_t D, uint8_t Kri, uint32_t Kmi)
 {
 	register uint32_t I = ROL(Kmi + D, Kri);
@@ -506,9 +472,9 @@ cast6_encrypt(const struct cast6_ctx *ctx,
 	/* copy to a 32-bit block, fixing any potential alignment or endian
 	 * issues */
 	uint32_t block[4];
-	copy_switch32(block, plaintext, 16);
+	be_to_host32(block, plaintext, 16);
 	encrypt(ctx, block);
-	copy_switch32(ciphertext, block, 16);
+	host_to_be32(ciphertext, block, 16);
 }
 
 void
@@ -518,9 +484,9 @@ cast6_decrypt(const struct cast6_ctx *ctx,
 	/* copy to a 32-bit block, fixing any potential alignment or endian
 	 * issues */
 	uint32_t block[4];
-	copy_switch32(block, ciphertext, 16);
+	be_to_host32(block, ciphertext, 16);
 	decrypt(ctx, block);
-	copy_switch32(plaintext, block, 16);
+	host_to_be32(plaintext, block, 16);
 }
 
 #ifdef GEN_TABLES
@@ -605,7 +571,7 @@ cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz)
 
 	/* sizes are multiples of 4, so this works fine:
 	 * copy key (switching endian) into kappa, then fill rest with 0 */
-	copy_switch32(kappa, key, sz);
+	be_to_host32(kappa, key, sz);
 	if (sz < 32) memset(kappa + sz/4, 0, 32 - sz);
 
 	for (uint8_t i = 0; i < 12; i++) {

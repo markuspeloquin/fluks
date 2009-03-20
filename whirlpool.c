@@ -70,9 +70,6 @@
  * u32  -> unsigned integer type, at least 32 bits
  *
  * s8, s16, s32  -> signed counterparts of u8, u16, u32
- *
- * Always use macro's T8(), T16() or T32() to obtain exact-width results,
- * i.e., to specify the size of the result of each expression.
  */
 
 typedef int8_t s8;
@@ -84,83 +81,7 @@ typedef uint32_t u32;
 typedef int64_t s64;
 typedef uint64_t u64;
 
-#define ONE8    0xffU
-#define ONE16   0xffffU
-#if UINT_MAX >=	    0xffffffffUL
-#   define ONE32    0xffffffffU
-#else
-#   define ONE32    0xffffffffUL
-#endif
-
-#define LL(v)	(v##ULL)
-#define ONE64	LL(0xffffffffffffffff)
-
-#define T8(x)	((x) & ONE8)
-#define T16(x)	((x) & ONE16)
-#define T32(x)	((x) & ONE32)
-#define T64(x)	((x) & ONE64)
-
-#define ROTR64(v, n)	(		\
-    ((v) >> (n)) |			\
-    T64((v) << (64 - (n)))		)
-
-/*
- * U8TO32_BIG(c) returns the 32-bit value stored in big-endian convention
- * in the unsigned char array pointed to by c.
- */
-#define U8TO32_BIG(c)	(		\
-    ((u32)T8(*(c)) << 24) |		\
-    ((u32)T8(*((c) + 1)) << 16) |	\
-    ((u32)T8(*((c) + 2)) << 8) |	\
-    ((u32)T8(*((c) + 3)))		)
-
-/*
- * U8TO32_LITTLE(c) returns the 32-bit value stored in little-endian convention
- * in the unsigned char array pointed to by c.
- */
-#define U8TO32_LITTLE(c) (		\
-    ((u32)T8(*(c))) |			\
-    ((u32)T8(*((c) + 1)) << 8) |	\
-    ((u32)T8(*((c) + 2)) << 16) |	\
-    ((u32)T8(*((c) + 3)) << 24)		)
-
-/*
- * U8TO32_BIG(c, v) stores the 32-bit-value v in big-endian convention
- * into the unsigned char array pointed to by c.
- */
-#define U32TO8_BIG(c, v) do { \
-	u32 x = (v);		\
-	u8 *d = (c);		\
-	d[0] = T8(x >> 24);	\
-	d[1] = T8(x >> 16);	\
-	d[2] = T8(x >> 8);	\
-	d[3] = T8(x);		} while (0)
-
-/*
- * U8TO32_LITTLE(c, v) stores the 32-bit-value v in little-endian convention
- * into the unsigned char array pointed to by c.
- */
-#define U32TO8_LITTLE(c, v) do { \
-	u32 x = (v);		\
-	u8 *d = (c);		\
-	d[0] = T8(x);		\
-	d[1] = T8(x >> 8);	\
-	d[2] = T8(x >> 16);	\
-	d[3] = T8(x >> 24);	} while (0)
-
-/*
- * ROTL32(v, n) returns the value of the 32-bit unsigned value v after
- * a rotation of n bits to the left. It might be replaced by the appropriate
- * architecture-specific macro.
- *
- * It evaluates v and n twice.
- *
- * The compiler might emit a warning if n is the constant 0. The result
- * is undefined if n is greater than 31.
- */
-#define ROTL32(v, n) (		\
-    T32((v) << (n)) |		\
-    ((v) >> (32 - (n)))		)
+#define LL(x) x##ULL
 
 /*
  * Whirlpool-specific definitions.
@@ -741,14 +662,14 @@ static const u64 rc[R + 1] = {
  * The core Whirlpool transform.
  */
 static void
-processBuffer(struct whirlpool_ctx * const structpointer)
+processBuffer(struct whirlpool_ctx *const structpointer)
 {
-    int i, r;
     u64 K[8];        /* the round key */
     u64 block[8];    /* mu(buffer) */
     u64 state[8];    /* the cipher state */
     u64 L[8];
     u8 *buffer = structpointer->buffer;
+    int i, r;
 
 #ifdef TRACE_INTERMEDIATE_VALUES
     printf("The 8x8 matrix Z' derived from the data-string is as follows.\n");
