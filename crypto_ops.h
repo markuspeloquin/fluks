@@ -36,4 +36,6 @@ ROR(uint32_t x, uint8_t n)
 	return x << (32 - n) | x >> n;
 }
 
+#undef INLINE
+
 #endif

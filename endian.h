@@ -104,6 +104,23 @@ INLINE void
 le_to_be64(void *out, const void *in, size_t sz)
 {	be_to_le64(out, in, sz); }
 
+/** Convert a le64 array to a host64 array */
+INLINE void
+le_to_host64(void *out, const void *in, size_t sz)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	be_to_le64(out, in, sz);
+#else
+	memcpy(out, in, sz);
+#endif
+}
+
+/** Convert a host64 array to a le64 array */
+INLINE void
+host_to_le64(void *out, const void *in, size_t sz)
+{	le_to_host64(out, in, sz); }
+
+
 #undef INLINE
 
 

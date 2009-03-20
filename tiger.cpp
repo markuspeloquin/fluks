@@ -672,7 +672,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 		size_t bytes = TIGER_SZ_BLOCK - ctx->sz;
 		std::copy(buf, buf + bytes, ctxbuf8 + ctx->sz);
 #if BYTE_ORDER == BIG_ENDIAN
-		be_to_le64(temp, ctx->buf, TIGER_SZ_BLOCK);
+		le_to_host64(temp, ctx->buf, TIGER_SZ_BLOCK);
 		tiger_compress(temp, ctx->res);
 #else
 		// LE can run straight off ctx->buf
@@ -686,7 +686,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	while (sz > TIGER_SZ_BLOCK) {
 		// LE needs to copy for alignment issues, and BE needs to
 		// both copy (for alignment) and swith endians
-		be_to_le64(temp, buf, TIGER_SZ_BLOCK);
+		le_to_host64(temp, buf, TIGER_SZ_BLOCK);
 		tiger_compress(temp, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
@@ -707,7 +707,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 
 	// (switch endian if necessary;) copy into the context buffer 0x01,
 	// then pad with zeros until the number of bytes is 0 mod 8
-	be_to_le64(temp, ctx->buf, ctx->sz);
+	le_to_host64(temp, ctx->buf, ctx->sz);
 	i = ctx->sz;
 #if BYTE_ORDER == BIG_ENDIAN
 	temp8[i++ ^ 7] = 1;
