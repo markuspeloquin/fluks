@@ -643,13 +643,15 @@ tiger_compress(const uint64_t *str, uint64_t state[3])
 }
 
 extern "C" void
-tiger_init(struct tiger_ctx *ctx)
+tiger_init(struct tiger_ctx *ctx, uint8_t version)
 {
 	ctx->res[0] = 0x0123456789ABCDEFLL;
 	ctx->res[1] = 0xFEDCBA9876543210LL;
 	ctx->res[2] = 0xF096A5B4C3B2E187LL;
 	ctx->length = 0;
 	ctx->sz = 0;
+	// default to 1 if the version is 1 or unrecognized (i.e. not 2)
+	ctx->version = version == 2 ? 2 : 1;
 }
 
 extern "C" void
@@ -706,14 +708,16 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	size_t i;
 
 	// (switch endian if necessary;) copy into the context buffer 0x01,
-	// then pad with zeros until the number of bytes is 0 mod 8
+	// then pad with zeros until the number of bytes is 0 mod 8; the
+	// buffer will have room; Tiger2 uses 0x80 instead of 1 for the next
+	// byte
 	le_to_host64(temp, ctx->buf, ctx->sz);
 	i = ctx->sz;
 #if BYTE_ORDER == BIG_ENDIAN
-	temp8[i++ ^ 7] = 1;
+	temp8[i++ ^ 7] = ctx->version == 1 ? 1 : 0x80;
 	while (i & 7) temp8[i++ ^ 7] = 0;
 #else
-	temp8[i++] = 1;
+	temp8[i++] = ctx->version == 1 ? 1 : 0x80;
 	while (i & 7) temp8[i++] = 0;
 #endif
 
@@ -721,7 +725,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	// greater than 56, it can only be 64), then fill the rest of the
 	// buffer with zeros and compress the block
 	if (i > 56) {
-		// I really doubt this loop does anything
+		// I really doubt this loop ever does anything
 		while (i < TIGER_SZ_BLOCK) temp8[i++] = 0;
 		tiger_compress(temp, ctx->res);
 		i = 0;
@@ -731,7 +735,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	// 8 before the end; length*8 is written to the final 64 bits of
 	// the buffer; then compress this final buffer
 	while (i < 56) temp8[i++] = 0;
-	temp[7] = ctx->length << 3;
+	temp[7] = ctx->length * 8;
 	tiger_compress(temp, ctx->res);
 
 	std::copy(ctx->res, ctx->res + 3, reinterpret_cast<uint64_t *>(res));

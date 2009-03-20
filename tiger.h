@@ -35,6 +35,7 @@ struct tiger_ctx {
 	uint64_t	res[3];
 	uint64_t	length;
 	size_t		sz;
+	uint8_t		version;
 };
 
 __BEGIN_DECLS
@@ -44,8 +45,9 @@ __BEGIN_DECLS
  * This function should be called before each hash computation.
  *
  * \param ctx		The hash context.
+ * \param version	The version of Tiger (1 or 2).
  */
-void	tiger_init(struct tiger_ctx *ctx);
+void	tiger_init(struct tiger_ctx *ctx, uint8_t version=1);
 
 /** Update a hash with new data
  *
