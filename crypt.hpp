@@ -29,7 +29,7 @@
 namespace fluks {
 
 
-enum crypt_direction { DIR_ENCRYPT, DIR_DECRYPT };
+enum crypt_direction { DIR_NONE, DIR_ENCRYPT, DIR_DECRYPT };
 
 /** En/Decrypt a block of data */
 class Crypt {
@@ -47,25 +47,33 @@ public:
 
 	/** Set the direction of encryption and the key
 	 *
-	 * \param dir		One of {<code>DIR_ENCRYPT</code>,
-	 *	<code>DIR_DECRYPT</code>}
 	 * \param key		The encryption key
 	 * \param sz_key	The size of the encryption key in bytes
 	 * \param Crypt_error	Probably the key size is bad
 	 */
-	virtual void init(enum crypt_direction dir, const uint8_t *key,
-	    size_t sz_key) throw (Crypt_error) = 0;
+	virtual void init(const uint8_t *key, size_t sz_key)
+	    throw (Crypt_error) = 0;
 
-	/** En/Decrypt a block of data
+	/** Encrypt a block of data
 	 *
-	 * \param in	The data to be en/decrypted
-	 * \param out	The output of the en/decryption, usually cannot be
-	 *	equal to <code>in</code>.
+	 * \param in	Plaintext
+	 * \param out	Ciphertext, usually cannot be equal to <code>in</code>.
 	 * \throw Crypt_error	This will occur if the init() function was
 	 *	not first called or if <code>in<code> cannot be equal to
 	 *	</code>out</code>.
 	 */
-	virtual void crypt(const uint8_t *in, uint8_t *out)
+	virtual void encrypt(const uint8_t *in, uint8_t *out)
+	    throw (Crypt_error) = 0;
+
+	/** Decrypt a block of data
+	 *
+	 * \param in	Ciphertext
+	 * \param out	Plaintext, usually cannot be equal to <code>in</code>.
+	 * \throw Crypt_error	This will occur if the init() function was
+	 *	not first called or if <code>in<code> cannot be equal to
+	 *	</code>out</code>.
+	 */
+	virtual void decrypt(const uint8_t *in, uint8_t *out)
 	    throw (Crypt_error) = 0;
 
 	/** Get the block size of the cipher
@@ -312,19 +320,15 @@ public:
 	Crypt_aes() : _init(false) {}
 	~Crypt_aes() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw (Crypt_error)
+	void init(const uint8_t *key, size_t sz) throw ()
 	{
-		_dir = dir;
-		if (_dir == DIR_ENCRYPT) {
-			if (!AES_set_encrypt_key(key, sz * 8, &_key))
-				throw Ssl_crypt_error();
-		} else
-			if (!AES_set_decrypt_key(key, sz * 8, &_key))
-				throw Ssl_crypt_error();
+		_key_data.reset(new uint8_t[sz]);
+		std::copy(key, key + sz, _key_data.get());
+		_sz = sz;
+		_dir = DIR_NONE;
 		_init = true;
 	}
-	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
@@ -332,16 +336,37 @@ public:
 			// TODO see if this is necessary for AES
 			throw Crypt_error("for AES, input and output buffers "
 			    "should be different");
-		if (_dir == DIR_ENCRYPT)
-			AES_encrypt(in, out, &_key);
-		else
-			AES_decrypt(in, out, &_key);
+		if (_dir != DIR_ENCRYPT) {
+			if (!AES_set_encrypt_key(_key_data.get(), _sz * 8,
+			    &_key))
+				throw Ssl_crypt_error();
+			_dir = DIR_ENCRYPT;
+		}
+		AES_encrypt(in, out, &_key);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no en/decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for AES
+			throw Crypt_error("for AES, input and output buffers "
+			    "should be different");
+		if (_dir != DIR_DECRYPT) {
+			if (!AES_set_decrypt_key(_key_data.get(), _sz * 8,
+			    &_key))
+				throw Ssl_crypt_error();
+			_dir = DIR_DECRYPT;
+		}
+		AES_decrypt(in, out, &_key);
 	}
 	size_t block_size() const throw ()
 	{	return AES_BLOCK_SIZE; }
 
 private:
 	AES_KEY			_key;
+	boost::scoped_array<uint8_t> _key_data;
+	size_t			_sz;
 	enum crypt_direction	_dir;
 	bool			_init;
 };
@@ -351,30 +376,36 @@ public:
 	Crypt_blowfish() : _init(false) {}
 	~Crypt_blowfish() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw ()
+	void init(const uint8_t *key, size_t sz) throw ()
 	{
 		_init = true;
-		_dir = dir;
 		BF_set_key(&_key, sz, key);
 	}
-	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
-			throw Crypt_error("no en/decryption key set");
+			throw Crypt_error("no encryption key set");
 		if (in == out)
 			// TODO see if this is necessary for blowfish
 			throw Crypt_error("for Blowfish, input and output "
 			    "buffers should be different");
-		BF_ecb_encrypt(in, out, &_key, _dir == DIR_ENCRYPT ?
-		    BF_ENCRYPT : BF_DECRYPT);
+		BF_ecb_encrypt(in, out, &_key, BF_ENCRYPT);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for blowfish
+			throw Crypt_error("for Blowfish, input and output "
+			    "buffers should be different");
+		BF_ecb_encrypt(in, out, &_key, BF_DECRYPT);
 	}
 	size_t block_size() const throw ()
 	{	return BF_BLOCK; }
 
 private:
 	BF_KEY			_key;
-	enum crypt_direction	_dir;
 	bool			_init;
 };
 
@@ -383,30 +414,36 @@ public:
 	Crypt_cast5() : _init(false) {}
 	~Crypt_cast5() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw ()
+	void init(const uint8_t *key, size_t sz) throw ()
 	{
 		_init = true;
-		_dir = dir;
 		CAST_set_key(&_key, sz, key);
 	}
-	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
-			throw Crypt_error("no en/decryption key set");
+			throw Crypt_error("no encryption key set");
 		if (in == out)
 			// TODO see if this is necessary for cast5
 			throw Crypt_error("for CAST5, input and output "
 			    "buffers should be different");
-		CAST_ecb_encrypt(in, out, &_key, _dir == DIR_ENCRYPT ?
-		    CAST_ENCRYPT : CAST_DECRYPT);
+		CAST_ecb_encrypt(in, out, &_key, CAST_ENCRYPT);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for cast5
+			throw Crypt_error("for CAST5, input and output "
+			    "buffers should be different");
+		CAST_ecb_encrypt(in, out, &_key, CAST_DECRYPT);
 	}
 	size_t block_size() const throw ()
 	{	return CAST_BLOCK; }
 
 private:
 	CAST_KEY		_key;
-	enum crypt_direction	_dir;
 	bool			_init;
 };
 
@@ -415,31 +452,31 @@ public:
 	Crypt_cast6() : _init(false) {}
 	~Crypt_cast6() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw ()
+	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
 		_init = true;
-		_dir = dir;
-		cast6_init(&_ctx, key, sz);
+		if (!cast6_init(&_ctx, key, sz))
+			throw Crypt_error("bad key size");
 	}
-	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
-			throw Crypt_error("no en/decryption key set");
-		// CAST6 encryption works by copying the plaintext data
-		// to the ciphertext buffer, then modifies it; so in can
-		// be equal to out
-		if (_dir == DIR_ENCRYPT)
-			cast6_encrypt(&_ctx, in, out);
-		else
-			cast6_decrypt(&_ctx, in, out);
+			throw Crypt_error("no encryption key set");
+		// it's fine if in==out
+		cast6_encrypt(&_ctx, in, out);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		// it's fine if in==out
+		cast6_decrypt(&_ctx, in, out);
 	}
 	size_t block_size() const throw ()
 	{	return CAST6_BLOCK; }
 
 private:
 	struct cast6_ctx	_ctx;
-	enum crypt_direction	_dir;
 	bool			_init;
 };
 
@@ -448,30 +485,31 @@ public:
 	Crypt_serpent() : _init(false) {}
 	~Crypt_serpent() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw (Crypt_error)
+	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
 		_init = true;
-		_dir = dir;
 		if (serpent_init(&_ctx, key, sz) == SERPENT_BAD_KEY_MAT)
 			throw Crypt_error("bad key size");
 	}
-	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
-			throw Crypt_error("no en/decryption key set");
+			throw Crypt_error("no encryption key set");
 		// it's fine if in==out
-		if (_dir == DIR_ENCRYPT)
-			serpent_encrypt(&_ctx, in, out);
-		else
-			serpent_decrypt(&_ctx, in, out);
+		serpent_encrypt(&_ctx, in, out);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		// it's fine if in==out
+		serpent_decrypt(&_ctx, in, out);
 	}
 	size_t block_size() const throw ()
 	{	return SERPENT_BLOCK; }
 
 private:
 	struct serpent_ctx	_ctx;
-	enum crypt_direction	_dir;
 	bool			_init;
 };
 
@@ -480,32 +518,30 @@ public:
 	Crypt_twofish() : _init(false) {}
 	~Crypt_twofish() throw () {}
 
-	void init(enum crypt_direction dir, const uint8_t *key, size_t sz)
-	    throw ()
+	void init(const uint8_t *key, size_t sz) throw ()
 	{
 		_init = true;
-		_dir = dir;
-		twofish_set_key(&_key, key, sz);
+		twofish_init(&_ctx, key, sz);
 	}
-	void crypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
-			throw Crypt_error("no en/decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for twofish
-			throw Crypt_error("for Twofish, input and output "
-			    "buffers should be different");
-		if (_dir == DIR_ENCRYPT)
-			twofish_encrypt(&_key, in, out);
-		else
-			twofish_decrypt(&_key, in, out);
+			throw Crypt_error("no encryption key set");
+		// it's fine if in==out
+		twofish_encrypt(&_ctx, in, out);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		// it's fine if in==out
+		twofish_decrypt(&_ctx, in, out);
 	}
 	size_t block_size() const throw ()
 	{	return TWOFISH_BLOCK; }
 
 private:
-	struct twofish_key	_key;
-	enum crypt_direction	_dir;
+	struct twofish_ctx	_ctx;
 	bool			_init;
 };
 

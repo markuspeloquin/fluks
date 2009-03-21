@@ -48,7 +48,7 @@ make_essiv_crypter(enum cipher_type cipher, enum hash_type hash,
 	hashfn->end(key_hash);
 
 	// set key to H(K)
-	crypter->init(DIR_ENCRYPT, key_hash, sz_hash);
+	crypter->init(key_hash, sz_hash);
 	return crypter;
 }
 
@@ -99,7 +99,7 @@ fluks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 			xor_bufs(out - sz_blk, in, sz_blk, buf);
 		else
 			xor_bufs(iv, in, sz_blk, buf);
-		crypter->crypt(buf, out);
+		crypter->encrypt(buf, out);
 
 		in += sz_blk;
 		out += sz_blk;
@@ -115,7 +115,7 @@ fluks::cbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 			// first block
 			xor_bufs(iv, in, left, buf);
 		std::fill(buf + left, buf + sz_blk, 0);
-		crypter->crypt(buf, out);
+		crypter->encrypt(buf, out);
 	}
 }
 
@@ -133,7 +133,7 @@ fluks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		//   out = D(in) XOR iv
 		// for rest:
 		//   out = D(in) XOR in-prev
-		crypter->crypt(in, out);
+		crypter->decrypt(in, out);
 		if (i)
 			xor_bufs(out, in - sz_blk, sz_blk, out);
 		else
@@ -146,7 +146,7 @@ fluks::cbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	// decrypt partial block
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
-		crypter->crypt(in, buf);
+		crypter->decrypt(in, buf);
 		if (blocks)
 			// not first block
 			xor_bufs(buf, in - sz_blk, left, out);
@@ -170,9 +170,9 @@ fluks::cfb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		// for rest:
 		//   out = E(out_prev) XOR in
 		if (i)
-			crypter->crypt(out - sz_blk, out);
+			crypter->encrypt(out - sz_blk, out);
 		else
-			crypter->crypt(iv, out);
+			crypter->encrypt(iv, out);
 		xor_bufs(in, out, sz_blk, out);
 
 		in += sz_blk;
@@ -185,9 +185,9 @@ fluks::cfb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		uint8_t buf[crypter->block_size()];
 
 		if (blocks)
-			crypter->crypt(out - sz_blk, buf);
+			crypter->encrypt(out - sz_blk, buf);
 		else
-			crypter->crypt(iv, buf);
+			crypter->encrypt(iv, buf);
 		xor_bufs(in, buf, left, out);
 	}
 }
@@ -206,9 +206,9 @@ fluks::cfb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		// for rest:
 		//   out = E(in_prev) XOR in
 		if (i)
-			crypter->crypt(in - sz_blk, out);
+			crypter->encrypt(in - sz_blk, out);
 		else
-			crypter->crypt(iv, out);
+			crypter->encrypt(iv, out);
 		xor_bufs(in, out, sz_blk, out);
 
 		in += sz_blk;
@@ -221,9 +221,9 @@ fluks::cfb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		uint8_t buf[crypter->block_size()];
 
 		if (blocks)
-			crypter->crypt(in - sz_blk, buf);
+			crypter->encrypt(in - sz_blk, buf);
 		else
-			crypter->crypt(iv, buf);
+			crypter->encrypt(iv, buf);
 		xor_bufs(in, buf, left, out);
 	}
 }
@@ -248,7 +248,7 @@ fluks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
 		    htonl(i ^ iv_tail);
 
-		crypter->crypt(pre, out);
+		crypter->encrypt(pre, out);
 		xor_bufs(out, in, sz_blk, out);
 
 		in += sz_blk;
@@ -263,7 +263,7 @@ fluks::ctr_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
 		    htonl(blocks ^ iv_tail);
 
-		crypter->crypt(pre, post);
+		crypter->encrypt(pre, post);
 		xor_bufs(post, in, left, out);
 	}
 }
@@ -277,7 +277,7 @@ fluks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
-		crypter->crypt(in, out);
+		crypter->encrypt(in, out);
 
 		in += sz_blk;
 		out += sz_blk;
@@ -289,7 +289,7 @@ fluks::ecb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		uint8_t buf[crypter->block_size()];
 		std::copy(in, in + left, buf);
 		std::fill(buf + left, buf + sz_blk, 0);
-		crypter->crypt(buf, out);
+		crypter->encrypt(buf, out);
 	}
 }
 
@@ -302,7 +302,7 @@ fluks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 
 	// decrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
-		crypter->crypt(in, out);
+		crypter->decrypt(in, out);
 
 		in += sz_blk;
 		out += sz_blk;
@@ -312,7 +312,7 @@ fluks::ecb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
 		uint8_t buf[crypter->block_size()];
-		crypter->crypt(in, buf);
+		crypter->decrypt(in, buf);
 		std::copy(buf, buf + left, out);
 	}
 }
@@ -338,9 +338,9 @@ fluks::ofb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		//   tmp = E(tmp)
 		//   out = tmp XOR in
 		if (i)
-			crypter->crypt(buf_prev, buf_this);
+			crypter->encrypt(buf_prev, buf_this);
 		else
-			crypter->crypt(iv, buf_this);
+			crypter->encrypt(iv, buf_this);
 		xor_bufs(in, buf_this, sz_blk, out);
 
 		in += sz_blk;
@@ -352,9 +352,9 @@ fluks::ofb_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	uint32_t left = sz % sz_blk;
 	if (left) {
 		if (blocks)
-			crypter->crypt(buf_prev, buf_this);
+			crypter->encrypt(buf_prev, buf_this);
 		else
-			crypter->crypt(iv, buf_this);
+			crypter->encrypt(iv, buf_this);
 		xor_bufs(in, buf_this, left, out);
 	}
 }
@@ -378,7 +378,7 @@ fluks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 			xor_bufs(buf, in, sz_blk, buf);
 		} else
 			xor_bufs(iv, in, sz_blk, buf);
-		crypter->crypt(buf, out);
+		crypter->encrypt(buf, out);
 
 		in += sz_blk;
 		out += sz_blk;
@@ -396,7 +396,7 @@ fluks::pcbc_encrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 			xor_bufs(iv, in, left, buf);
 			std::copy(iv + left, iv + sz_blk, buf + left);
 		}
-		crypter->crypt(buf, out);
+		crypter->encrypt(buf, out);
 	}
 }
 
@@ -413,7 +413,7 @@ fluks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 		//   out = D(in) XOR iv
 		// for rest:
 		//   out = D(in) XOR out-prev XOR in-prev
-		crypter->crypt(in, out);
+		crypter->decrypt(in, out);
 		if (i) {
 			xor_bufs(out - sz_blk, out, sz_blk, out);
 			xor_bufs(in - sz_blk, out, sz_blk, out);
@@ -428,7 +428,7 @@ fluks::pcbc_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
 		uint8_t buf[sz_blk];
-		crypter->crypt(in, buf);
+		crypter->decrypt(in, buf);
 		if (sz_plain > sz_blk) {
 			// not first block
 			xor_bufs(out - sz_blk, buf, left, out);
@@ -477,7 +477,7 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 	size_t		sz_blk = encrypter->block_size();
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
-	encrypter->init(DIR_ENCRYPT, key, sz_key);
+	encrypter->init(key, sz_key);
 
 	switch (iv_mode) {
 	case IM_PLAIN:
@@ -527,7 +527,7 @@ fluks::encrypt(enum cipher_type cipher, enum block_mode block_mode,
 		case IM_ESSIV:
 			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
 			    host_little(start_sector + s);
-			iv_crypt->crypt(pre_essiv.get(), iv);
+			iv_crypt->encrypt(pre_essiv.get(), iv);
 			break;
 		case IM_UNDEFINED:
 			// IV never changes
@@ -562,21 +562,8 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 
 	size_t		sz_blk = decrypter->block_size();
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
-	enum crypt_direction dir;
 
-	switch (block_mode) {
-	case BM_CFB:
-	case BM_CTR:
-	case BM_OFB:
-		// encrypt to decrypt :)
-		dir = DIR_ENCRYPT;
-		break;
-	default:
-		dir = DIR_DECRYPT;
-		break;
-	}
-
-	decrypter->init(dir, key, sz_key);
+	decrypter->init(key, sz_key);
 
 	switch (iv_mode) {
 	case IM_PLAIN:
@@ -626,7 +613,7 @@ fluks::decrypt(enum cipher_type cipher, enum block_mode block_mode,
 		case IM_ESSIV:
 			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
 			    host_little(start_sector + s);
-			iv_crypt->crypt(pre_essiv.get(), iv);
+			iv_crypt->encrypt(pre_essiv.get(), iv);
 			break;
 		case IM_UNDEFINED:
 			// IV does not change

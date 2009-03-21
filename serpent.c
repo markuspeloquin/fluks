@@ -157,7 +157,7 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 		d += 4;
 	}
 
-	return 0;
+	return SERPENT_OKAY;
 }
 
 void

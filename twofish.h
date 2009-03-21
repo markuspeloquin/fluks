@@ -26,7 +26,7 @@
 
 const size_t TWOFISH_BLOCK = 16;
 
-struct twofish_key {
+struct twofish_ctx {
 	uint32_t K[40];
 	uint32_t QF[4][256];
 };
@@ -39,7 +39,7 @@ __BEGIN_DECLS
  * \param keydata	The %key for en/decryption
  * \param sz		The size in bytes of the %key
  */
-void	twofish_set_key(struct twofish_key *key, const uint8_t *keydata,
+void	twofish_init(struct twofish_ctx *key, const uint8_t *keydata,
 	    size_t sz);
 
 /** Encrypt a block of plaintext
@@ -51,7 +51,7 @@ void	twofish_set_key(struct twofish_key *key, const uint8_t *keydata,
  * \param[in] in	The plaintext
  * \param[out] out	The ciphertext buffer
  */
-void	twofish_encrypt(struct twofish_key *key, const uint8_t *in,
+void	twofish_encrypt(struct twofish_ctx *key, const uint8_t *in,
 	    uint8_t *out);
 
 /** Decrypt a block of ciphertext
@@ -63,7 +63,7 @@ void	twofish_encrypt(struct twofish_key *key, const uint8_t *in,
  * \param[in] in	The ciphertext
  * \param[out] out	The plaintext buffer
  */
-void	twofish_decrypt(struct twofish_key *key, const uint8_t *in,
+void	twofish_decrypt(struct twofish_ctx *key, const uint8_t *in,
 	    uint8_t *out);
 
 __END_DECLS

@@ -92,8 +92,11 @@ Crypt_test::run()
 {
 	std::tr1::shared_ptr<Crypt> crypt = Crypt::create(_type);
 	uint8_t buf[crypt->block_size()];
-	crypt->init(_dir, _key.get(), _sz_key);
-	crypt->crypt(_block.get(), buf);
+	crypt->init(_key.get(), _sz_key);
+	if (_dir == DIR_ENCRYPT)
+		crypt->encrypt(_block.get(), buf);
+	else
+		crypt->decrypt(_block.get(), buf);
 
 	std::cout
 	//    << "KEY=" << hex(_key.get(), _sz_key) << '\n'

@@ -479,23 +479,23 @@ int main()
 #endif /* TF_TESTING */
 
 void
-twofish_set_key(struct twofish_key *key, const uint8_t *keydata, size_t sz)
+twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz)
 {
 	uint32_t *S;
 	uint8_t k;
-	keySched(keydata, sz * 8, &S, key->K, &k);
-	fullKey(S, k, key->QF);
+	keySched(keydata, sz * 8, &S, ctx->K, &k);
+	fullKey(S, k, ctx->QF);
 	free(S);
 }
 
 void
-twofish_encrypt(struct twofish_key *key, const uint8_t *in, uint8_t *out)
+twofish_encrypt(struct twofish_ctx *ctx, const uint8_t *in, uint8_t *out)
 {
-	encrypt(key->K, key->QF, in, out);
+	encrypt(ctx->K, ctx->QF, in, out);
 }
 
 void
-twofish_decrypt(struct twofish_key *key, const uint8_t *in, uint8_t *out)
+twofish_decrypt(struct twofish_ctx *ctx, const uint8_t *in, uint8_t *out)
 {
-	decrypt(key->K, key->QF, in, out);
+	decrypt(ctx->K, ctx->QF, in, out);
 }
