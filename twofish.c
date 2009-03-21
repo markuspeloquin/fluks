@@ -29,12 +29,12 @@
 
 */
 
-#include <endian.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "crypto_ops.h"
+#include "endian.h"
 #include "twofish.h"
 #include "twofish_tables.h"
 #define uint32_t uint32_t
@@ -44,9 +44,6 @@
 const uint32_t RHO = 0x01010101UL;
 
 #define TWOFISH_TESTING 0
-
-/* ensure ENDIAN macros exist */
-#include "endian_check.h"
 
 /* get byte N of x, where 0 is the least significant byte */
 #define _b(x, N) ((uint8_t)((x) >> (N)*8))

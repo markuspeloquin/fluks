@@ -14,10 +14,7 @@
 
 #include <arpa/inet.h>
 
-#include <endian.h>
-
-// ensure ENDIAN macros exist
-#include "endian_check.h"
+#include "endian.h"
 
 namespace fluks {
 
