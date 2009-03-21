@@ -58,9 +58,9 @@ public:
 	virtual void run() = 0;
 };
 
-class Crypt_test : public Test {
+class Cipher_test : public Test {
 public:
-	Crypt_test(enum cipher_type, const uint8_t *key, size_t sz_key,
+	Cipher_test(enum cipher_type, const uint8_t *key, size_t sz_key,
 	    const uint8_t *block, size_t sz_blk, enum crypt_direction);
 
 	void run();
@@ -72,7 +72,7 @@ private:
 	size_t _sz_key;
 };
 
-Crypt_test::Crypt_test(enum cipher_type type, const uint8_t *key,
+Cipher_test::Cipher_test(enum cipher_type type, const uint8_t *key,
     size_t sz_key, const uint8_t *block, size_t sz_blk,
     enum crypt_direction dir) :
 	_type(type),
@@ -82,28 +82,28 @@ Crypt_test::Crypt_test(enum cipher_type type, const uint8_t *key,
 	_sz_key(sz_key)
 {
 	Assert(cipher_info::block_size(type) == sz_blk,
-	    "Crypt_test block size wrong");
+	    "Cipher_test block size wrong");
 	std::copy(key, key + sz_key, _key.get());
 	std::copy(block, block + sz_blk, _block.get());
 }
 
 void
-Crypt_test::run()
+Cipher_test::run()
 {
-	std::tr1::shared_ptr<Crypt> crypt = Crypt::create(_type);
-	uint8_t buf[crypt->block_size()];
-	crypt->init(_key.get(), _sz_key);
+	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(_type);
+	uint8_t buf[cipher->block_size()];
+	cipher->init(_key.get(), _sz_key);
 	if (_dir == DIR_ENCRYPT)
-		crypt->encrypt(_block.get(), buf);
+		cipher->encrypt(_block.get(), buf);
 	else
-		crypt->decrypt(_block.get(), buf);
+		cipher->decrypt(_block.get(), buf);
 
 	std::cout
 	//    << "KEY=" << hex(_key.get(), _sz_key) << '\n'
 	//    << (_dir == DIR_ENCRYPT ? 'P' : 'C') << "T="
-	//    << hex(_block.get(), crypt->block_size()) << '\n'
+	//    << hex(_block.get(), cipher->block_size()) << '\n'
 	//    << (_dir == DIR_ENCRYPT ? 'C' : 'P') << "T="
-	    << hex(buf, crypt->block_size()) << '\n';
+	    << hex(buf, cipher->block_size()) << '\n';
 }
 
 class Hash_test : public Test {
@@ -188,7 +188,8 @@ void
 usage()
 {
 	std::cout
-	    << "usage: " << prog << " crypt TYPE (encrypt | decrypt) KEY DATA\n"
+	    << "usage: " << prog
+		<< " cipher TYPE (encrypt | decrypt) KEY DATA\n"
 	    << "       " << prog << " hash TYPE DATA\n"
 	    << "       " << prog << " hmac TYPE KEY DATA\n\n"
 	    << "TYPE: name of the cipher/hash function\n"
@@ -206,11 +207,6 @@ main(int argc, char **argv)
 	using namespace test;
 
 	boost::scoped_ptr<Test> test;
-	/*= Test::create(
-	    "crypt cast6 encrypt "
-	    "2342bb9efa38542c0af75647f29f615d "
-	    "00000000000000000000000000000000");
-	    */
 
 	prog = *argv;
 	if (argc < 2) {
@@ -219,7 +215,7 @@ main(int argc, char **argv)
 	}
 
 	std::string type = argv[1];
-	if (type == "crypt") {
+	if (type == "cipher") {
 		if (argc != 6) {
 			usage();
 			return 1;
@@ -253,7 +249,7 @@ main(int argc, char **argv)
 			datasz = data.size()/2;
 		}
 
-		test.reset(new Crypt_test(cipher_, keybuf, key.size()/2,
+		test.reset(new Cipher_test(cipher_, keybuf, key.size()/2,
 		    databuf, datasz, dir_));
 	} else if (type == "hash") {
 		if (argc != 4) {

@@ -32,7 +32,7 @@ namespace fluks {
 enum crypt_direction { DIR_NONE, DIR_ENCRYPT, DIR_DECRYPT };
 
 /** En/Decrypt a block of data */
-class Crypt {
+class Cipher {
 	// CRYPTER! CRYPTER! CRYPTER!
 public:
 	/** Create an encryption or decryption object
@@ -41,9 +41,9 @@ public:
 	 * \return	An object to en/decrypt with.  It's meant to be used
 	 *	with the XXX_encrypt() and XXX_decrypt() functions.
 	 */
-	static std::tr1::shared_ptr<Crypt> create(enum cipher_type type);
+	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
 
-	virtual ~Crypt() throw () {}
+	virtual ~Cipher() throw () {}
 
 	/** Set the direction of encryption and the key
 	 *
@@ -143,7 +143,7 @@ void	decrypt(enum cipher_type cipher, enum block_mode block_mode,
  * The final block is padded as necessary so that the size of the plaintext
  * is a multiple of the cipher's block size.
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Plaintext
  * \param[in] sz_plain	The size of the plaintext
@@ -151,43 +151,43 @@ void	decrypt(enum cipher_type cipher, enum block_mode block_mode,
  *	<code>ceil(sz_plain/B)</code>, where <code>B</code> is the block
  *	size of the cipher.
  */
-void		cbc_encrypt(Crypt *crypter, const uint8_t *iv,
+void		cbc_encrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 /** Decrypt using Cyclic Block Chaining mode
  *
- * \param[in] crypter	Block decrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Ciphertext
  * \param[in] sz_plain	The size of the plaintext
  * \param[out] out	The plaintext.  Its size should be at least
  *	<code>sz_plain</code>.
  */
-void		cbc_decrypt(Crypt *crypter, const uint8_t *iv,
+void		cbc_decrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 /** Encrypt using Cipher feedback
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Plaintext
  * \param[in] sz	The size of the plaintext and resulting ciphertext
  * \param[out] out	The ciphertext.  It should be at least as big as the
  *	plaintext buffer.
  */
-void		cfb_encrypt(Crypt *crypter, const uint8_t *iv,
+void		cfb_encrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
 /** Decrypt using Cipher feedback
  *
- * \param[in] crypter	Block decrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Ciphertext
  * \param[in] sz	The size of the plaintext and ciphertext
  * \param[out] out	Plaintext.  It should be at least as big as the
  *	ciphertext buffer.
  */
-void		cfb_decrypt(Crypt *crypter, const uint8_t *iv,
+void		cfb_decrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
 /** Encrypt using Counter mode
@@ -196,14 +196,14 @@ void		cfb_decrypt(Crypt *crypter, const uint8_t *iv,
  * mode turns the block cipher into a sort of stream cipher.  Encryption
  * and decryption in counter mode are the same.
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization vector
  * \param[in] in	Plaintext
  * \param[in] sz	The size of the plaintext/ciphertext
  * \param[out] out	The ciphertext.  Its size should be at least
  *	<code>sz</code>.
  */
-void		ctr_encrypt(Crypt *crypter, const uint8_t *iv,
+void		ctr_encrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
 /** Decrypt using Counter mode
@@ -212,14 +212,14 @@ void		ctr_encrypt(Crypt *crypter, const uint8_t *iv,
  * mode turns the block cipher into a sort of stream cipher.  Encryption
  * and decryption in counter mode are the same.
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization vector
  * \param[in] in	Ciphertext
  * \param[in] sz	The size of the plaintext/ciphertext
  * \param[out] out	The plaintext.  Its size should be at least
  *	<code>sz</code>.
  */
-inline void	ctr_decrypt(Crypt *crypter, const uint8_t *iv,
+inline void	ctr_decrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
 /** Encrypt using Electronic Code Book mode
@@ -227,7 +227,7 @@ inline void	ctr_decrypt(Crypt *crypter, const uint8_t *iv,
  * The most insecure of the encryption modes.  The plaintext is padded so
  * that its size is a multiple of the cipher's block size.
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization vector
  * \param[in] in	Plaintext
  * \param[in] sz_plain	The size of the plaintext
@@ -235,43 +235,43 @@ inline void	ctr_decrypt(Crypt *crypter, const uint8_t *iv,
  *	<code>ceil(sz_plain/B)</code>, where <code>B</code> is the block
  *	size of the cipher.
  */
-void		ecb_encrypt(Crypt *crypter, const uint8_t *iv,
+void		ecb_encrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 /** Encrypt using Electronic Code Book mode
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization vector
  * \param[in] in	Ciphertext
  * \param[in] sz_plain	The size of the plaintext
  * \param[out] out	The plaintext.  Its size should be at least
  *	<code>sz_plain</code>.
  */
-void		ecb_decrypt(Crypt *crypter, const uint8_t *iv,
+void		ecb_decrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 /** Encrypt using Output feedback
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Plaintext
  * \param[in] sz	The size of the plaintext and resulting ciphertext
  * \param[out] out	The ciphertext.  It should be at least as big as the
  *	plaintext buffer.
  */
-void		ofb_encrypt(Crypt *crypter, const uint8_t *iv,
+void		ofb_encrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
 /** Decrypt using Output feedback
  *
- * \param[in] crypter	Block decrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Ciphertext
  * \param[in] sz	The size of the plaintext and ciphertext
  * \param[out] out	Plaintext.  It should be at least as big as the
  *	ciphertext buffer.
  */
-void		ofb_decrypt(Crypt *crypter, const uint8_t *iv,
+void		ofb_decrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz, uint8_t *out);
 
 /** Encrypt using Propagating Cyclic Block Chaining mode
@@ -279,7 +279,7 @@ void		ofb_decrypt(Crypt *crypter, const uint8_t *iv,
  * The final block is padded as necessary so that the size of the plaintext
  * is a multiple of the cipher's block size.
  *
- * \param[in] crypter	Block encrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Plaintext
  * \param[in] sz_plain	The size of the plaintext
@@ -287,38 +287,38 @@ void		ofb_decrypt(Crypt *crypter, const uint8_t *iv,
  *	<code>ceil(sz_plain/B)</code>, where <code>B</code> is the block
  *	size of the cipher.
  */
-void		pcbc_encrypt(Crypt *crypter, const uint8_t *iv,
+void		pcbc_encrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 /** Decrypt using Propagating Cyclic Block Chaining mode
  *
- * \param[in] crypter	Block decrypter
+ * \param[in] cipher	Block cipher
  * \param[in] iv	Initialization Vector
  * \param[in] in	Ciphertext
  * \param[in] sz_plain	The size of the plaintext
  * \param[out] out	The plaintext.  Its size should be at least
  *	<code>sz_plain</code>.
  */
-void		pcbc_decrypt(Crypt *crypter, const uint8_t *iv,
+void		pcbc_decrypt(Cipher *cipher, const uint8_t *iv,
 		    const uint8_t *in, size_t sz_plain, uint8_t *out);
 
 
 // the encryption and decryption work the same for these
 inline void
-ctr_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+ctr_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
-{	ctr_encrypt(crypter, iv, in, sz, out); }
+{	ctr_encrypt(cipher, iv, in, sz, out); }
 inline void
-ofb_decrypt(Crypt *crypter, const uint8_t *iv, const uint8_t *in,
+ofb_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
-{	ofb_encrypt(crypter, iv, in, sz, out); }
+{	ofb_encrypt(cipher, iv, in, sz, out); }
 
 
 /** AES encryption, using OpenSSL */
-class Crypt_aes : public Crypt {
+class Cipher_aes : public Cipher {
 public:
-	Crypt_aes() : _init(false) {}
-	~Crypt_aes() throw () {}
+	Cipher_aes() : _init(false) {}
+	~Cipher_aes() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
@@ -371,10 +371,10 @@ private:
 	bool			_init;
 };
 
-class Crypt_blowfish : public Crypt {
+class Cipher_blowfish : public Cipher {
 public:
-	Crypt_blowfish() : _init(false) {}
-	~Crypt_blowfish() throw () {}
+	Cipher_blowfish() : _init(false) {}
+	~Cipher_blowfish() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
@@ -409,10 +409,10 @@ private:
 	bool			_init;
 };
 
-class Crypt_cast5 : public Crypt {
+class Cipher_cast5 : public Cipher {
 public:
-	Crypt_cast5() : _init(false) {}
-	~Crypt_cast5() throw () {}
+	Cipher_cast5() : _init(false) {}
+	~Cipher_cast5() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
@@ -447,10 +447,10 @@ private:
 	bool			_init;
 };
 
-class Crypt_cast6 : public Crypt {
+class Cipher_cast6 : public Cipher {
 public:
-	Crypt_cast6() : _init(false) {}
-	~Crypt_cast6() throw () {}
+	Cipher_cast6() : _init(false) {}
+	~Cipher_cast6() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
@@ -480,10 +480,10 @@ private:
 	bool			_init;
 };
 
-class Crypt_serpent : public Crypt {
+class Cipher_serpent : public Cipher {
 public:
-	Crypt_serpent() : _init(false) {}
-	~Crypt_serpent() throw () {}
+	Cipher_serpent() : _init(false) {}
+	~Cipher_serpent() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
@@ -513,10 +513,10 @@ private:
 	bool			_init;
 };
 
-class Crypt_twofish : public Crypt {
+class Cipher_twofish : public Cipher {
 public:
-	Crypt_twofish() : _init(false) {}
-	~Crypt_twofish() throw () {}
+	Cipher_twofish() : _init(false) {}
+	~Cipher_twofish() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
