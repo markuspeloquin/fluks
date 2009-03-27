@@ -103,7 +103,7 @@ void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
 	    Hash_function::create(HT_SHA1);
 	hash->init();
 	hash->add(buf, sz);
-	uint8_t out[hash->digest_size()];
+	uint8_t out[hash->info()->digest_size];
 	hash->end(out);
 
 	dump(pfx, out, sizeof(out));
@@ -132,7 +132,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
 	_sz_sect(sector_size(*device)),
-	_hash_type(hash_info::type(hash_spec)),
+	_hash_type(Hash_info::type(hash_spec)),
 	_proved_passwd(-1),
 	_mach_end(true),
 	_dirty(true),
@@ -221,7 +221,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
 		init_cipher_spec(cipher_spec, _hdr->sz_key);
 	}
 
-	_hash_type = hash_info::type(_hdr->hash_spec);
+	_hash_type = Hash_info::type(_hdr->hash_spec);
 
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec(
@@ -458,7 +458,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	_cipher_type = Cipher_info::type(cipher);
 	_block_mode = block_mode_info::type(block_mode);
 	_iv_mode = iv_mode_info::type(ivmode);
-	_iv_hash = hash_info::type(ivhash);
+	_iv_hash = Hash_info::type(ivhash);
 
 	// are the specs supported by fluks?
 	if (_cipher_type == CT_UNDEFINED)
@@ -474,8 +474,9 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 
 	// canonize cipher and IV hash; note that ivhash will remain an
 	// empty string if it was empty initially
+	const Hash_info *ivhash_info = Hash_info::info(_iv_hash);
 	cipher = cipher_info->name;
-	ivhash = hash_info::name(_iv_hash);
+	ivhash = ivhash_info->name;
 
 	// is the cipher spec supported by the system?
 	{
@@ -518,7 +519,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	if (_iv_mode == IM_ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
-		uint16_t size = hash_info::digest_size(_iv_hash);
+		uint16_t size = ivhash_info->digest_size;
 		if (std::find(sizes.begin(), sizes.end(), size) ==
 		    sizes.end()) {
 			std::ostringstream out;
@@ -538,7 +539,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// recreate a canonical cipher spec, canonize the hash spec; note
 	// that cipher and ivhash were already canonized
 	std::string mode = make_mode(block_mode, ivmode, ivhash);
-	std::string hash = hash_info::name(_hash_type);
+	std::string hash = Hash_info::info(_hash_type)->name;
 
 	// copy specs (back) into header
 	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);

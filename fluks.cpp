@@ -38,7 +38,7 @@ void
 list_modes()
 {
 	const std::vector<enum cipher_type> &ciphers = Cipher_info::types();
-	std::vector<enum hash_type> hashes = hash_info::types();
+	std::vector<enum hash_type> hashes = Hash_info::types();
 	std::vector<enum block_mode> block_modes = block_mode_info::types();
 	std::vector<enum iv_mode> iv_modes = iv_mode_info::types();
 
@@ -73,14 +73,16 @@ list_modes()
 	for (std::vector<enum hash_type>::iterator i = hashes.begin();
 	    i != hashes.end(); ++i) {
 
-		uint16_t version = hash_info::version(*i);
+		const Hash_info *info = Hash_info::info(*i);
 		std::cout << "\t[";
-		if (!version)	std::cout << '!';
-		else		std::cout << version;
+		if (!info->luks_version)
+			std::cout << '!';
+		else
+			std::cout << info->luks_version;
 		std::cout << "] ";
 
-		std::cout << hash_info::name(*i) << " ("
-		    << hash_info::digest_size(*i) * 8 << ")\n";
+		std::cout << info->name << " ("
+		    << info->digest_size * 8 << ")\n";
 	}
 
 	std::cout << "\nblock modes:\n";

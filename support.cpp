@@ -21,13 +21,6 @@ namespace {
 
 std::string blank = "";
 
-struct hash_stat {
-	std::string kern_name;
-	uint16_t blocksize;
-	uint16_t digestsize;
-	uint16_t version;
-};
-
 struct block_mode_stat {
 	std::string kern_name;
 	uint16_t version;
@@ -70,11 +63,6 @@ private:
 	}
 
 public:
-	struct hash_stat	*stat_lookup(enum hash_type type)
-	{
-		return stat_lookup<struct hash_stat>(
-		    hash_stat_map, type);
-	}
 	struct block_mode_stat	*stat_lookup(enum block_mode mode)
 	{
 		return stat_lookup<struct block_mode_stat>(
@@ -86,10 +74,6 @@ public:
 		    iv_mode_stat_map, mode);
 	}
 
-	enum hash_type		hash_lookup(const std::string &name)
-	{
-		return enum_lookup(hash_name_map, HT_UNDEFINED, name);
-	}
 	enum block_mode		block_mode_lookup(const std::string &name)
 	{
 		return enum_lookup(block_mode_name_map, BM_UNDEFINED, name);
@@ -99,19 +83,15 @@ public:
 		return enum_lookup(iv_mode_name_map, IM_UNDEFINED, name);
 	}
 
-	void	hash_types(std::vector<enum hash_type> &vec)
-	{	types(hash_stat_map, vec); }
 	void	block_mode_types(std::vector<enum block_mode> &vec)
 	{	types(block_mode_stat_map, vec); }
 	void	iv_mode_types(std::vector<enum iv_mode> &vec)
 	{	types(iv_mode_stat_map, vec); }
 
 private:
-	std::map<enum hash_type, struct hash_stat> hash_stat_map;
 	std::map<enum block_mode, struct block_mode_stat> block_mode_stat_map;
 	std::map<enum iv_mode, struct iv_mode_stat> iv_mode_stat_map;
 
-	std::map<std::string, enum hash_type> hash_name_map;
 	std::map<std::string, enum block_mode> block_mode_name_map;
 	std::map<std::string, enum iv_mode> iv_mode_name_map;
 
@@ -127,44 +107,6 @@ Lookup Lookup::_instance;
 
 Lookup::Lookup()
 {
-	hash_stat_map[HT_MD5] = (hash_stat){ "md5", 64, 16, 0 };
-	hash_stat_map[HT_RMD160] = (hash_stat){ "rmd160", 64, 20, 1 };
-	hash_stat_map[HT_SHA1] = (hash_stat){ "sha1", 64, 20, 1 };
-	hash_stat_map[HT_SHA224] = (hash_stat){ "sha224", 64, 28, 0 };
-	hash_stat_map[HT_SHA256] = (hash_stat){ "sha256", 64, 32, 1 };
-	hash_stat_map[HT_SHA384] = (hash_stat){ "sha384", 128, 48, 0 };
-	hash_stat_map[HT_SHA512] = (hash_stat){ "sha512", 128, 64, 1 };
-	hash_stat_map[HT_TIGER128] = (hash_stat){ "tgr128", 64, 16, 0 };
-	hash_stat_map[HT_TIGER160] = (hash_stat){ "tgr160", 64, 20, 0 };
-	hash_stat_map[HT_TIGER192] = (hash_stat){ "tgr192", 64, 24, 0 };
-	hash_stat_map[HT_WHIRLPOOL256] = (hash_stat){ "wp256", 64, 32, 0 };
-	hash_stat_map[HT_WHIRLPOOL384] = (hash_stat){ "wp384", 64, 48, 0 };
-	hash_stat_map[HT_WHIRLPOOL512] = (hash_stat){ "wp512", 64, 64, 0 };
-
-	hash_name_map["md5"] = HT_MD5;
-	hash_name_map["rmd160"] = HT_RMD160;
-	hash_name_map["ripemd160"] = HT_RMD160;
-	hash_name_map["sha"] = HT_SHA1;
-	hash_name_map["sha1"] = HT_SHA1;
-	hash_name_map["sha224"] = HT_SHA224;
-	hash_name_map["sha256"] = HT_SHA256;
-	hash_name_map["sha384"] = HT_SHA384;
-	hash_name_map["sha512"] = HT_SHA512;
-	hash_name_map["tiger128"] = HT_TIGER128;
-	hash_name_map["tgr128"] = HT_TIGER128;
-	hash_name_map["tiger160"] = HT_TIGER160;
-	hash_name_map["tgr160"] = HT_TIGER160;
-	hash_name_map["tiger"] = HT_TIGER192;
-	hash_name_map["tgr"] = HT_TIGER192;
-	hash_name_map["tiger192"] = HT_TIGER192;
-	hash_name_map["tgr192"] = HT_TIGER192;
-	hash_name_map["whirlpool256"] = HT_WHIRLPOOL256;
-	hash_name_map["wp256"] = HT_WHIRLPOOL256;
-	hash_name_map["whirlpool384"] = HT_WHIRLPOOL384;
-	hash_name_map["wp384"] = HT_WHIRLPOOL384;
-	hash_name_map["whirlpool512"] = HT_WHIRLPOOL512;
-	hash_name_map["wp512"] = HT_WHIRLPOOL512;
-
 	block_mode_stat_map[BM_CBC] = (block_mode_stat){ "cbc", 1 };
 	block_mode_stat_map[BM_CFB] = (block_mode_stat){ "cfb", 0 };
 	block_mode_stat_map[BM_CTR] = (block_mode_stat){ "ctr", 0 };
@@ -187,48 +129,6 @@ Lookup::Lookup()
 }
 
 } // end anon namespace
-}
-
-enum fluks::hash_type
-fluks::hash_info::type(const std::string &name)
-{
-	return Lookup::instance()->hash_lookup(name);
-}
-
-std::vector<enum fluks::hash_type>
-fluks::hash_info::types()
-{
-	std::vector<enum hash_type> res;
-	Lookup::instance()->hash_types(res);
-	return res;
-}
-
-const std::string &
-fluks::hash_info::name(enum hash_type type)
-{
-	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->kern_name : blank;
-}
-
-size_t
-fluks::hash_info::digest_size(enum hash_type type)
-{
-	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->digestsize : 0;
-}
-
-size_t
-fluks::hash_info::block_size(enum hash_type type)
-{
-	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->blocksize : 0;
-}
-
-uint16_t
-fluks::hash_info::version(enum hash_type type)
-{
-	struct hash_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->version : 0;
 }
 
 enum fluks::block_mode

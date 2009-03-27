@@ -97,8 +97,8 @@ public:
 	 * 
 	 * \return	The block size in bytes.
 	 */
-	const Cipher_info &info() const
-	{	return *_info; }
+	const Cipher_info *info() const
+	{	return _info; }
 
 private:
 	Cipher_info *_info;

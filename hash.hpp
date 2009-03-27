@@ -37,7 +37,28 @@
 
 namespace fluks {
 
+struct Hash_info {
+	Hash_info() {}
+	Hash_info(const std::string &name, uint16_t sz_blk, uint16_t sz_dig,
+	    uint16_t version) :
+		name(name),
+		block_size(sz_blk),
+		digest_size(sz_dig),
+		luks_version(version)
+	{}
+
+	static const Hash_info *info(enum hash_type type);
+	static enum hash_type type(const std::string &name);
+	static const std::vector<enum hash_type> &types();
+
+	std::string name;
+	uint16_t block_size;
+	uint16_t digest_size;
+	uint16_t luks_version;
+};
+
 struct Hash_function {
+	Hash_function(enum hash_type type) : _info(Hash_info::info(type)) {}
 
 	/**
 	 * Create a hash function, in an abstract sense, given a hash spec.
@@ -49,7 +70,7 @@ struct Hash_function {
 	 */
 	static std::tr1::shared_ptr<Hash_function>
 	create(const std::string &name)
-	{	return create(hash_info::type(name)); }
+	{	return create(Hash_info::type(name)); }
 
 	/**
 	 * Create a hash function, in an abstract sense, given a hash type.
@@ -89,17 +110,14 @@ struct Hash_function {
 	 */
 	virtual void end(uint8_t *buf) throw (Hash_error) = 0;
 
-	/** The size of the digest.
+	/** Get information on the hash function
 	 *
-	 * \return	The size in bytes.
+	 * \return	properties of the function
 	 */
-	virtual size_t digest_size() const = 0;
-
-	/** The size of the blocks.
-	 *
-	 * \return	The size in bytes.
-	 */
-	virtual size_t block_size() const = 0;
+	const Hash_info *info() const
+	{	return _info; }
+private:
+	const Hash_info *_info;
 };
 
 
@@ -109,11 +127,10 @@ template <
     int (*Init)(CTX *),
     int (*Update)(CTX *, const void *, size_t),
     int (*Final)(uint8_t *, CTX *),
-    size_t SIZE,
-    size_t BLOCKSIZE>
+    enum hash_type type>
 class Hash_ssl : public Hash_function {
 public:
-	Hash_ssl() : _valid(false) {}
+	Hash_ssl() : Hash_function(type), _valid(false) {}
 	~Hash_ssl() throw () {}
 
 	void init() throw (Hash_error)
@@ -133,10 +150,6 @@ public:
 		if (!Final(buf, &_ctx)) throw Ssl_hash_error();
 		_valid = false;
 	}
-	size_t digest_size() const
-	{	return SIZE; }
-	size_t block_size() const
-	{	return BLOCKSIZE; }
 
 private:
 	CTX _ctx;
@@ -149,42 +162,47 @@ class Hash_tiger : public Hash_function {
 public:
 	/** Create a Tiger hash object
 	 *
-	 * \param sz_digest	The size of the digest in bytes.  Must be one
-	 *	of { \link TIGER128_SZ_DIGEST\endlink,
-	 *	\link TIGER160_SZ_DIGEST\endlink,
-	 *	\link TIGER_SZ_DIGEST\endlink }.
+	 * \param type the type of the Tiger hash, must be one of
+	 *	of { HT_TIGER128, TIGER160, TIGER_SZ_DIGEST }.
 	 */
-	Hash_tiger(size_t sz_digest) :
-		_sz(sz_digest)
-	{}
+	Hash_tiger(enum hash_type type) :
+		Hash_function(type),
+		_valid(false)
+	{
+		Assert(
+		    type == HT_TIGER128 ||
+		    type == HT_TIGER160 ||
+		    type == HT_TIGER192,
+		    "Hash_tiger constructor needs a HT_TIGER* enum");
+	}
 	~Hash_tiger() throw () {}
 
 	void init() throw ()
 	{
 		tiger_init(&_ctx);
+		_valid = true;
 	}
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{
+		if (!_valid) return;
 		tiger_update(&_ctx, buf, sz);
 	}
 	void end(uint8_t *buf) throw ()
 	{
-		if (_sz < TIGER_SZ_DIGEST) {
+		if (!_valid) return;
+		if (info()->digest_size < TIGER_SZ_DIGEST) {
 			// truncate output
 			uint8_t buf2[TIGER_SZ_DIGEST];
 			tiger_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + _sz, buf);
+			std::copy(buf2, buf2 + info()->digest_size, buf);
 		} else
 			tiger_end(&_ctx, buf);
+		_valid = false;
 	}
-	size_t digest_size() const
-	{	return _sz; }
-	size_t block_size() const
-	{	return TIGER_SZ_BLOCK; }
 
 private:
 	tiger_ctx	_ctx;
-	size_t		_sz;
+	bool		_valid;
 };
 
 
@@ -193,75 +211,70 @@ class Hash_whirlpool : public Hash_function {
 public:
 	/** Create a Whirlpool hash object
 	 *
-	 * \param sz_digest	The size of the digest in bytes.  Must be one
-	 *	of { \link TIGER128_SZ_DIGEST\endlink,
-	 *	\link TIGER160_SZ_DIGEST\endlink,
-	 *	\link TIGER_SZ_DIGEST\endlink }.
-	 * \param passes	The number of passes to take in the Tiger
-	 *	compression function.  Minumum value is 3.
+	 * \param type the type of the Whirlpool hash, must be one of
+	 *	of { HT_WHIRLPOOL256, HT_WHIRLPOOL384, HT_WHIRLPOOL512 }.
 	 */
-	Hash_whirlpool(size_t sz_digest) :
-		_sz(sz_digest)
-	{}
+	Hash_whirlpool(enum hash_type type) :
+		Hash_function(type),
+		_valid(false)
+	{
+		Assert(
+		    type == HT_WHIRLPOOL256 ||
+		    type == HT_WHIRLPOOL384 ||
+		    type == HT_WHIRLPOOL512,
+		    "Hash_whirlpool constructor needs a HT_WHIRLPOOL* enum");
+	}
 	~Hash_whirlpool() throw () {}
 
 	void init() throw ()
 	{
 		whirlpool_init(&_ctx);
+		_valid = true;
 	}
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{
+		if (!_valid) return;
 		whirlpool_update(&_ctx, buf, sz);
 	}
 	void end(uint8_t *buf) throw ()
 	{
-		if (_sz < WHIRLPOOL_SZ_DIGEST) {
+		if (!_valid) return;
+		if (info()->digest_size < WHIRLPOOL_SZ_DIGEST) {
 			// truncate output
 			uint8_t buf2[WHIRLPOOL_SZ_DIGEST];
 			whirlpool_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + _sz, buf);
+			std::copy(buf2, buf2 + info()->digest_size, buf);
 		} else
 			whirlpool_end(&_ctx, buf);
 	}
-	size_t digest_size() const
-	{	return _sz; }
-	size_t block_size() const
-	{	return WHIRLPOOL_SZ_BLOCK; }
 
 private:
 	whirlpool_ctx	_ctx;
-	unsigned	_passes;
-	size_t		_sz;
+	bool		_valid;
 };
 
 
 typedef Hash_ssl<
-    MD5_CTX, MD5_Init, MD5_Update, MD5_Final,
-    MD5_DIGEST_LENGTH, MD5_CBLOCK>
+    MD5_CTX, MD5_Init, MD5_Update, MD5_Final, HT_MD5>
     Hash_md5;
 typedef Hash_ssl<
     RIPEMD160_CTX, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
-    RIPEMD160_DIGEST_LENGTH, RIPEMD160_CBLOCK>
+    HT_RMD160>
     Hash_rmd160;
 typedef Hash_ssl<
-    SHA_CTX, SHA1_Init, SHA1_Update, SHA1_Final,
-    SHA_DIGEST_LENGTH, SHA_CBLOCK>
+    SHA_CTX, SHA1_Init, SHA1_Update, SHA1_Final, HT_SHA1>
     Hash_sha1;
 typedef Hash_ssl<
-    SHA256_CTX, SHA224_Init, SHA224_Update, SHA224_Final,
-    SHA224_DIGEST_LENGTH, SHA256_CBLOCK>
+    SHA256_CTX, SHA224_Init, SHA224_Update, SHA224_Final, HT_SHA224>
     Hash_sha224;
 typedef Hash_ssl<
-    SHA256_CTX, SHA256_Init, SHA256_Update, SHA256_Final,
-    SHA256_DIGEST_LENGTH, SHA256_CBLOCK>
+    SHA256_CTX, SHA256_Init, SHA256_Update, SHA256_Final, HT_SHA256>
     Hash_sha256;
 typedef Hash_ssl<
-    SHA512_CTX, SHA384_Init, SHA384_Update, SHA384_Final,
-    SHA384_DIGEST_LENGTH, SHA512_CBLOCK>
+    SHA512_CTX, SHA384_Init, SHA384_Update, SHA384_Final, HT_SHA384>
     Hash_sha384;
 typedef Hash_ssl<
-    SHA512_CTX, SHA512_Init, SHA512_Update, SHA512_Final,
-    SHA512_DIGEST_LENGTH, SHA512_CBLOCK>
+    SHA512_CTX, SHA512_Init, SHA512_Update, SHA512_Final, HT_SHA512>
     Hash_sha512;
 
 }

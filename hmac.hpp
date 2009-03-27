@@ -31,6 +31,8 @@
 namespace fluks {
 
 struct Hmac_function {
+	Hmac_function(enum hash_type type) : _info(Hash_info::info(type)) {}
+	Hmac_function(const Hash_info *info) : _info(info) {}
 
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash spec.
@@ -42,7 +44,7 @@ struct Hmac_function {
 	 */
 	static std::tr1::shared_ptr<Hmac_function>
 	create(const std::string &name)
-	{	return create(hash_info::type(name)); }
+	{	return create(Hash_info::type(name)); }
 
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash type.
@@ -74,22 +76,20 @@ struct Hmac_function {
 
 	/** End the hashing sequence and return the result.
 	 *
-	 * \param[out] buf	Output buffer.
-	 * \see digest_size()
+	 * \param[out] buf	Output buffer. At least
+	 *	<code>info()->digest_size</code> bytes.
 	 */
 	virtual void end(uint8_t *buf) throw () = 0;
 
-	/** Get the size of the digest.
+	/** Get the info of the underlying hash function.
 	 *
-	 * \return	The size in bytes.
+	 * \return	The hash function properties
 	 */
-	virtual size_t digest_size() const = 0;
+	const Hash_info *info() const
+	{	return _info; }
 
-	/** The size of the blocks.
-	 *
-	 * \return	The size in bytes.
-	 */
-	virtual size_t block_size() const = 0;
+private:
+	const Hash_info *_info;
 };
 
 
@@ -104,8 +104,9 @@ public:
 	 * \param hashfn	A hash object.
 	 */
 	Hmac_impl(std::tr1::shared_ptr<Hash_function> hashfn) :
+		Hmac_function(hashfn->info()),
 		_hashfn(hashfn),
-		_key(new uint8_t[hashfn->block_size()])
+		_key(new uint8_t[hashfn->info()->block_size])
 	{}
 
 	~Hmac_impl() throw () {}
@@ -114,13 +115,9 @@ public:
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{	_hashfn->add(buf, sz); }
 	void end(uint8_t *out) throw();
-	size_t digest_size() const
-	{	return _hashfn->digest_size(); }
-	size_t block_size() const
-	{	return _hashfn->block_size(); }
 
 private:
-	Hmac_impl(const Hmac_impl &h) {}
+	Hmac_impl(const Hmac_impl &h) : Hmac_function(0) {}
 	void operator=(const Hmac_impl &h) {}
 
 	std::tr1::shared_ptr<Hash_function> _hashfn;
@@ -131,11 +128,11 @@ private:
 /** OpenSSL HMAC function template */
 template <
     const EVP_MD *(*EVP_hashfn)(),
-    size_t SIZE,
-    size_t BLOCKSIZE>
+    enum hash_type type>
 class Hmac_ssl : public Hmac_function {
 public:
 	Hmac_ssl() :
+		Hmac_function(type),
 		_md(EVP_hashfn()),
 		_valid(false)
 	{
@@ -158,14 +155,10 @@ public:
 	void end(uint8_t *out) throw ()
 	{
 		if (!_valid) return;
-		unsigned sz = digest_size();
+		unsigned sz = info()->digest_size;
 		HMAC_Final(&_ctx, out, &sz);
 		_valid = false;
 	}
-	size_t digest_size() const
-	{	return SIZE; }
-	size_t block_size() const
-	{	return BLOCKSIZE; }
 
 private:
 	HMAC_CTX	_ctx;
@@ -174,20 +167,13 @@ private:
 };
 
 
-typedef Hmac_ssl<EVP_md5, MD5_DIGEST_LENGTH, MD5_CBLOCK>
-    Hmac_md5;
-typedef Hmac_ssl<EVP_ripemd160, RIPEMD160_DIGEST_LENGTH, RIPEMD160_CBLOCK>
-    Hmac_rmd160;
-typedef Hmac_ssl<EVP_sha1, SHA_DIGEST_LENGTH, SHA_CBLOCK>
-    Hmac_sha1;
-typedef Hmac_ssl<EVP_sha224, SHA224_DIGEST_LENGTH, SHA256_CBLOCK>
-    Hmac_sha224;
-typedef Hmac_ssl<EVP_sha256, SHA256_DIGEST_LENGTH, SHA256_CBLOCK>
-    Hmac_sha256;
-typedef Hmac_ssl<EVP_sha384, SHA384_DIGEST_LENGTH, SHA512_CBLOCK>
-    Hmac_sha384;
-typedef Hmac_ssl<EVP_sha512, SHA512_DIGEST_LENGTH, SHA512_CBLOCK>
-    Hmac_sha512;
+typedef Hmac_ssl<EVP_md5, HT_MD5>		Hmac_md5;
+typedef Hmac_ssl<EVP_ripemd160, HT_RMD160>	Hmac_rmd160;
+typedef Hmac_ssl<EVP_sha1, HT_SHA1>		Hmac_sha1;
+typedef Hmac_ssl<EVP_sha224, HT_SHA224>		Hmac_sha224;
+typedef Hmac_ssl<EVP_sha256, HT_SHA256>		Hmac_sha256;
+typedef Hmac_ssl<EVP_sha384, HT_SHA384>		Hmac_sha384;
+typedef Hmac_ssl<EVP_sha512, HT_SHA512>		Hmac_sha512;
 
 
 }

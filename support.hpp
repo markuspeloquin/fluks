@@ -21,61 +21,7 @@
 #include "luks.hpp"
 
 namespace fluks {
-namespace hash_info {
-
-	/** Get the type of a hash given a name.
-	 *
-	 * \param	The name of the hash algorithm.
-	 * \return	The type of the hash or \link HT_UNDEFINED\endlink.
-	 */
-	enum hash_type		type(const std::string &);
-
-	std::vector<enum hash_type> types();
-
-	/** Get the name of a hash in a format the kernel will recognize.
-	 *
-	 * \param type	The hash algorithm.
-	 * \return	The kernel name of the hash, or "" if the hash
-	 *	does not exist.
-	 */
-	const std::string	&name(enum hash_type type);
-
-	/** Get the kernel name of the given hash name.
-	 *
-	 * \param type	The hash algorithm.
-	 * \return	The kernel name of the hash, or "" if the hash
-	 *	does not exist.
-	 */
-	inline std::string	canonize(const std::string &n)
-	{
-		enum hash_type t = type(n);
-		return t == HT_UNDEFINED ? n : name(t);
-	}
-
-	/** Get the size of a hash's digest.
-	 *
-	 * \param type	The hash algorithm.
-	 * \return	The size of the hash's digest in bytes, or 0 if
-	 *	the hash does not exist.
-	 */
-	size_t			digest_size(enum hash_type type);
-
-	/** Get the block size of a hash.
-	 *
-	 * \param type	The hash algorithm.
-	 * \return	The block size of the hash in bytes, or 0 if the hash
-	 *	does not exist.
-	 */
-	size_t			block_size(enum hash_type type);
-
-	/** Which version of LUKS is this a part of
-	 *
-	 * \param typo	The hash algorithm
-	 * \retval 0	The hash algorithm isn't a part of any standard
-	 */
-	uint16_t		version(enum hash_type type);
-
-} namespace block_mode_info {
+namespace block_mode_info {
 
 	enum block_mode		type(const std::string &mode);
 	std::vector<enum block_mode> types();

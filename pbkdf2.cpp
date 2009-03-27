@@ -50,7 +50,7 @@ pbkdf2_f(Hmac_function *hmacfn, const uint8_t *passwd, uint32_t sz_passwd,
 	//
 	// I instead use 0-indexing (index: [0,l), j: [0,c)).
 
-	uint8_t u[hmacfn->digest_size()];
+	uint8_t u[hmacfn->info()->digest_size];
 
 	// switch from 0-indexing to 1-indexing
 	index = htonl(index + 1);
@@ -85,7 +85,7 @@ fluks::pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
 	std::auto_ptr<boost::timer> timer;
 	if (benchmark)
 		timer.reset(new boost::timer);
-	uint32_t sz_hash = hash_info::digest_size(type);
+	uint32_t sz_hash = Hash_info::info(type)->digest_size;
 
 	// 1.
 	// If dkLen > (2^32 - 1) * hLen, stop
