@@ -455,7 +455,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 		throw Bad_spec("unrecognized spec format");
 
 	// make the cipher/hash specs malleable
-	_cipher_type = cipher_info::type(cipher);
+	_cipher_type = Cipher_info::type(cipher);
 	_block_mode = block_mode_info::type(block_mode);
 	_iv_mode = iv_mode_info::type(ivmode);
 	_iv_hash = hash_info::type(ivhash);
@@ -470,9 +470,11 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	if (ivhash.size() && _iv_hash == HT_UNDEFINED)
 		throw Bad_spec("unrecognized IV hash: " + ivhash);
 
+	const Cipher_info *cipher_info = Cipher_info::info(_cipher_type);
+
 	// canonize cipher and IV hash; note that ivhash will remain an
 	// empty string if it was empty initially
-	cipher = cipher_info::name(_cipher_type);
+	cipher = cipher_info->name;
 	ivhash = hash_info::name(_iv_hash);
 
 	// is the cipher spec supported by the system?
@@ -491,13 +493,13 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
 	// XXX only *after* dm-crypt attempts to use them.
 
-	std::vector<uint16_t> sizes = cipher_info::key_sizes(_cipher_type);
+	const std::vector<uint16_t> &sizes = cipher_info->key_sizes;
 	if (std::find(sizes.begin(), sizes.end(), sz_key) == sizes.end()) {
 		// sz_key not compatible with the cipher
 		std::ostringstream out;
 		out << "cipher `" << cipher
 		    << "' only supports keys of sizes";
-		for (std::vector<uint16_t>::iterator i = sizes.begin();
+		for (std::vector<uint16_t>::const_iterator i = sizes.begin();
 		    i != sizes.end(); ++i) {
 			if (i != sizes.begin()) out << ',';
 			out << ' ' << *i * 8;
@@ -522,7 +524,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 			std::ostringstream out;
 			out << "cipher `" << cipher
 			    << "' only supports keys of sizes";
-			for (std::vector<uint16_t>::iterator i =
+			for (std::vector<uint16_t>::const_iterator i =
 			    sizes.begin(); i != sizes.end(); ++i) {
 				if (i != sizes.begin())
 					out << ',';

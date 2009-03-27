@@ -31,6 +31,22 @@ namespace fluks {
 
 enum crypt_direction { DIR_NONE, DIR_ENCRYPT, DIR_DECRYPT };
 
+struct Cipher_info {
+	Cipher_info() {}
+	Cipher_info(const std::string &name,
+	    uint16_t min_key, uint16_t max_key, uint16_t key_step,
+	    uint16_t sz_blk, uint16_t version);
+
+	static const Cipher_info *info(enum cipher_type type);
+	static enum cipher_type type(const std::string &name);
+	static const std::vector<enum cipher_type> &types();
+
+	std::string name;
+	std::vector<uint16_t> key_sizes;
+	uint16_t block_size;
+	uint16_t luks_version;
+};
+
 /** En/Decrypt a block of data */
 class Cipher {
 	// CRYPTER! CRYPTER! CRYPTER!
@@ -43,6 +59,7 @@ public:
 	 */
 	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
 
+	Cipher(enum cipher_type type);
 	virtual ~Cipher() throw () {}
 
 	/** Set the direction of encryption and the key
@@ -76,11 +93,15 @@ public:
 	virtual void decrypt(const uint8_t *in, uint8_t *out)
 	    throw (Crypt_error) = 0;
 
-	/** Get the block size of the cipher
+	/** Get information on the current cipher
 	 * 
 	 * \return	The block size in bytes.
 	 */
-	virtual size_t block_size() const throw () = 0;
+	const Cipher_info &info() const
+	{	return *_info; }
+
+private:
+	Cipher_info *_info;
 };
 
 /** Get the number of bytes required to encrypt data
@@ -317,7 +338,7 @@ ofb_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 /** AES encryption, using OpenSSL */
 class Cipher_aes : public Cipher {
 public:
-	Cipher_aes() : _init(false) {}
+	Cipher_aes() : Cipher(CT_AES), _init(false) {}
 	~Cipher_aes() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
@@ -373,7 +394,7 @@ private:
 
 class Cipher_blowfish : public Cipher {
 public:
-	Cipher_blowfish() : _init(false) {}
+	Cipher_blowfish() : Cipher(CT_BLOWFISH), _init(false) {}
 	~Cipher_blowfish() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
@@ -411,7 +432,7 @@ private:
 
 class Cipher_cast5 : public Cipher {
 public:
-	Cipher_cast5() : _init(false) {}
+	Cipher_cast5() : Cipher(CT_CAST5), _init(false) {}
 	~Cipher_cast5() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()
@@ -449,7 +470,7 @@ private:
 
 class Cipher_cast6 : public Cipher {
 public:
-	Cipher_cast6() : _init(false) {}
+	Cipher_cast6() : Cipher(CT_CAST6), _init(false) {}
 	~Cipher_cast6() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
@@ -482,7 +503,7 @@ private:
 
 class Cipher_serpent : public Cipher {
 public:
-	Cipher_serpent() : _init(false) {}
+	Cipher_serpent() : Cipher(CT_SERPENT), _init(false) {}
 	~Cipher_serpent() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
@@ -515,7 +536,7 @@ private:
 
 class Cipher_twofish : public Cipher {
 public:
-	Cipher_twofish() : _init(false) {}
+	Cipher_twofish() : Cipher(CT_TWOFISH), _init(false) {}
 	~Cipher_twofish() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw ()

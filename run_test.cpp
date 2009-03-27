@@ -78,10 +78,10 @@ Cipher_test::Cipher_test(enum cipher_type type, const uint8_t *key,
 	_type(type),
 	_dir(dir),
 	_key(new uint8_t[sz_key]),
-	_block(new uint8_t[cipher_info::block_size(type)]),
+	_block(new uint8_t[Cipher_info::info(type)->block_size]),
 	_sz_key(sz_key)
 {
-	Assert(cipher_info::block_size(type) == sz_blk,
+	Assert(Cipher_info::info(type)->block_size == sz_blk,
 	    "Cipher_test block size wrong");
 	std::copy(key, key + sz_key, _key.get());
 	std::copy(block, block + sz_blk, _block.get());
@@ -91,7 +91,7 @@ void
 Cipher_test::run()
 {
 	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(_type);
-	uint8_t buf[cipher->block_size()];
+	uint8_t buf[cipher->info().block_size];
 	cipher->init(_key.get(), _sz_key);
 	if (_dir == DIR_ENCRYPT)
 		cipher->encrypt(_block.get(), buf);
@@ -101,9 +101,9 @@ Cipher_test::run()
 	std::cout
 	//    << "KEY=" << hex(_key.get(), _sz_key) << '\n'
 	//    << (_dir == DIR_ENCRYPT ? 'P' : 'C') << "T="
-	//    << hex(_block.get(), cipher->block_size()) << '\n'
+	//    << hex(_block.get(), cipher->info().block_size) << '\n'
 	//    << (_dir == DIR_ENCRYPT ? 'C' : 'P') << "T="
-	    << hex(buf, cipher->block_size()) << '\n';
+	    << hex(buf, cipher->info().block_size) << '\n';
 }
 
 class Hash_test : public Test {
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 		std::string key = argv[4];
 		std::string data = argv[5];
 
-		enum cipher_type cipher_ = cipher_info::type(cipher);
+		enum cipher_type cipher_ = Cipher_info::type(cipher);
 		Assert(cipher_ != CT_UNDEFINED, "undefined cipher: " + cipher);
 		enum crypt_direction dir_;
 		if (dir == "encrypt")

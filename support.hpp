@@ -21,61 +21,7 @@
 #include "luks.hpp"
 
 namespace fluks {
-namespace cipher_info {
-
-	/** Get the type of a cipher given a name.
-	 *
-	 * \param name	The name of the cipher algorithm.
-	 * \return	The type of the cipher or \link CT_UNDEFINED\endlink.
-	 */
-	enum cipher_type	type(const std::string &name);
-
-	std::vector<enum cipher_type> types();
-
-	/** Get the name of a cipher in a format the kernel will recognize.
-	 *
-	 * \param type	The cipher algorithm.
-	 * \return	The kernel name of the cipher, or "" if the cipher does
-	 *	not exist.
-	 */
-	const std::string	&name(enum cipher_type type);
-
-	/** Get the kernel name of the given cipher name.
-	 *
-	 * \param type	The cipher algorithm.
-	 * \return	The kernel name of the cipher, or "" if the cipher does
-	 *	not exist.
-	 */
-	inline std::string	canonize(const std::string &n)
-	{
-		enum cipher_type t = type(n);
-		return t == CT_UNDEFINED ? n : name(t);
-	}
-
-	/** Get the block size of a cipher.
-	 *
-	 * \param type	The cipher algorithm.
-	 * \return	The block size in bytes, or 0 if the cipher does not
-	 *	exist.
-	 */
-	uint16_t		block_size(enum cipher_type type);
-
-	/** Get the valid %key sizes of a cipher.
-	 *
-	 * \param type	The cipher algorithm.
-	 * \return	The sizes in bytes that are valid, which will be
-	 *	empty if the cipher does not exist.
-	 */
-	std::vector<uint16_t>	key_sizes(enum cipher_type type);
-
-	/** Which version of LUKS is this a part of
-	 *
-	 * \param typo	The cipher algorithm
-	 * \retval 0	The cipher algorithm isn't a part of any standard
-	 */
-	uint16_t		version(enum cipher_type type);
-
-} namespace hash_info {
+namespace hash_info {
 
 	/** Get the type of a hash given a name.
 	 *

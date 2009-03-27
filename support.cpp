@@ -21,15 +21,6 @@ namespace {
 
 std::string blank = "";
 
-struct cipher_stat {
-	std::string kern_name;
-	uint16_t blocksize;
-	uint16_t keymin;
-	uint16_t keymax;
-	uint16_t keystep;
-	uint16_t version;
-};
-
 struct hash_stat {
 	std::string kern_name;
 	uint16_t blocksize;
@@ -79,11 +70,6 @@ private:
 	}
 
 public:
-	struct cipher_stat	*stat_lookup(enum cipher_type type)
-	{
-		return stat_lookup<struct cipher_stat>(
-		    cipher_stat_map, type);
-	}
 	struct hash_stat	*stat_lookup(enum hash_type type)
 	{
 		return stat_lookup<struct hash_stat>(
@@ -100,10 +86,6 @@ public:
 		    iv_mode_stat_map, mode);
 	}
 
-	enum cipher_type	cipher_lookup(const std::string &name)
-	{
-		return enum_lookup(cipher_name_map, CT_UNDEFINED, name);
-	}
 	enum hash_type		hash_lookup(const std::string &name)
 	{
 		return enum_lookup(hash_name_map, HT_UNDEFINED, name);
@@ -117,8 +99,6 @@ public:
 		return enum_lookup(iv_mode_name_map, IM_UNDEFINED, name);
 	}
 
-	void	cipher_types(std::vector<enum cipher_type> &vec)
-	{	types(cipher_stat_map, vec); }
 	void	hash_types(std::vector<enum hash_type> &vec)
 	{	types(hash_stat_map, vec); }
 	void	block_mode_types(std::vector<enum block_mode> &vec)
@@ -127,12 +107,10 @@ public:
 	{	types(iv_mode_stat_map, vec); }
 
 private:
-	std::map<enum cipher_type, struct cipher_stat> cipher_stat_map;
 	std::map<enum hash_type, struct hash_stat> hash_stat_map;
 	std::map<enum block_mode, struct block_mode_stat> block_mode_stat_map;
 	std::map<enum iv_mode, struct iv_mode_stat> iv_mode_stat_map;
 
-	std::map<std::string, enum cipher_type> cipher_name_map;
 	std::map<std::string, enum hash_type> hash_name_map;
 	std::map<std::string, enum block_mode> block_mode_name_map;
 	std::map<std::string, enum iv_mode> iv_mode_name_map;
@@ -149,25 +127,6 @@ Lookup Lookup::_instance;
 
 Lookup::Lookup()
 {
-	cipher_stat_map[CT_AES] = (cipher_stat){ "aes", 16, 16, 32, 8, 1 };
-	cipher_stat_map[CT_BLOWFISH] = (cipher_stat){ "blowfish", 8, 4, 56, 1, 0 };
-	cipher_stat_map[CT_CAST5] = (cipher_stat){ "cast5", 8, 5, 16, 1, 1 };
-	cipher_stat_map[CT_CAST6] = (cipher_stat){ "cast6", 16, 16, 32, 4, 1 };
-//	cipher_stat_map[CT_DES3] = (cipher_stat){ "des3_ede", 8, 24, 24, 0, 0 };
-	cipher_stat_map[CT_SERPENT] = (cipher_stat){ "serpent", 16, 0, 32, 8, 1 };
-	cipher_stat_map[CT_TWOFISH] = (cipher_stat){ "twofish", 16, 16, 32, 8, 1 };
-
-	cipher_name_map["aes"] = CT_AES;
-	cipher_name_map["blowfish"] = CT_BLOWFISH;
-	cipher_name_map["cast5"] = CT_CAST5;
-	cipher_name_map["cast6"] = CT_CAST6;
-//	cipher_name_map["des3"] = CT_DES3;
-//	cipher_name_map["3des"] = CT_DES3;
-//	cipher_name_map["des3_ede"] = CT_DES3;
-//	cipher_name_map["3des_ede"] = CT_DES3;
-	cipher_name_map["serpent"] = CT_SERPENT;
-	cipher_name_map["twofish"] = CT_TWOFISH;
-
 	hash_stat_map[HT_MD5] = (hash_stat){ "md5", 64, 16, 0 };
 	hash_stat_map[HT_RMD160] = (hash_stat){ "rmd160", 64, 20, 1 };
 	hash_stat_map[HT_SHA1] = (hash_stat){ "sha1", 64, 20, 1 };
@@ -228,52 +187,6 @@ Lookup::Lookup()
 }
 
 } // end anon namespace
-}
-
-enum fluks::cipher_type
-fluks::cipher_info::type(const std::string &name)
-{
-	return Lookup::instance()->cipher_lookup(name);
-}
-
-std::vector<enum fluks::cipher_type>
-fluks::cipher_info::types()
-{
-	std::vector<enum cipher_type> res;
-	Lookup::instance()->cipher_types(res);
-	return res;
-}
-
-const std::string &
-fluks::cipher_info::name(enum cipher_type type)
-{
-	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->kern_name : blank;
-}
-
-uint16_t
-fluks::cipher_info::block_size(enum cipher_type type)
-{
-	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->blocksize : 0;
-}
-
-std::vector<uint16_t>
-fluks::cipher_info::key_sizes(enum cipher_type type)
-{
-	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
-	if (!st) return std::vector<uint16_t>();
-	std::vector<uint16_t> res;
-	for (uint16_t s = st->keymin; s <= st->keymax; s += st->keystep)
-		res.push_back(s);
-	return res;
-}
-
-uint16_t
-fluks::cipher_info::version(enum cipher_type type)
-{
-	struct cipher_stat *st = Lookup::instance()->stat_lookup(type);
-	return st ? st->version : 0;
 }
 
 enum fluks::hash_type

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <map>
 
 #include "crypt.hpp"
 #include "errors.hpp"
@@ -27,6 +28,64 @@
 
 namespace fluks {
 namespace {
+
+class Lookup {
+public:
+	static const Cipher_info *info(enum cipher_type type);
+	static enum cipher_type type(const std::string &name);
+	static const std::vector<enum cipher_type> &types()
+	{	return inst._types; }
+private:
+	Lookup();
+	Lookup(const Lookup &) {}
+	void operator=(const Lookup &) {}
+
+	static Lookup inst;
+	std::map<enum cipher_type, Cipher_info> _map_info;
+	std::map<std::string, enum cipher_type> _map_type;
+	std::vector<enum cipher_type> _types;
+};
+
+const Cipher_info *
+Lookup::info(enum cipher_type type)
+{
+	std::map<enum cipher_type, Cipher_info>::iterator i;
+	i = inst._map_info.find(type);
+	if (i == inst._map_info.end()) return 0;
+	return &i->second;
+}
+
+enum cipher_type
+Lookup::type(const std::string &name)
+{
+	std::map<std::string, enum cipher_type>::iterator i;
+	i = inst._map_type.find(name);
+	if (i == inst._map_type.end()) return CT_UNDEFINED;
+	return i->second;
+}
+
+Lookup::Lookup()
+{
+	_map_info[CT_AES] = Cipher_info("aes", 16, 32, 8, 16, 1);
+	_map_info[CT_BLOWFISH] = Cipher_info("blowfish", 4, 56, 1, 8, 0);
+	_map_info[CT_CAST5] = Cipher_info("cast5", 5, 16, 1, 8, 1);
+	_map_info[CT_CAST6] = Cipher_info("cast6", 16, 32, 4, 16, 1);
+	_map_info[CT_SERPENT] = Cipher_info("serpent", 16, 32, 8, 16, 1);
+	_map_info[CT_TWOFISH] = Cipher_info("twofish", 16, 32, 8, 16, 1);
+
+	_map_type["aes"] = CT_AES;
+	_map_type["blowfish"] = CT_BLOWFISH;
+	_map_type["cast5"] = CT_CAST5;
+	_map_type["cast6"] = CT_CAST6;
+	_map_type["serpent"] = CT_SERPENT;
+	_map_type["twofish"] = CT_TWOFISH;
+
+	for (std::map<enum cipher_type, Cipher_info>::iterator i =
+	    _map_info.begin(); i != _map_info.end(); ++i)
+		_types.push_back(i->first);
+}
+
+Lookup Lookup::inst;
 
 inline std::tr1::shared_ptr<Cipher>
 		make_essiv_cipher(enum cipher_type cipher,
@@ -55,6 +114,37 @@ make_essiv_cipher(enum cipher_type type, enum hash_type hash,
 } // end anon namespace
 }
 
+fluks::Cipher_info::Cipher_info(const std::string &name,
+    uint16_t min_key, uint16_t max_key, uint16_t key_step,
+    uint16_t sz_blk, uint16_t version) :
+	name(name),
+	key_sizes((max_key - min_key + (key_step - 1)) / key_step),
+	block_size(sz_blk),
+	luks_version(version)
+{
+	size_t i = 0;
+	for (uint16_t n = min_key; n <= max_key; n += key_step)
+		key_sizes[i++] = n;
+}
+
+const fluks::Cipher_info *
+fluks::Cipher_info::info(enum cipher_type type)
+{
+	return Lookup::info(type);
+}
+
+enum fluks::cipher_type
+fluks::Cipher_info::type(const std::string &name)
+{
+	return Lookup::type(name);
+}
+
+const std::vector<enum fluks::cipher_type> &
+fluks::Cipher_info::types()
+{
+	return Lookup::types();
+}
+
 std::tr1::shared_ptr<fluks::Cipher> 
 fluks::Cipher::create(enum cipher_type type)
 {
@@ -81,13 +171,17 @@ fluks::Cipher::create(enum cipher_type type)
 	}
 }
 
+fluks::Cipher::Cipher(enum cipher_type type)
+{
+}
+
 void
 fluks::cbc_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
-	uint8_t		buf[cipher->block_size()];
-	uint32_t	blocks = sz_plain / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint8_t		buf[cipher->info().block_size];
+	uint32_t	blocks = sz_plain / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -123,9 +217,9 @@ void
 fluks::cbc_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
-	uint8_t		buf[cipher->block_size()];
-	uint32_t	blocks = sz_plain / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint8_t		buf[cipher->info().block_size];
+	uint32_t	blocks = sz_plain / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// decrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -160,8 +254,8 @@ void
 fluks::cfb_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {
-	uint32_t	blocks = sz / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint32_t	blocks = sz / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -182,7 +276,7 @@ fluks::cfb_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 	// encrypt partial block
 	uint32_t left = sz % sz_blk;
 	if (left) {
-		uint8_t buf[cipher->block_size()];
+		uint8_t buf[cipher->info().block_size];
 
 		if (blocks)
 			cipher->encrypt(out - sz_blk, buf);
@@ -196,8 +290,8 @@ void
 fluks::cfb_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {
-	uint32_t	blocks = sz / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint32_t	blocks = sz / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// decrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -218,7 +312,7 @@ fluks::cfb_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 	// encrypt partial block
 	uint32_t left = sz % sz_blk;
 	if (left) {
-		uint8_t buf[cipher->block_size()];
+		uint8_t buf[cipher->info().block_size];
 
 		if (blocks)
 			cipher->encrypt(in - sz_blk, buf);
@@ -232,10 +326,10 @@ void
 fluks::ctr_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {
-	uint8_t		pre[cipher->block_size()];
-	uint32_t	blocks = sz / cipher->block_size();
+	uint8_t		pre[cipher->info().block_size];
+	uint32_t	blocks = sz / cipher->info().block_size;
 	uint32_t	iv_tail;
-	size_t		sz_blk = cipher->block_size();
+	size_t		sz_blk = cipher->info().block_size;
 
 	// copy all but last 4 bytes from 'iv' to 'pre'
 	std::copy(iv, iv + sz_blk - 4, pre);
@@ -272,8 +366,8 @@ void
 fluks::ecb_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
-	uint32_t	blocks = sz_plain / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint32_t	blocks = sz_plain / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -286,7 +380,7 @@ fluks::ecb_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 	// encrypt partial block
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
-		uint8_t buf[cipher->block_size()];
+		uint8_t buf[cipher->info().block_size];
 		std::copy(in, in + left, buf);
 		std::fill(buf + left, buf + sz_blk, 0);
 		cipher->encrypt(buf, out);
@@ -297,8 +391,8 @@ void
 fluks::ecb_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
-	uint32_t	blocks = sz_plain / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint32_t	blocks = sz_plain / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// decrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -311,7 +405,7 @@ fluks::ecb_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 	// decrypt partial block
 	uint32_t left = sz_plain % sz_blk;
 	if (left) {
-		uint8_t buf[cipher->block_size()];
+		uint8_t buf[cipher->info().block_size];
 		cipher->decrypt(in, buf);
 		std::copy(buf, buf + left, out);
 	}
@@ -322,10 +416,10 @@ fluks::ofb_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz, uint8_t *out)
 {
 	// need two buffers because cannot encrypt in place
-	uint8_t		buf1[cipher->block_size()];
-	uint8_t		buf2[cipher->block_size()];
-	uint32_t	blocks = sz / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint8_t		buf1[cipher->info().block_size];
+	uint8_t		buf2[cipher->info().block_size];
+	uint32_t	blocks = sz / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 	uint8_t		*buf_this = buf1;
 	uint8_t		*buf_prev = buf2;
 
@@ -363,9 +457,9 @@ void
 fluks::pcbc_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
-	uint8_t		buf[cipher->block_size()];
-	uint32_t	blocks = sz_plain / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint8_t		buf[cipher->info().block_size];
+	uint32_t	blocks = sz_plain / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -404,8 +498,8 @@ void
 fluks::pcbc_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
     size_t sz_plain, uint8_t *out)
 {
-	uint32_t	blocks = sz_plain / cipher->block_size();
-	size_t		sz_blk = cipher->block_size();
+	uint32_t	blocks = sz_plain / cipher->info().block_size;
+	size_t		sz_blk = cipher->info().block_size;
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
@@ -448,7 +542,8 @@ fluks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
 	case BM_CBC:
 	case BM_ECB:
 	case BM_PCBC: {
-		size_t blocksize = cipher_info::block_size(cipher);
+		size_t blocksize =
+		    Cipher_info::info(cipher)->block_size;
 		size_t numblocks = (sz_data + blocksize - 1) / blocksize;
 		return numblocks * blocksize;
 	}
@@ -472,9 +567,9 @@ fluks::encrypt(enum cipher_type type, enum block_mode block_mode,
 	std::tr1::shared_ptr<Cipher> cipher(Cipher::create(type));
 	std::tr1::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint8_t> pre_essiv;
-	uint8_t		iv[cipher->block_size()];
+	uint8_t		iv[cipher->info().block_size];
 
-	size_t		sz_blk = cipher->block_size();
+	size_t		sz_blk = cipher->info().block_size;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
 	cipher->init(key, sz_key);
@@ -558,9 +653,9 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
 	std::tr1::shared_ptr<Cipher> cipher(Cipher::create(type));
 	std::tr1::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint8_t> pre_essiv;
-	uint8_t		iv[cipher->block_size()];
+	uint8_t		iv[cipher->info().block_size];
 
-	size_t		sz_blk = cipher->block_size();
+	size_t		sz_blk = cipher->info().block_size;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
 	cipher->init(key, sz_key);

@@ -23,6 +23,7 @@
 #include <openssl/rand.h>
 
 #include "backup.hpp"
+#include "crypt.hpp"
 #include "detect.hpp"
 #include "dm.hpp"
 #include "hash.hpp"
@@ -36,7 +37,7 @@ namespace {
 void
 list_modes()
 {
-	std::vector<enum cipher_type> ciphers = cipher_info::types();
+	const std::vector<enum cipher_type> &ciphers = Cipher_info::types();
 	std::vector<enum hash_type> hashes = hash_info::types();
 	std::vector<enum block_mode> block_modes = block_mode_info::types();
 	std::vector<enum iv_mode> iv_modes = iv_mode_info::types();
@@ -46,19 +47,21 @@ list_modes()
 "[!] (not in any LUKS spec).\n\n";
 
 	std::cout << "ciphers (with supported key sizes):\n";
-	for (std::vector<enum cipher_type>::iterator i = ciphers.begin();
+	for (std::vector<enum cipher_type>::const_iterator i = ciphers.begin();
 	    i != ciphers.end(); ++i) {
-		std::vector<uint16_t> sizes = cipher_info::key_sizes(*i);
+		const Cipher_info *info = Cipher_info::info(*i);
+		std::vector<uint16_t> sizes = info->key_sizes;
 
-		uint16_t version = cipher_info::version(*i);
+		uint16_t version = info->luks_version;
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
 		else		std::cout << version;
 		std::cout << "] ";
 
-		std::cout << cipher_info::name(*i) << " (";
-		for (std::vector<uint16_t>::iterator j = sizes.begin();
-		    j != sizes.end(); ++j) {
+		std::cout << info->name << " (";
+		for (std::vector<uint16_t>::const_iterator j =
+		    info->key_sizes.begin(); j != info->key_sizes.end();
+		    ++j) {
 			if (j != sizes.begin())
 				std::cout << ' ';
 			std::cout << *j * 8;
