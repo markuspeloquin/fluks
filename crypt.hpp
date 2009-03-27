@@ -37,7 +37,7 @@ struct Cipher_info {
 	Cipher_info() {}
 	/** Create a cipher info object.
 	 * \param name		The cipher's name
-	 * \aparam max_key	The largest key size
+	 * \param max_key	The largest key size
 	 * \param min_key	The smallest key size
 	 * \param key_step	The size difference between every consective
 	 *	pair of key sizes.
@@ -90,7 +90,7 @@ public:
 	 *
 	 * \param key		The encryption key
 	 * \param sz_key	The size of the encryption key in bytes
-	 * \param Crypt_error	Probably the key size is bad
+	 * \throw Crypt_error	Probably the key size is bad
 	 */
 	virtual void init(const uint8_t *key, size_t sz_key)
 	    throw (Crypt_error) = 0;

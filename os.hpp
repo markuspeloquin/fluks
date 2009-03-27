@@ -30,7 +30,7 @@ uint32_t    num_sectors(int fildes) throw (boost::system::system_error);
 
 /** Get the number of sectors in a device
  *
- * \param fildes	The device.
+ * \param device	The device.
  * \return		The number of sectors.
  * \throw boost::system::system_error	If the ioctl() fails.
  */

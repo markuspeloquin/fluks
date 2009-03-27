@@ -24,7 +24,7 @@ namespace fluks {
  *
  * Expands the input to add <em>loads</em> of entropy.  Reversed by
  * af_merge().  The default stripes value for AF splits in LUKS version 1 is
- * \link NUM_STRIPES\endlink.
+ * <code>NUM_STRIPES</code>.
  *
  * \param[in] in	The data to expand.
  * \param[in] sz	The size of the <code>in</code> in bytes.
