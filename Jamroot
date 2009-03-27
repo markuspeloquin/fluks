@@ -2,9 +2,9 @@ DEBUG = -DDEBUG ;
 using gcc : # compiler version
 	: # c++ compile command
 	:
-	    # -D_BSD_SOURCE needed for proper endian macros
-	    <cxxflags>"-std=c++98 -D_BSD_SOURCE $(DEBUG)"
-	    <cflags>"-std=c99 -D_BSD_SOURCE $(DEBUG)"
+	# -D_BSD_SOURCE needed for proper endian macros
+	<cxxflags>"-std=c++98 -D_BSD_SOURCE $(DEBUG)"
+	<cflags>"-std=c99 -D_BSD_SOURCE $(DEBUG)"
 	;
 lib boost_filesystem ;
 lib boost_program_options ;
@@ -14,26 +14,26 @@ lib devmapper ;
 lib ssl ;
 lib uuid ;
 lib fluks_crypto :
-	    tiger.cpp
-	    cast6.c serpent.c twofish.c whirlpool.c
+	tiger.cpp
+	cast6.c serpent.c twofish.c whirlpool.c
 	;
 exe fluks :
-	    af.cpp backup.cpp crypt.cpp
-	    detect.cpp dm.cpp errors.cpp fluks.cpp
-	    hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
-	    support.cpp util.cpp
+	af.cpp backup.cpp crypt.cpp
+	detect.cpp dm.cpp errors.cpp fluks.cpp
+	hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
+	support.cpp util.cpp
 
-	    # libraries
-	    fluks_crypto/<link>static
-	    boost_filesystem boost_program_options
-	    boost_regex devmapper ssl uuid
+	# libraries
+	fluks_crypto/<link>static
+	boost_filesystem boost_program_options
+	boost_regex devmapper ssl uuid
 	;
 exe run_test :
-	    run_test.cpp
-	    crypt.cpp errors.cpp hash.cpp hmac.cpp
-	    support.cpp util.cpp
+	run_test.cpp
+	crypt.cpp errors.cpp hash.cpp hmac.cpp
+	support.cpp util.cpp
 
-	    # libraries
-	    fluks_crypto/<link>static
-	    boost_system ssl
+	# libraries
+	fluks_crypto/<link>static
+	boost_system ssl
 	;
