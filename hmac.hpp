@@ -30,8 +30,15 @@
 
 namespace fluks {
 
+/** Computes hash function digests using HMAC */
 struct Hmac_function {
+	/** Init the hash properties
+	 * \param type The hash type
+	 */
 	Hmac_function(enum hash_type type) : _info(Hash_info::info(type)) {}
+	/** Init the hash properties
+	 * \param info The hash information
+	 */
 	Hmac_function(const Hash_info *info) : _info(info) {}
 
 	/**
@@ -43,7 +50,7 @@ struct Hmac_function {
 	 * \see create(type)
 	 */
 	static std::tr1::shared_ptr<Hmac_function>
-	create(const std::string &name)
+	    create(const std::string &name)
 	{	return create(Hash_info::type(name)); }
 
 	/**
@@ -53,7 +60,7 @@ struct Hmac_function {
 	 * \return	An HMAC function pointer.
 	 */
 	static std::tr1::shared_ptr<Hmac_function>
-	create(enum hash_type type);
+	    create(enum hash_type type);
 
 	virtual ~Hmac_function() throw () {}
 

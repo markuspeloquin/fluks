@@ -37,8 +37,16 @@
 
 namespace fluks {
 
+/** Information for a hash function */
 struct Hash_info {
+	/** Required for storage in a vector, otherwise not used */
 	Hash_info() {}
+	/** Init the struct
+	 * \param name	    The hash name
+	 * \param sz_blk    The block size
+	 * \param sz_dig    The digest size
+	 * \param version   The version of LUKS required, or 0 if not in LUKS
+	 */
 	Hash_info(const std::string &name, uint16_t sz_blk, uint16_t sz_dig,
 	    uint16_t version) :
 		name(name),
@@ -47,16 +55,29 @@ struct Hash_info {
 		luks_version(version)
 	{}
 
+	/** Get the information for the specified hash function
+	 * \param type	The type of the hash function
+	 * \return	The properties of the function
+	 */
 	static const Hash_info *info(enum hash_type type);
+	/** Get the type of the named hash function
+	 * \param name	The name of the function
+	 * \return	The type
+	 */
 	static enum hash_type type(const std::string &name);
+	/** Get the hash types supported by fluks
+	 * \return	The shit
+	 */
 	static const std::vector<enum hash_type> &types();
 
-	std::string name;
+	std::string name; /**< The hash name */
 	uint16_t block_size;
 	uint16_t digest_size;
+	/** The version of LUKS required, or 0 if not in LUKS */
 	uint16_t luks_version;
 };
 
+/** Computes hash function digests */
 struct Hash_function {
 	Hash_function(enum hash_type type) : _info(Hash_info::info(type)) {}
 
@@ -69,7 +90,7 @@ struct Hash_function {
 	 * \see create(type)
 	 */
 	static std::tr1::shared_ptr<Hash_function>
-	create(const std::string &name)
+	    create(const std::string &name)
 	{	return create(Hash_info::type(name)); }
 
 	/**
@@ -79,7 +100,7 @@ struct Hash_function {
 	 * \return	A hash function pointer.
 	 */
 	static std::tr1::shared_ptr<Hash_function>
-	create(enum hash_type type);
+	    create(enum hash_type type);
 
 	virtual ~Hash_function() throw () {}
 

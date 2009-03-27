@@ -31,19 +31,40 @@ namespace fluks {
 
 enum crypt_direction { DIR_NONE, DIR_ENCRYPT, DIR_DECRYPT };
 
+/** Information for a cipher function */
 struct Cipher_info {
+	/** Required for storage in a vector, but isn't otherwise used. */
 	Cipher_info() {}
+	/** Create a cipher info object.
+	 * \param name		The cipher's name
+	 * \aparam max_key	The largest key size
+	 * \param min_key	The smallest key size
+	 * \param key_step	The size difference between every consective
+	 *	pair of key sizes.
+	 * \param sz_blk	The block size
+	 * \param version	The version of LUKS required, or 0 if not LUKS.
+	 */
 	Cipher_info(const std::string &name,
 	    uint16_t min_key, uint16_t max_key, uint16_t key_step,
 	    uint16_t sz_blk, uint16_t version);
 
+	/** Get information for a cipher
+	 * \return Cipher information, or <code>nullptr</code> if nonexistent.
+	 */
 	static const Cipher_info *info(enum cipher_type type);
+	/** Get the type of a cipher
+	 * \return The enum of the cipher
+	 */
 	static enum cipher_type type(const std::string &name);
+	/** Get all types that fluks supports
+	 * \return The supported types
+	 */
 	static const std::vector<enum cipher_type> &types();
 
-	std::string name;
-	std::vector<uint16_t> key_sizes;
-	uint16_t block_size;
+	std::string name; /**< The cipher's name */
+	std::vector<uint16_t> key_sizes; /**< The possible key sizes */
+	uint16_t block_size; /**< The block size */
+	/** The LUKS version required, or 0 if not LUKS */
 	uint16_t luks_version;
 };
 
@@ -59,6 +80,9 @@ public:
 	 */
 	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
 
+	/** Set up the properties of the cipher function
+	 * \param type The cipher type
+	 */
 	Cipher(enum cipher_type type);
 	virtual ~Cipher() throw () {}
 
