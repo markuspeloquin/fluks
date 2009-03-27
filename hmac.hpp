@@ -146,9 +146,7 @@ public:
 		HMAC_CTX_init(&_ctx);
 	}
 	~Hmac_ssl() throw ()
-	{
-		HMAC_CTX_cleanup(&_ctx);
-	}
+	{	HMAC_CTX_cleanup(&_ctx); }
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
 		HMAC_Init_ex(&_ctx, key, sz, _md, 0);
