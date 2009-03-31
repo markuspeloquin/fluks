@@ -32,10 +32,10 @@ namespace fluks {
 enum crypt_direction { DIR_NONE, DIR_ENCRYPT, DIR_DECRYPT };
 
 /** Information for a cipher function */
-struct Cipher_info {
+struct Cipher_traits {
 	/** Required for storage in a vector, but isn't otherwise used. */
-	Cipher_info() {}
-	/** Create a cipher info object.
+	Cipher_traits() {}
+	/** Create a cipher traits object.
 	 * \param name		The cipher's name
 	 * \param max_key	The largest key size
 	 * \param min_key	The smallest key size
@@ -44,14 +44,14 @@ struct Cipher_info {
 	 * \param sz_blk	The block size
 	 * \param version	The version of LUKS required, or 0 if not LUKS.
 	 */
-	Cipher_info(const std::string &name,
+	Cipher_traits(const std::string &name,
 	    uint16_t min_key, uint16_t max_key, uint16_t key_step,
 	    uint16_t sz_blk, uint16_t version);
 
 	/** Get information for a cipher
 	 * \return Cipher information, or <code>nullptr</code> if nonexistent.
 	 */
-	static const Cipher_info *info(enum cipher_type type);
+	static const Cipher_traits *traits(enum cipher_type type);
 	/** Get the type of a cipher
 	 * \return The enum of the cipher
 	 */
@@ -121,11 +121,11 @@ public:
 	 * 
 	 * \return	The block size in bytes.
 	 */
-	const Cipher_info *info() const
-	{	return _info; }
+	const Cipher_traits *traits() const
+	{	return _traits; }
 
 private:
-	Cipher_info *_info;
+	Cipher_traits *_traits;
 };
 
 /** Get the number of bytes required to encrypt data

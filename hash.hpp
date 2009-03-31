@@ -38,16 +38,16 @@
 namespace fluks {
 
 /** Information for a hash function */
-struct Hash_info {
+struct Hash_traits {
 	/** Required for storage in a vector, otherwise not used */
-	Hash_info() {}
+	Hash_traits() {}
 	/** Init the struct
 	 * \param name	    The hash name
 	 * \param sz_blk    The block size
 	 * \param sz_dig    The digest size
 	 * \param version   The version of LUKS required, or 0 if not in LUKS
 	 */
-	Hash_info(const std::string &name, uint16_t sz_blk, uint16_t sz_dig,
+	Hash_traits(const std::string &name, uint16_t sz_blk, uint16_t sz_dig,
 	    uint16_t version) :
 		name(name),
 		block_size(sz_blk),
@@ -59,7 +59,7 @@ struct Hash_info {
 	 * \param type	The type of the hash function
 	 * \return	The properties of the function
 	 */
-	static const Hash_info *info(enum hash_type type);
+	static const Hash_traits *traits(enum hash_type type);
 	/** Get the type of the named hash function
 	 * \param name	The name of the function
 	 * \return	The type
@@ -79,7 +79,9 @@ struct Hash_info {
 
 /** Computes hash function digests */
 struct Hash_function {
-	Hash_function(enum hash_type type) : _info(Hash_info::info(type)) {}
+	Hash_function(enum hash_type type) :
+		_traits(Hash_traits::traits(type))
+	{}
 
 	/**
 	 * Create a hash function, in an abstract sense, given a hash spec.
@@ -91,7 +93,7 @@ struct Hash_function {
 	 */
 	static std::tr1::shared_ptr<Hash_function>
 	    create(const std::string &name)
-	{	return create(Hash_info::type(name)); }
+	{	return create(Hash_traits::type(name)); }
 
 	/**
 	 * Create a hash function, in an abstract sense, given a hash type.
@@ -135,10 +137,10 @@ struct Hash_function {
 	 *
 	 * \return	properties of the function
 	 */
-	const Hash_info *info() const
-	{	return _info; }
+	const Hash_traits *traits() const
+	{	return _traits; }
 private:
-	const Hash_info *_info;
+	const Hash_traits *_traits;
 };
 
 
@@ -211,11 +213,11 @@ public:
 	void end(uint8_t *buf) throw ()
 	{
 		if (!_valid) return;
-		if (info()->digest_size < TIGER_SZ_DIGEST) {
+		if (traits()->digest_size < TIGER_SZ_DIGEST) {
 			// truncate output
 			uint8_t buf2[TIGER_SZ_DIGEST];
 			tiger_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + info()->digest_size, buf);
+			std::copy(buf2, buf2 + traits()->digest_size, buf);
 		} else
 			tiger_end(&_ctx, buf);
 		_valid = false;
@@ -260,11 +262,11 @@ public:
 	void end(uint8_t *buf) throw ()
 	{
 		if (!_valid) return;
-		if (info()->digest_size < WHIRLPOOL_SZ_DIGEST) {
+		if (traits()->digest_size < WHIRLPOOL_SZ_DIGEST) {
 			// truncate output
 			uint8_t buf2[WHIRLPOOL_SZ_DIGEST];
 			whirlpool_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + info()->digest_size, buf);
+			std::copy(buf2, buf2 + traits()->digest_size, buf);
 		} else
 			whirlpool_end(&_ctx, buf);
 	}

@@ -103,7 +103,7 @@ void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
 	    Hash_function::create(HT_SHA1);
 	hash->init();
 	hash->add(buf, sz);
-	uint8_t out[hash->info()->digest_size];
+	uint8_t out[hash->traits()->digest_size];
 	hash->end(out);
 
 	dump(pfx, out, sizeof(out));
@@ -132,7 +132,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	_hdr(new struct phdr1),
 	_master_key(new uint8_t[sz_key]),
 	_sz_sect(sector_size(*device)),
-	_hash_type(Hash_info::type(hash_spec)),
+	_hash_type(Hash_traits::type(hash_spec)),
 	_proved_passwd(-1),
 	_mach_end(true),
 	_dirty(true),
@@ -221,7 +221,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
 		init_cipher_spec(cipher_spec, _hdr->sz_key);
 	}
 
-	_hash_type = Hash_info::type(_hdr->hash_spec);
+	_hash_type = Hash_traits::type(_hdr->hash_spec);
 
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec(
@@ -455,10 +455,10 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 		throw Bad_spec("unrecognized spec format");
 
 	// make the cipher/hash specs malleable
-	_cipher_type = Cipher_info::type(cipher);
+	_cipher_type = Cipher_traits::type(cipher);
 	_block_mode = block_mode_info::type(block_mode);
 	_iv_mode = iv_mode_info::type(ivmode);
-	_iv_hash = Hash_info::type(ivhash);
+	_iv_hash = Hash_traits::type(ivhash);
 
 	// are the specs supported by fluks?
 	if (_cipher_type == CT_UNDEFINED)
@@ -470,13 +470,14 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	if (ivhash.size() && _iv_hash == HT_UNDEFINED)
 		throw Bad_spec("unrecognized IV hash: " + ivhash);
 
-	const Cipher_info *cipher_info = Cipher_info::info(_cipher_type);
+	const Cipher_traits *cipher_traits =
+	    Cipher_traits::traits(_cipher_type);
 
 	// canonize cipher and IV hash; note that ivhash will remain an
 	// empty string if it was empty initially
-	const Hash_info *ivhash_info = Hash_info::info(_iv_hash);
-	cipher = cipher_info->name;
-	ivhash = ivhash_info->name;
+	const Hash_traits *ivhash_traits = Hash_traits::traits(_iv_hash);
+	cipher = cipher_traits->name;
+	ivhash = ivhash_traits->name;
 
 	// is the cipher spec supported by the system?
 	{
@@ -494,7 +495,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
 	// XXX only *after* dm-crypt attempts to use them.
 
-	const std::vector<uint16_t> &sizes = cipher_info->key_sizes;
+	const std::vector<uint16_t> &sizes = cipher_traits->key_sizes;
 	if (std::find(sizes.begin(), sizes.end(), sz_key) == sizes.end()) {
 		// sz_key not compatible with the cipher
 		std::ostringstream out;
@@ -519,7 +520,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	if (_iv_mode == IM_ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
-		uint16_t size = ivhash_info->digest_size;
+		uint16_t size = ivhash_traits->digest_size;
 		if (std::find(sizes.begin(), sizes.end(), size) ==
 		    sizes.end()) {
 			std::ostringstream out;
@@ -539,7 +540,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// recreate a canonical cipher spec, canonize the hash spec; note
 	// that cipher and ivhash were already canonized
 	std::string mode = make_mode(block_mode, ivmode, ivhash);
-	std::string hash = Hash_info::info(_hash_type)->name;
+	std::string hash = Hash_traits::traits(_hash_type)->name;
 
 	// copy specs (back) into header
 	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);

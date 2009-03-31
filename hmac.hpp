@@ -35,11 +35,13 @@ struct Hmac_function {
 	/** Init the hash properties
 	 * \param type The hash type
 	 */
-	Hmac_function(enum hash_type type) : _info(Hash_info::info(type)) {}
+	Hmac_function(enum hash_type type) :
+		_traits(Hash_traits::traits(type))
+	{}
 	/** Init the hash properties
-	 * \param info The hash information
+	 * \param traits The hash information
 	 */
-	Hmac_function(const Hash_info *info) : _info(info) {}
+	Hmac_function(const Hash_traits *traits) : _traits(traits) {}
 
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash spec.
@@ -51,7 +53,7 @@ struct Hmac_function {
 	 */
 	static std::tr1::shared_ptr<Hmac_function>
 	    create(const std::string &name)
-	{	return create(Hash_info::type(name)); }
+	{	return create(Hash_traits::type(name)); }
 
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash type.
@@ -84,19 +86,19 @@ struct Hmac_function {
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer. At least
-	 *	<code>info()->digest_size</code> bytes.
+	 *	<code>traits()->digest_size</code> bytes.
 	 */
 	virtual void end(uint8_t *buf) throw () = 0;
 
-	/** Get the info of the underlying hash function.
+	/** Get the traits of the underlying hash function.
 	 *
 	 * \return	The hash function properties
 	 */
-	const Hash_info *info() const
-	{	return _info; }
+	const Hash_traits *traits() const
+	{	return _traits; }
 
 private:
-	const Hash_info *_info;
+	const Hash_traits *_traits;
 };
 
 
@@ -111,9 +113,9 @@ public:
 	 * \param hashfn	A hash object.
 	 */
 	Hmac_impl(std::tr1::shared_ptr<Hash_function> hashfn) :
-		Hmac_function(hashfn->info()),
+		Hmac_function(hashfn->traits()),
 		_hashfn(hashfn),
-		_key(new uint8_t[hashfn->info()->block_size])
+		_key(new uint8_t[hashfn->traits()->block_size])
 	{}
 
 	~Hmac_impl() throw () {}
@@ -160,7 +162,7 @@ public:
 	void end(uint8_t *out) throw ()
 	{
 		if (!_valid) return;
-		unsigned sz = info()->digest_size;
+		unsigned sz = traits()->digest_size;
 		HMAC_Final(&_ctx, out, &sz);
 		_valid = false;
 	}

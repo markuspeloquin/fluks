@@ -81,7 +81,7 @@ hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 
 	uint32_t	iv;
 	// the wording in LUKS is bad; it should read 'Digest Size'
-	size_t		sz_blk = hashfn->info()->digest_size;
+	size_t		sz_blk = hashfn->traits()->digest_size;
 	size_t		whole = sz / sz_blk;
 	size_t		left = sz % sz_blk;
 
@@ -125,7 +125,7 @@ hash2(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 
 	uint32_t	iv;
 	// the wording in LUKS is bad; it should read 'Digest Size'
-	size_t		sz_blk = hashfn->info()->digest_size;
+	size_t		sz_blk = hashfn->traits()->digest_size;
 	size_t		whole = sz / sz_blk;
 	size_t		left = sz % sz_blk;
 

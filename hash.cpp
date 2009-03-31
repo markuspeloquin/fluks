@@ -21,7 +21,7 @@ namespace {
 
 class Lookup {
 public:
-	static const Hash_info *info(enum hash_type type);
+	static const Hash_traits *traits(enum hash_type type);
 	static enum hash_type type(const std::string &name);
 	static const std::vector<enum hash_type> &types()
 	{	return inst._types; }
@@ -31,17 +31,17 @@ private:
 	void operator=(const Lookup &) {}
 
 	static Lookup inst;
-	std::map<enum hash_type, Hash_info> _map_info;
+	std::map<enum hash_type, Hash_traits> _map_traits;
 	std::map<std::string, enum hash_type> _map_type;
 	std::vector<enum hash_type> _types;
 };
 
-const Hash_info *
-Lookup::info(enum hash_type type)
+const Hash_traits *
+Lookup::traits(enum hash_type type)
 {
-	std::map<enum hash_type, Hash_info>::iterator i;
-	i = inst._map_info.find(type);
-	if (i == inst._map_info.end()) return 0;
+	std::map<enum hash_type, Hash_traits>::iterator i;
+	i = inst._map_traits.find(type);
+	if (i == inst._map_traits.end()) return 0;
 	return &i->second;
 }
 
@@ -56,19 +56,19 @@ Lookup::type(const std::string &name)
 
 Lookup::Lookup()
 {
-	_map_info[HT_MD5] = Hash_info("md5", 64, 16, 0);
-	_map_info[HT_RMD160] = Hash_info("rmd160", 64, 20, 1);
-	_map_info[HT_SHA1] = Hash_info("sha1", 64, 20, 1);
-	_map_info[HT_SHA224] = Hash_info("sha224", 64, 28, 0);
-	_map_info[HT_SHA256] = Hash_info("sha256", 64, 32, 1);
-	_map_info[HT_SHA384] = Hash_info("sha384", 128, 48, 0);
-	_map_info[HT_SHA512] = Hash_info("sha512", 128, 64, 1);
-	_map_info[HT_TIGER128] = Hash_info("tgr128", 64, 16, 0);
-	_map_info[HT_TIGER160] = Hash_info("tgr160", 64, 20, 0);
-	_map_info[HT_TIGER192] = Hash_info("tgr192", 64, 24, 0);
-	_map_info[HT_WHIRLPOOL256] = Hash_info("wp256", 64, 32, 0);
-	_map_info[HT_WHIRLPOOL384] = Hash_info("wp384", 64, 48, 0);
-	_map_info[HT_WHIRLPOOL512] = Hash_info("wp512", 64, 64, 0);
+	_map_traits[HT_MD5] = Hash_traits("md5", 64, 16, 0);
+	_map_traits[HT_RMD160] = Hash_traits("rmd160", 64, 20, 1);
+	_map_traits[HT_SHA1] = Hash_traits("sha1", 64, 20, 1);
+	_map_traits[HT_SHA224] = Hash_traits("sha224", 64, 28, 0);
+	_map_traits[HT_SHA256] = Hash_traits("sha256", 64, 32, 1);
+	_map_traits[HT_SHA384] = Hash_traits("sha384", 128, 48, 0);
+	_map_traits[HT_SHA512] = Hash_traits("sha512", 128, 64, 1);
+	_map_traits[HT_TIGER128] = Hash_traits("tgr128", 64, 16, 0);
+	_map_traits[HT_TIGER160] = Hash_traits("tgr160", 64, 20, 0);
+	_map_traits[HT_TIGER192] = Hash_traits("tgr192", 64, 24, 0);
+	_map_traits[HT_WHIRLPOOL256] = Hash_traits("wp256", 64, 32, 0);
+	_map_traits[HT_WHIRLPOOL384] = Hash_traits("wp384", 64, 48, 0);
+	_map_traits[HT_WHIRLPOOL512] = Hash_traits("wp512", 64, 64, 0);
 
 	_map_type["md5"] = HT_MD5;
 	_map_type["rmd160"] = HT_RMD160;
@@ -94,8 +94,8 @@ Lookup::Lookup()
 	_map_type["whirlpool512"] = HT_WHIRLPOOL512;
 	_map_type["wp512"] = HT_WHIRLPOOL512;
 
-	for (std::map<enum hash_type, Hash_info>::iterator i =
-	    _map_info.begin(); i != _map_info.end(); ++i)
+	for (std::map<enum hash_type, Hash_traits>::iterator i =
+	    _map_traits.begin(); i != _map_traits.end(); ++i)
 		_types.push_back(i->first);
 }
 
@@ -146,20 +146,20 @@ fluks::Hash_function::create(enum hash_type type)
 	}
 }
 
-const fluks::Hash_info *
-fluks::Hash_info::info(enum hash_type type)
+const fluks::Hash_traits *
+fluks::Hash_traits::traits(enum hash_type type)
 {
-	return Lookup::info(type);
+	return Lookup::traits(type);
 }
 
 enum fluks::hash_type
-fluks::Hash_info::type(const std::string &name)
+fluks::Hash_traits::type(const std::string &name)
 {
 	return Lookup::type(name);
 }
 
 const std::vector<enum fluks::hash_type> &
-fluks::Hash_info::types()
+fluks::Hash_traits::types()
 {
 	return Lookup::types();
 }

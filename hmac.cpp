@@ -50,14 +50,14 @@ fluks::Hmac_function::create(enum hash_type type)
 void
 fluks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
 {
-	size_t sz_block = info()->block_size;
+	size_t sz_block = traits()->block_size;
 	if (sz > sz_block) {
 		// key too long, so
 		// K := H(K)
 		_hashfn->init();
 		_hashfn->add(key, sz);
 		_hashfn->end(_key.get());
-		sz = info()->digest_size;
+		sz = traits()->digest_size;
 	} else {
 		std::copy(key, key + sz, _key.get());
 	}
@@ -81,9 +81,9 @@ fluks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
 void
 fluks::Hmac_impl::end(uint8_t *out) throw ()
 {
-	size_t sz_block = info()->block_size;
+	size_t sz_block = traits()->block_size;
 	uint8_t key_opad[sz_block];
-	uint8_t mid_digest[info()->digest_size];
+	uint8_t mid_digest[traits()->digest_size];
 
 	// (5) XOR result of (1) with opad
 	xor_buf_byte(_key.get(), sz_block, OPAD, key_opad);
@@ -95,7 +95,7 @@ fluks::Hmac_impl::end(uint8_t *out) throw ()
 	_hashfn->end(mid_digest);
 	_hashfn->init();
 	_hashfn->add(key_opad, sz_block);
-	_hashfn->add(mid_digest, info()->digest_size);
+	_hashfn->add(mid_digest, traits()->digest_size);
 	// get H( K^opad . H1 )
 	_hashfn->end(out);
 }

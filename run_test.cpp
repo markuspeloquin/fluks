@@ -78,10 +78,10 @@ Cipher_test::Cipher_test(enum cipher_type type, const uint8_t *key,
 	_type(type),
 	_dir(dir),
 	_key(new uint8_t[sz_key]),
-	_block(new uint8_t[Cipher_info::info(type)->block_size]),
+	_block(new uint8_t[Cipher_traits::traits(type)->block_size]),
 	_sz_key(sz_key)
 {
-	Assert(Cipher_info::info(type)->block_size == sz_blk,
+	Assert(Cipher_traits::traits(type)->block_size == sz_blk,
 	    "Cipher_test block size wrong");
 	std::copy(key, key + sz_key, _key.get());
 	std::copy(block, block + sz_blk, _block.get());
@@ -91,7 +91,7 @@ void
 Cipher_test::run()
 {
 	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(_type);
-	uint8_t buf[cipher->info()->block_size];
+	uint8_t buf[cipher->traits()->block_size];
 	cipher->init(_key.get(), _sz_key);
 	if (_dir == DIR_ENCRYPT)
 		cipher->encrypt(_block.get(), buf);
@@ -101,9 +101,9 @@ Cipher_test::run()
 	std::cout
 	//    << "KEY=" << hex(_key.get(), _sz_key) << '\n'
 	//    << (_dir == DIR_ENCRYPT ? 'P' : 'C') << "T="
-	//    << hex(_block.get(), cipher->info()->block_size) << '\n'
+	//    << hex(_block.get(), cipher->traits()->block_size) << '\n'
 	//    << (_dir == DIR_ENCRYPT ? 'C' : 'P') << "T="
-	    << hex(buf, cipher->info()->block_size) << '\n';
+	    << hex(buf, cipher->traits()->block_size) << '\n';
 }
 
 class Hash_test : public Test {
@@ -130,7 +130,7 @@ Hash_test::run()
 {
 	std::tr1::shared_ptr<Hash_function> hash =
 	    Hash_function::create(_type);
-	uint8_t buf[hash->info()->digest_size];
+	uint8_t buf[hash->traits()->digest_size];
 	hash->init();
 	hash->add(_data.get(), _sz);
 	hash->end(buf);
@@ -138,7 +138,7 @@ Hash_test::run()
 	std::cout
 	//    << "DATA=" << hex(_data.get(), _sz) << '\n'
 	//    << "DIGEST="
-	    << hex(buf, hash->info()->digest_size) << '\n';
+	    << hex(buf, hash->traits()->digest_size) << '\n';
 }
 
 class Hmac_test : public Test {
@@ -172,14 +172,14 @@ Hmac_test::run()
 {
 	std::tr1::shared_ptr<Hmac_function> hmac =
 	    Hmac_function::create(_type);
-	uint8_t buf[hmac->info()->digest_size];
+	uint8_t buf[hmac->traits()->digest_size];
 	hmac->init(_key.get(), _sz_key);
 	hmac->add(_data.get(), _sz_data);
 	hmac->end(buf);
 
 	std::cout << "KEY=" << hex(_key.get(), _sz_key)
 	    << "\nDATA=" << hex(_data.get(), _sz_data)
-	    << "\nDIGEST=" << hex(buf, hmac->info()->digest_size) << '\n';
+	    << "\nDIGEST=" << hex(buf, hmac->traits()->digest_size) << '\n';
 }
 
 } // end test namespace
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 		std::string key = argv[4];
 		std::string data = argv[5];
 
-		enum cipher_type cipher_ = Cipher_info::type(cipher);
+		enum cipher_type cipher_ = Cipher_traits::type(cipher);
 		Assert(cipher_ != CT_UNDEFINED, "undefined cipher: " + cipher);
 		enum crypt_direction dir_;
 		if (dir == "encrypt")
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 		std::string hash = argv[2];
 		std::string data = argv[3];
 
-		enum hash_type hash_ = Hash_info::type(hash);
+		enum hash_type hash_ = Hash_traits::type(hash);
 		Assert(hash_ != HT_UNDEFINED, "undefined hash: " + hash);
 		uint8_t databuf[data.size()];
 		size_t datasz;
@@ -282,7 +282,7 @@ main(int argc, char **argv)
 		std::string key = argv[3];
 		std::string data = argv[4];
 
-		enum hash_type hash_ = Hash_info::type(hash);
+		enum hash_type hash_ = Hash_traits::type(hash);
 		Assert(hash_ != HT_UNDEFINED, "undefined hash: " + hash);
 		uint8_t keybuf[key.size()/2];
 		dehex(key, keybuf);

@@ -37,8 +37,8 @@ namespace {
 void
 list_modes()
 {
-	const std::vector<enum cipher_type> &ciphers = Cipher_info::types();
-	std::vector<enum hash_type> hashes = Hash_info::types();
+	const std::vector<enum cipher_type> &ciphers = Cipher_traits::types();
+	std::vector<enum hash_type> hashes = Hash_traits::types();
 	std::vector<enum block_mode> block_modes = block_mode_info::types();
 	std::vector<enum iv_mode> iv_modes = iv_mode_info::types();
 
@@ -49,18 +49,18 @@ list_modes()
 	std::cout << "ciphers (with supported key sizes):\n";
 	for (std::vector<enum cipher_type>::const_iterator i = ciphers.begin();
 	    i != ciphers.end(); ++i) {
-		const Cipher_info *info = Cipher_info::info(*i);
-		std::vector<uint16_t> sizes = info->key_sizes;
+		const Cipher_traits *traits = Cipher_traits::traits(*i);
+		std::vector<uint16_t> sizes = traits->key_sizes;
 
-		uint16_t version = info->luks_version;
+		uint16_t version = traits->luks_version;
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
 		else		std::cout << version;
 		std::cout << "] ";
 
-		std::cout << info->name << " (";
+		std::cout << traits->name << " (";
 		for (std::vector<uint16_t>::const_iterator j =
-		    info->key_sizes.begin(); j != info->key_sizes.end();
+		    traits->key_sizes.begin(); j != traits->key_sizes.end();
 		    ++j) {
 			if (j != sizes.begin())
 				std::cout << ' ';
@@ -73,16 +73,16 @@ list_modes()
 	for (std::vector<enum hash_type>::iterator i = hashes.begin();
 	    i != hashes.end(); ++i) {
 
-		const Hash_info *info = Hash_info::info(*i);
+		const Hash_traits *traits = Hash_traits::traits(*i);
 		std::cout << "\t[";
-		if (!info->luks_version)
+		if (!traits->luks_version)
 			std::cout << '!';
 		else
-			std::cout << info->luks_version;
+			std::cout << traits->luks_version;
 		std::cout << "] ";
 
-		std::cout << info->name << " ("
-		    << info->digest_size * 8 << ")\n";
+		std::cout << traits->name << " ("
+		    << traits->digest_size * 8 << ")\n";
 	}
 
 	std::cout << "\nblock modes:\n";
