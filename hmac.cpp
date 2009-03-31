@@ -34,23 +34,13 @@ fluks::Hmac_function::create(enum hash_type type)
 	case HT_SHA512:
 		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha512);
 	case HT_TIGER128:
-		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(HT_TIGER128)));
 	case HT_TIGER160:
-		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(HT_TIGER160)));
 	case HT_TIGER192:
-		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(HT_TIGER192)));
 	case HT_WHIRLPOOL256:
-		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL256)));
 	case HT_WHIRLPOOL384:
-		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL384)));
 	case HT_WHIRLPOOL512:
 		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(HT_WHIRLPOOL512)));
+		    new Hmac_impl(Hash_function::create(type)));
 	default:
 		Assert(0, "Hmac_function::create() bad hash type");
 		return std::tr1::shared_ptr<Hmac_function>();
