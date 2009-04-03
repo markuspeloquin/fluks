@@ -22,22 +22,13 @@
 #include "dm.hpp"
 #include "libdevmapper.h"
 
+namespace fluks {
 namespace {
-
-struct Dm_task_watch {
-	Dm_task_watch(struct dm_task *task) : _task(task) {}
-	~Dm_task_watch()
-	{
-		dm_task_destroy(_task);
-	}
-
-	struct dm_task *_task;
-};
 
 std::string log_output;
 
-extern "C" void dm_logger(int level, const char *file, int line,
-    const char *f, ...)
+extern "C" void
+dm_logger(int level, const char *file, int line, const char *f, ...)
 {
 	if (level > 3) return;
 
@@ -80,28 +71,90 @@ void dm_setup_log()
 	needed = false;
 }
 
+class Device_mapper {
+public:
+	Device_mapper(int type) throw (Dm_error)
+	{
+		dm_setup_log();
+
+		log_output = "";
+		if (!(_task = dm_task_create(type)))
+			throw Dm_error(log_output);
+	}
+
+	~Device_mapper()
+	{
+		dm_task_destroy(_task);
+	}
+
+	void set_name(const std::string &name) throw (Dm_error)
+	{
+		log_output = "";
+		if (!dm_task_set_name(_task, name.c_str()))
+			throw Dm_error(log_output);
+	}
+
+	void run() throw (Dm_error)
+	{
+		log_output = "";
+		if (!dm_task_run(_task))
+			throw Dm_error(log_output);
+	}
+
+	void add_crypt_target(
+	    uint64_t start_sector, uint64_t num_sectors,
+	    const std::string &cipher_spec,
+	    const uint8_t *key, size_t sz_key,
+	    const std::string &device_path) throw (Dm_error);
+
+private:
+	struct dm_task *_task;
+};
+
+void
+Device_mapper::add_crypt_target(
+    uint64_t start_sector, uint64_t num_sectors,
+    const std::string &cipher_spec,
+    const uint8_t *key, size_t sz_key,
+    const std::string &device_path) throw (Dm_error)
+{
+	std::ostringstream param_out;
+
+	// format of param argument:
+	//	CIPHER KEY IV_OFFSET DEVICE_PATH OFFSET
+
+	// CIPHER (e.g. serpent-cbc-essiv:tgr192)
+	param_out << cipher_spec << ' ';
+
+	// KEY (hex-encoded master key)
+	param_out << std::hex << std::setfill('0');
+	for (size_t i = 0; i < sz_key; i++)
+		param_out << std::setw(2) << (short)key[i];
+	param_out << std::dec << std::setfill(' ');
+
+	// IV_OFFSET (number added to sector number for each IV)
+	// DEVICE_PATH (e.g. /dev/sda7)
+	// OFFSET (start sector number [header is at sector 0])
+	param_out << " 0 " << device_path << ' ' << start_sector;
+
+	log_output = "";
+	if (!dm_task_add_target(_task,
+	    0, // logical start sector
+	    num_sectors,
+	    "crypt", // DM target
+	    param_out.str().c_str()))
+		throw Dm_error(log_output);
+}
+
 } // end anon namespace
+}
 
 void
 fluks::dm_close(const std::string &name) throw (Dm_error)
 {
-	struct dm_task *task;
-
-	dm_setup_log();
-
-	log_output = "";
-	if (!(task = dm_task_create(DM_DEVICE_REMOVE)))
-		throw Dm_error(log_output);
-
-	Dm_task_watch watcher(task);
-
-	log_output = "";
-	if (!dm_task_set_name(task, name.c_str()))
-		throw Dm_error(log_output);
-
-	log_output = "";
-	if (!dm_task_run(task))
-		throw Dm_error(log_output);
+	Device_mapper task(DM_DEVICE_REMOVE);
+	task.set_name(name);
+	task.run();
 }
 
 void
@@ -110,46 +163,9 @@ fluks::dm_open(const std::string &name, uint64_t start_sector,
     const uint8_t *key, size_t sz_key, const std::string &device_path)
     throw (Dm_error)
 {
-	std::ostringstream param_out;
-	struct dm_task *task;
-
-	dm_setup_log();
-
-	log_output = "";
-	if (!(task = dm_task_create(DM_DEVICE_CREATE)))
-		throw Dm_error(log_output);
-
-	Dm_task_watch task_watch(task);
-
-	log_output = "";
-	if (!dm_task_set_name(task, name.c_str()))
-		throw Dm_error(log_output);
-
-	// format of param argument:
-	//	CIPHER KEY IV_OFFSET DEVICE_PATH OFFSET
-	// CIPHER: (e.g. serpent-cbc-essiv:tgr192)
-	// KEY: hexadecimal-encoded master key
-	// IV_OFFSET: number added to sector number for each IV calculation
-	// DEVICE_PATH: (e.g. /dev/sda7)
-	// OFFSET: start sector number (header is at sector 0)
-
-	param_out << cipher_spec << ' ';
-
-	param_out << std::hex << std::setfill('0');
-	for (size_t i = 0; i < sz_key; i++)
-		param_out << std::setw(2) << (short)key[i];
-	param_out << std::dec << std::setfill(' ');
-
-	// IV_OFFSET = 0
-	param_out << " 0 " << device_path << ' ' << start_sector;
-
-	// logical start sector: 0
-	log_output = "";
-	if (!dm_task_add_target(task, 0, num_sectors, "crypt",
-	    param_out.str().c_str()))
-		throw Dm_error(log_output);
-
-	log_output = "";
-	if (!dm_task_run(task))
-		throw Dm_error(log_output);
+	Device_mapper task(DM_DEVICE_CREATE);
+	task.set_name(name);
+	task.add_crypt_target(start_sector, num_sectors, cipher_spec,
+	    key, sz_key, device_path);
+	task.run();
 }
