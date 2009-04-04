@@ -84,11 +84,11 @@ fluks::Cipher_traits::Cipher_traits(const std::string &name,
     uint16_t min_key, uint16_t max_key, uint16_t key_step,
     uint16_t sz_blk, uint16_t version) :
 	name(name),
-	key_sizes((max_key - min_key + (key_step - 1)) / key_step),
+	key_sizes((max_key - min_key + key_step) / key_step),
 	block_size(sz_blk),
 	luks_version(version)
 {
-	size_t i = 0;
+	uint16_t i = 0;
 	for (uint16_t n = min_key; n <= max_key; n += key_step)
 		key_sizes[i++] = n;
 }

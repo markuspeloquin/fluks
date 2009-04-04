@@ -50,7 +50,6 @@ list_modes()
 	for (std::vector<enum cipher_type>::const_iterator i = ciphers.begin();
 	    i != ciphers.end(); ++i) {
 		const Cipher_traits *traits = Cipher_traits::traits(*i);
-		std::vector<uint16_t> sizes = traits->key_sizes;
 
 		uint16_t version = traits->luks_version;
 		std::cout << "\t[";
@@ -62,7 +61,7 @@ list_modes()
 		for (std::vector<uint16_t>::const_iterator j =
 		    traits->key_sizes.begin(); j != traits->key_sizes.end();
 		    ++j) {
-			if (j != sizes.begin())
+			if (j != traits->key_sizes.begin())
 				std::cout << ' ';
 			std::cout << *j * 8;
 		}
