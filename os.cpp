@@ -44,11 +44,8 @@ fluks::num_sectors(int fd) throw (boost::system::system_error)
 {
 	uint64_t sz;
 	int sz_sect = sector_size(fd);
-	if (ioctl(fd, BLKGETSIZE64, &sz) == -1) {
-		int e = errno;
-		close(fd);
-		throw_errno(e);
-	}
+	if (ioctl(fd, BLKGETSIZE64, &sz) == -1)
+		throw_errno(errno);
 	return static_cast<uint32_t>(sz / sz_sect);
 }
 
@@ -56,11 +53,8 @@ int
 fluks::sector_size(int fd) throw (boost::system::system_error)
 {
 	int sz_sect;
-	if (ioctl(fd, BLKSSZGET, &sz_sect) == -1) {
-		int e = errno;
-		close(fd);
-		throw_errno(e);
-	}
+	if (ioctl(fd, BLKSSZGET, &sz_sect) == -1)
+		throw_errno(errno);
 	return sz_sect;
 }
 
