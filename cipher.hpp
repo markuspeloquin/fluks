@@ -303,7 +303,13 @@ private:
 
 class Cipher_serpent : public Cipher {
 public:
-	Cipher_serpent() : Cipher(CT_SERPENT), _init(false) {}
+	Cipher_serpent() : Cipher(CT_SERPENT), _init(false)
+	{
+		Assert(0,
+		    "I just reread the license on the implementation I used,\n"
+		    "and it appears that it is not redistributable.  Use\n"
+		    "something else.");
+	}
 	~Cipher_serpent() throw () {}
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
