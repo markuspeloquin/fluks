@@ -23,7 +23,7 @@
 #include <openssl/rand.h>
 
 #include "backup.hpp"
-#include "crypt.hpp"
+#include "cipher.hpp"
 #include "detect.hpp"
 #include "dm.hpp"
 #include "hash.hpp"

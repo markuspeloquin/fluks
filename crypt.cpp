@@ -17,10 +17,9 @@
 #include <stdint.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <functional>
-#include <map>
 
+#include "cipher.hpp"
 #include "crypt.hpp"
 #include "errors.hpp"
 #include "hash.hpp"
@@ -28,64 +27,6 @@
 
 namespace fluks {
 namespace {
-
-class Lookup {
-public:
-	static const Cipher_traits *traits(enum cipher_type type);
-	static enum cipher_type type(const std::string &name);
-	static const std::vector<enum cipher_type> &types()
-	{	return inst._types; }
-private:
-	Lookup();
-	Lookup(const Lookup &) {}
-	void operator=(const Lookup &) {}
-
-	static Lookup inst;
-	std::map<enum cipher_type, Cipher_traits> _map_traits;
-	std::map<std::string, enum cipher_type> _map_type;
-	std::vector<enum cipher_type> _types;
-};
-
-const Cipher_traits *
-Lookup::traits(enum cipher_type type)
-{
-	std::map<enum cipher_type, Cipher_traits>::iterator i;
-	i = inst._map_traits.find(type);
-	if (i == inst._map_traits.end()) return 0;
-	return &i->second;
-}
-
-enum cipher_type
-Lookup::type(const std::string &name)
-{
-	std::map<std::string, enum cipher_type>::iterator i;
-	i = inst._map_type.find(name);
-	if (i == inst._map_type.end()) return CT_UNDEFINED;
-	return i->second;
-}
-
-Lookup::Lookup()
-{
-	_map_traits[CT_AES] = Cipher_traits("aes", 16, 32, 8, 16, 1);
-	_map_traits[CT_BLOWFISH] = Cipher_traits("blowfish", 4, 56, 1, 8, 0);
-	_map_traits[CT_CAST5] = Cipher_traits("cast5", 5, 16, 1, 8, 1);
-	_map_traits[CT_CAST6] = Cipher_traits("cast6", 16, 32, 4, 16, 1);
-	_map_traits[CT_SERPENT] = Cipher_traits("serpent", 16, 32, 8, 16, 1);
-	_map_traits[CT_TWOFISH] = Cipher_traits("twofish", 16, 32, 8, 16, 1);
-
-	_map_type["aes"] = CT_AES;
-	_map_type["blowfish"] = CT_BLOWFISH;
-	_map_type["cast5"] = CT_CAST5;
-	_map_type["cast6"] = CT_CAST6;
-	_map_type["serpent"] = CT_SERPENT;
-	_map_type["twofish"] = CT_TWOFISH;
-
-	for (std::map<enum cipher_type, Cipher_traits>::iterator i =
-	    _map_traits.begin(); i != _map_traits.end(); ++i)
-		_types.push_back(i->first);
-}
-
-Lookup Lookup::inst;
 
 inline std::tr1::shared_ptr<Cipher>
 		make_essiv_cipher(enum cipher_type cipher,
@@ -112,67 +53,6 @@ make_essiv_cipher(enum cipher_type type, enum hash_type hash,
 }
 
 } // end anon namespace
-}
-
-fluks::Cipher_traits::Cipher_traits(const std::string &name,
-    uint16_t min_key, uint16_t max_key, uint16_t key_step,
-    uint16_t sz_blk, uint16_t version) :
-	name(name),
-	key_sizes((max_key - min_key + (key_step - 1)) / key_step),
-	block_size(sz_blk),
-	luks_version(version)
-{
-	size_t i = 0;
-	for (uint16_t n = min_key; n <= max_key; n += key_step)
-		key_sizes[i++] = n;
-}
-
-const fluks::Cipher_traits *
-fluks::Cipher_traits::traits(enum cipher_type type)
-{
-	return Lookup::traits(type);
-}
-
-enum fluks::cipher_type
-fluks::Cipher_traits::type(const std::string &name)
-{
-	return Lookup::type(name);
-}
-
-const std::vector<enum fluks::cipher_type> &
-fluks::Cipher_traits::types()
-{
-	return Lookup::types();
-}
-
-std::tr1::shared_ptr<fluks::Cipher> 
-fluks::Cipher::create(enum cipher_type type)
-{
-	switch (type) {
-	case CT_AES:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_aes);
-	case CT_BLOWFISH:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_blowfish);
-	case CT_CAST5:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_cast5);
-	case CT_CAST6:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_cast6);
-	case CT_SERPENT:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_serpent);
-	case CT_TWOFISH:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_twofish);
-/*
-	case CT_DES3:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_des3);
-*/
-	default:
-		Assert(0, "Cipher::create() bad cipher type");
-		return std::tr1::shared_ptr<Cipher>();
-	}
-}
-
-fluks::Cipher::Cipher(enum cipher_type type)
-{
 }
 
 void

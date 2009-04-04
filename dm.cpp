@@ -46,10 +46,13 @@ dm_logger(int level, const char *file, int line, const char *f, ...)
 
 		if (n >= 0) {
 			if (n < sz) {
+				// the string fit into the buffer
 				log_output += buf.get();
 				return;
 			}
 
+			// buffer not big enough, resize to the proper size
+			// (only performed once)
 			sz = n + 1;
 			buf.reset(new char[sz]);
 		} else {

@@ -4,6 +4,7 @@
 #include <tr1/memory>
 #include <boost/regex.hpp>
 
+#include "cipher.hpp"
 #include "crypt.hpp"
 #include "hash.hpp"
 #include "hmac.hpp"

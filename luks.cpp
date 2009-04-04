@@ -23,6 +23,7 @@
 #include <uuid/uuid.h>
 
 #include "af.hpp"
+#include "cipher.hpp"
 #include "crypt.hpp"
 #include "detect.hpp"
 #include "gutmann.hpp"

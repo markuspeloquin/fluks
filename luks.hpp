@@ -15,7 +15,7 @@
 #ifndef FLUKS_LUKS_HPP
 #define FLUKS_LUKS_HPP
 
-#include <stdint.h> // no cstdint yet
+#include <stdint.h>
 
 #include <cstddef>
 #include <string>
@@ -116,7 +116,6 @@ enum cipher_type {
 	CT_BLOWFISH,
 	CT_CAST5,
 	CT_CAST6,
-	CT_DES3,
 	CT_TWOFISH,
 	CT_SERPENT
 };
