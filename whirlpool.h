@@ -31,25 +31,27 @@ const size_t WHIRLPOOL_SZ_BLOCK = 64;
 #else 
 /* C */
 #	include <stddef.h>
+#	define WHIRLPOOL256_SZ_DIGEST	32
+#	define WHIRLPOOL384_SZ_DIGEST	48
 #	define WHIRLPOOL_SZ_DIGEST	64
 #	define WHIRLPOOL_SZ_BLOCK	64
 #endif
 
 struct whirlpool_ctx {
+	/* the hashing state */
+	uint64_t	hash[WHIRLPOOL_SZ_DIGEST / 8];
+
 	/* global number of hashed bits (256-bit counter) */
-	uint8_t  bitLength[32];
+	uint8_t		bitLength[32];
 
 	/* buffer of data to hash */
-	uint8_t  buffer[WHIRLPOOL_SZ_BLOCK];
+	uint8_t		buffer[WHIRLPOOL_SZ_BLOCK];
 
 	/* current number of bits on the buffer */
-	int bufferBits;
+	uint16_t	bufferBits;
 
 	/* current (possibly incomplete) byte slot on the buffer */
-	int bufferPos;
-
-	/* the hashing state */
-	uint64_t hash[WHIRLPOOL_SZ_DIGEST / 8];
+	uint8_t		bufferPos;
 };
 
 __BEGIN_DECLS

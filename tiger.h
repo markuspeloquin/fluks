@@ -34,7 +34,7 @@ struct tiger_ctx {
 	uint64_t	buf[8];
 	uint64_t	res[3];
 	uint64_t	length;
-	size_t		sz;
+	uint8_t		sz;
 	uint8_t		version;
 };
 
