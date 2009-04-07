@@ -1,5 +1,5 @@
 all:
-	@echo You should really type \`bjam\'. Idiot.
+	@echo "You really meant to type \`bjam', didn't you?"
 
 doc:
 	@doxygen
