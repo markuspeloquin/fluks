@@ -15,8 +15,8 @@
 #ifndef FLUKS_UTIL_HPP
 #define FLUKS_UTIL_HPP
 
-#include <stdint.h>
 #include <cstddef>
+#include <tr1/cstdint>
 
 namespace fluks {
 

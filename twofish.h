@@ -16,12 +16,13 @@
 #define FLUKS_TWOFISH_H
 
 #include <features.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 #	include <cstddef>
+#	include <tr1/cstdint>
 #else
 #	include <stddef.h>
+#	include <stdint.h>
 #endif
 
 const size_t TWOFISH_BLOCK = 16;

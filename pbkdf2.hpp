@@ -15,10 +15,9 @@
 #ifndef FLUKS_PBKDF2_HPP
 #define FLUKS_PBKDF2_HPP
 
-#include <stdint.h>
-
 #include <stdexcept>
 #include <string>
+#include <tr1/cstdint>
 
 #include "luks.hpp"
 

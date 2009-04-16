@@ -15,7 +15,8 @@
 #ifndef FLUKS_AF_HPP
 #define FLUKS_AF_HPP
 
-#include <stdint.h>
+#include <tr1/cstdint>
+
 #include "luks.hpp"
 
 namespace fluks {

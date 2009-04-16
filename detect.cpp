@@ -12,11 +12,10 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <stdint.h>
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <tr1/cstdint>
 #include <boost/regex.hpp>
 
 #include "detect.hpp"

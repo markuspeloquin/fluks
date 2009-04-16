@@ -15,9 +15,8 @@
 #ifndef FLUKS_CRYPT_HPP
 #define FLUKS_CRYPT_HPP
 
-#include <stdint.h>
-
 #include <cstddef>
+#include <tr1/cstdint>
 
 #include "luks.hpp"
 

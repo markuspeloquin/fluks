@@ -15,10 +15,9 @@
 #ifndef FLUKS_HMAC_HPP
 #define FLUKS_HMAC_HPP
 
-#include <stdint.h>
-
 #include <cstddef>
 #include <string>
+#include <tr1/cstdint>
 #include <tr1/memory>
 #include <boost/scoped_array.hpp>
 

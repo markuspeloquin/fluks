@@ -12,9 +12,8 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <stdint.h>
-
 #include <algorithm>
+#include <tr1/cstdint>
 
 #include "endian.h"
 #include "tiger.h"

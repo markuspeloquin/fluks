@@ -16,15 +16,16 @@
 #define FLUKS_ENDIAN_H
 
 #include <endian.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 #	include <cassert>
 #	include <cstddef>
 #	include <cstring>
+#	include <tr1/cstdint>
 #else
 #	include <assert.h>
 #	include <stddef.h>
+#	include <stdint.h>
 #	include <string.h>
 #endif
 

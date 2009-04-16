@@ -16,11 +16,11 @@
 #define FLUKS_WHIRLPOOL_H
 
 #include <features.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 // C++
 #	include <cstddef>
+#	include <tr1/cstdint>
 
 // because I hate macros
 const size_t WHIRLPOOL256_SZ_DIGEST = 32;
@@ -31,6 +31,8 @@ const size_t WHIRLPOOL_SZ_BLOCK = 64;
 #else 
 /* C */
 #	include <stddef.h>
+#	include <stdint.h>
+
 #	define WHIRLPOOL256_SZ_DIGEST	32
 #	define WHIRLPOOL384_SZ_DIGEST	48
 #	define WHIRLPOOL_SZ_DIGEST	64

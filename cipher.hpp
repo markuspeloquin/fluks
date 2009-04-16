@@ -15,11 +15,10 @@
 #ifndef FLUKS_CIPHER_HPP
 #define FLUKS_CIPHER_HPP
 
-#include <stdint.h>
-
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <tr1/cstdint>
 #include <tr1/memory>
 
 #include <openssl/aes.h>
@@ -181,8 +180,6 @@ public:
 		}
 		AES_decrypt(in, out, &_key);
 	}
-	size_t block_size() const throw ()
-	{	return AES_BLOCK_SIZE; }
 
 private:
 	AES_KEY			_key;
@@ -222,8 +219,6 @@ public:
 			    "buffers should be different");
 		BF_ecb_encrypt(in, out, &_key, BF_DECRYPT);
 	}
-	size_t block_size() const throw ()
-	{	return BF_BLOCK; }
 
 private:
 	BF_KEY			_key;
@@ -260,8 +255,6 @@ public:
 			    "buffers should be different");
 		CAST_ecb_encrypt(in, out, &_key, CAST_DECRYPT);
 	}
-	size_t block_size() const throw ()
-	{	return CAST_BLOCK; }
 
 private:
 	CAST_KEY		_key;
@@ -293,8 +286,6 @@ public:
 		// it's fine if in==out
 		cast6_decrypt(&_ctx, in, out);
 	}
-	size_t block_size() const throw ()
-	{	return CAST6_BLOCK; }
 
 private:
 	struct cast6_ctx	_ctx;
@@ -332,8 +323,6 @@ public:
 		// it's fine if in==out
 		serpent_decrypt(&_ctx, in, out);
 	}
-	size_t block_size() const throw ()
-	{	return SERPENT_BLOCK; }
 
 private:
 	struct serpent_ctx	_ctx;
@@ -364,8 +353,6 @@ public:
 		// it's fine if in==out
 		twofish_decrypt(&_ctx, in, out);
 	}
-	size_t block_size() const throw ()
-	{	return TWOFISH_BLOCK; }
 
 private:
 	struct twofish_ctx	_ctx;

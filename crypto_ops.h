@@ -16,11 +16,12 @@
 #define FLUKS_CRYPTO_OPS_H
 
 #include <features.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
+#	include <tr1/cstdint>
 #	define INLINE inline
 #else
+#	include <stdint.h>
 #	define INLINE static inline
 #endif
 

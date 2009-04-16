@@ -15,12 +15,11 @@
 #ifndef FLUKS_HASH_HPP
 #define FLUKS_HASH_HPP
 
-#include <stdint.h> // no cstdint yet
-
 #include <cstddef>
 #include <stdexcept>
 #include <streambuf>
 #include <string>
+#include <tr1/cstdint>
 #include <tr1/memory>
 #include <boost/scoped_array.hpp>
 

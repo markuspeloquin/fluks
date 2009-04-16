@@ -5,6 +5,11 @@
  * included by C++ source.  Thanks, guys. */
 
 #include <features.h>
+#ifdef __cplusplus
+#	include <tr1/cstdint>
+#else
+#	include <stdint.h>
+#endif
 
 /* let's hope they don't change these on us */
 enum {
@@ -39,7 +44,6 @@ enum {
 	DM_DEVICE_SET_GEOMETRY
 };
 
-#include <stdint.h>
 
 typedef void (*dm_log_fn) (int level, const char *file, int line,
 			   const char *f, ...)

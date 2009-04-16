@@ -14,10 +14,9 @@
 
 #include <arpa/inet.h>
 
-#include <stdint.h>
-
 #include <algorithm>
 #include <functional>
+#include <tr1/cstdint>
 
 #include "cipher.hpp"
 #include "crypt.hpp"

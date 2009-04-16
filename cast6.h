@@ -16,13 +16,14 @@
 #define CAST6_H
 
 #include <features.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 #	include <cstddef>
+#	include <tr1/cstdint>
 #else
 #	include <stdbool.h>
 #	include <stddef.h>
+#	include <stdint.h>
 #endif
 
 /** Size of a CAST-256 block (bytes) */

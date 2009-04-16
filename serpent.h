@@ -16,21 +16,28 @@
 #define FLUKS_SERPENT_H
 
 #include <features.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 #	include <cstddef>
-#else
-#	include <stddef.h>
-#endif
+#	include <tr1/cstdint>
 
 const size_t SERPENT_BLOCK = 16;
 const size_t SERPENT_KEYMIN = 16;
 const size_t SERPENT_KEYMAX = 32;
 const size_t SERPENT_KEYSTEP = 8;
+#else
+#	include <stddef.h>
+#	include <stdint.h>
 
-/** Key material not of correct length */
+#	define SERPENT_BLOCK 16
+#	define SERPENT_KEYMIN 16
+#	define SERPENT_KEYMAX 32
+#	define SERPENT_KEYSTEP 8
+#endif
+
+
 enum serpent_return {
+	/** Key material not of correct length */
 	SERPENT_BAD_KEY_MAT = -1,
 	SERPENT_OKAY = 0
 };

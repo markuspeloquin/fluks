@@ -15,10 +15,9 @@
 #ifndef FLUKS_DM_HPP
 #define FLUKS_DM_HPP
 
-#include <stdint.h>
-
 #include <cstddef>
 #include <string>
+#include <tr1/cstdint>
 
 #include "errors.hpp"
 

@@ -4,7 +4,7 @@ using gcc : # compiler version
 	:
 	# -D_BSD_SOURCE needed for proper endian macros
 	<cxxflags>"-std=c++98 -D_BSD_SOURCE $(DEBUG)"
-	<cflags>"-std=c99 -D_BSD_SOURCE $(DEBUG)"
+	<cflags>"-std=c99 -pedantic -D_BSD_SOURCE $(DEBUG)"
 	;
 lib boost_filesystem ;
 lib boost_program_options ;
@@ -14,8 +14,8 @@ lib devmapper ;
 lib ssl ;
 lib uuid ;
 lib fluks_crypto :
-	tiger.cpp
-	cast6.c serpent.c twofish.c whirlpool.c
+	serpent.cpp tiger.cpp
+	cast6.c twofish.c whirlpool.c
 	;
 exe fluks :
 	af.cpp backup.cpp cipher.cpp crypt.cpp

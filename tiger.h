@@ -16,12 +16,13 @@
 #define FLUKS_TIGER_H
 
 #include <features.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 #	include <cstddef>
+#	include <tr1/cstdint>
 #else
 #	include <stddef.h>
+#	include <stdint.h>
 #endif
 
 const size_t TIGER_SZ_BLOCK = 64;
