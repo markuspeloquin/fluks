@@ -18,7 +18,7 @@
  * is used as the index into the S-Box to get the output:
  *	S0(0x31415926) => 0x18a86df5 */
 
-// S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 18 gates
+// S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 18 gates (one less than ref.)
 inline void
 sbox_0(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
@@ -66,7 +66,7 @@ sbox_1_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 {
 }
 
-// S2:    [8 6 7 9 3 c a f d 1 e 4 0 b 5 2] in 17 gates
+// S2:    [8 6 7 9 3 c a f d 1 e 4 0 b 5 2] in 17 gates (one more)
 inline void
 sbox_2(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
@@ -99,7 +99,7 @@ sbox_2_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 {
 }
 
-// S3:    [0 f b 8 c 9 6 3 d 1 2 4 a 7 5 e] in 18 gates
+// S3:    [0 f b 8 c 9 6 3 d 1 2 4 a 7 5 e] in 18 gates (same number)
 inline void
 sbox_3(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
@@ -126,7 +126,7 @@ sbox_3(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = t7 ^ t13;
 }
 
-// Sinv3: [0 9 a 7 b e 6 d 3 5 c 2 4 8 f 1] in 17 gates
+// Sinv3: [0 9 a 7 b e 6 d 3 5 c 2 4 8 f 1] in 17 gates (same number)
 inline void
 sbox_3_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
@@ -152,7 +152,7 @@ sbox_3_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = t11 ^ t12;
 }
 
-// S4:    [1 f 8 3 c 0 b 6 2 5 4 a 9 e 7 d] in 15 gates
+// S4:    [1 f 8 3 c 0 b 6 2 5 4 a 9 e 7 d] in 15 gates (two less)
 inline void
 sbox_4(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
@@ -182,7 +182,7 @@ sbox_4_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 {
 }
 
-// S5:    [f 5 2 b 4 a 9 c 0 3 e 8 d 6 7 1] in 17 gates
+// S5:    [f 5 2 b 4 a 9 c 0 3 e 8 d 6 7 1] in 17 gates (same number)
 inline void
 sbox_5(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
@@ -208,7 +208,7 @@ sbox_5(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y3 = t10 ^ t12;
 }
 
-// Sinv5: [8 f 2 9 4 1 d e b 6 5 3 7 c a 0] in 18 gates
+// Sinv5: [8 f 2 9 4 1 d e b 6 5 3 7 c a 0] in 18 gates (one more)
 inline void
 sbox_5_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
