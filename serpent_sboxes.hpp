@@ -12,6 +12,9 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#ifndef SERPENT_SBOXES_HPP
+#define SERPENT_SBOXES_HPP
+
 #include <tr1/cstdint>
 
 /* idea: block is read four bits at a time; each sequence of four bits
@@ -45,11 +48,30 @@ sbox_0(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = t12 ^ t13;
 }
 
-// Sinv0: d 3 b 0 a 6 5 c 1 e 4 7 f 9 8 2
+// Sinv0: [d 3 b 0 a 6 5 c 1 e 4 7 f 9 8 2] in 17 gates (one less)
 inline void
 sbox_0_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11,
+	    t12;
+	t0 = x0 ^ x1;
+	t1 = x2 ^ t0;
+	t2 = x1 | x3;
+	y3 = t1 ^ t2;
+	t3 = x0 ^ x3;
+	t4 = x2 | t3;
+	t5 = x1 ^ t4;
+	t6 = t1 & t5;
+	y1 = t3 ^ t6;
+	t7 = t2 ^ t5;
+	t8 = t1 & t7;
+	t9 = t7 ^ t8;
+	y0 = ~t9;
+	t10 = x0 ^ t4;
+	t11 = t8 ^ t10;
+	t12 = t7 | t10;
+	y2 = t11 ^ t12;
 }
 
 // S1:    [f c 2 7 9 0 5 a 1 b e 8 6 d 3 4] in 17 gates (one less)
@@ -214,11 +236,30 @@ sbox_4(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = t9 ^ t10;
 }
 
-// Sinv4: 5 0 8 3 a 9 7 e 2 c b 6 4 f d 1
+// Sinv4: [5 0 8 3 a 9 7 e 2 c b 6 4 f d 1] in 17 gates (same)
 inline void
 sbox_4_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11,
+	    t12;
+	t0 = x2 ^ x3;
+	t1 = x2 | x3;
+	t2 = x1 ^ t1;
+	t3 = x0 & t2;
+	y1 = t0 ^ t3;
+	t4 = x0 ^ x3;
+	t5 = t1 ^ t3;
+	t6 = t4 & t5;
+	y3 = t2 ^ t6;
+	t7 = x2 ^ y3;
+	t8 = ~x0;
+	t9 = t7 | t8;
+	y0 = t2 ^ t9;
+	t10 = x2 & t5;
+	t11 = t8 ^ t10;
+	t12 = x3 | t7;
+	y2 = t11 ^ t12;
 }
 
 // S5:    [f 5 2 b 4 a 9 c 0 3 e 8 d 6 7 1] in 17 gates (same number)
@@ -281,18 +322,58 @@ sbox_6(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 {
 }
 
-// Sinv6: f a 1 d 5 3 6 0 4 9 e 7 2 c 8 b
+// Sinv6: [f a 1 d 5 3 6 0 4 9 e 7 2 c 8 b] in 18 gates (one less)
 inline void
 sbox_6_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11,
+	    t12, t13;
+	t0 = x1 ^ x3;
+	t1 = ~x2;
+	t2 = x0 | t1;
+	y1 = t0 ^ t2;
+	t3 = x0 ^ x1;
+	t4 = x2 ^ t3;
+	t5 = x1 & t4;
+	t6 = t1 ^ t5;
+	t7 = t0 | t6;
+	y2 = t4 ^ t7;
+	t8 = x0 ^ t7;
+	t9 = t0 ^ t5;
+	t10 = t3 | t9;
+	y3 = t8 ^ t10;
+	t11 = x2 ^ y1;
+	t12 = y2 & t11;
+	t13 = t8 | t12;
+	y0 = t9 ^ t13;
 }
 
-// S7:    1 d f 0 e 8 2 b 7 4 c a 9 3 5 6
+// S7:    [1 d f 0 e 8 2 b 7 4 c a 9 3 5 6] in 18 gates (same)
 inline void
 sbox_7(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11,
+	    t12, t13;
+	t0 = x0 & x1;
+	t1 = x0 | x1;
+	t2 = x3 & t1;
+	t3 = x2 | t0;
+	y3 = t2 ^ t3;
+	t4 = x1 ^ x3;
+	t5 = x0 | x3;
+	t6 = x2 & t5;
+	t7 = t0 | t4;
+	y2 = t6 ^ t7;
+	t8 = x0 ^ t4;
+	t9 = x1 ^ t2;
+	t10 = t3 | t9;
+	t11 = t8 ^ t10;
+	y1 = ~t11;
+	t12 = x2 ^ t9;
+	t13 = x3 | y1;
+	y0 = t12 ^ t13;
 }
 
 // Sinv7: 3 0 6 d 9 e f 8 5 c b 7 a 1 4 2
@@ -301,3 +382,5 @@ sbox_7_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
 }
+
+#endif
