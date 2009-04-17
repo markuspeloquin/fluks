@@ -78,18 +78,16 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 	if(sz != 16 && sz != 24 && sz != 32)
 		return SERPENT_BAD_KEY_MAT;
 
+	// internal representation is little-endian
 	le_to_host32(v8, keyin, sz);
 	if (sz < 32) {
-		/* the spec seems to indicate that the pattern used to
-		 * fill the rest of the space is (binary) b1000..., though
-		 * Crypt::Serpent, libgcrypt's implementation, and the
-		 * standard Java implementation all write 0x1000...
-		 * (determined through reverse-engineering) */
+		// fill the remainder with the binary pattern b10000..., but
+		// reversed
 		v8[sz] = 0x1;
 		for (i = sz + 1; i < 32; i++) v8[i] = 0;
 	}
 
-	// get w_0 through w_131
+	// get w_0 through w_131 (4*33 values)
 	for (i = 0; i < 132; i++)
 		w[i] = ROL(w[i-8] ^ w[i-5] ^ w[i-3] ^ w[i-1] ^ PHI ^ i, 11);
 
