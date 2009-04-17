@@ -1,0 +1,1 @@
+Run `make'.  Each binary will produce one of the bitslice sbox functions, each writing out to a unique file.
