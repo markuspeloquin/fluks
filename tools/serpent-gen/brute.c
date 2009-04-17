@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -313,29 +314,57 @@ print_function(FILE *out, uint8_t sbox, bool inverse,
 	fprintf(out, "}\n");
 }
 
-#ifndef SBOX
-#error "SBOX not defined"
-#endif
-#ifndef CORE
-#error "CORE not defined"
-#endif
-
 int main(int argc, char **argv)
 {
 	struct	op_chain	seq;
 	char			path[80];
-	FILE			*out;
-	uint8_t			sbox = SBOX;
-	bool			inverse = CORE;
 
-	sprintf(path, "sbox_%d%s.cpp", sbox, inverse ? "_inv" : "");
+	long		tlong;
+	char		*end;
+	FILE		*out;
+	uint8_t		sbox;
+	bool		inverse;
+
+	if (argc != 3) {
+		printf(
+		    "usage: %s NUM0 NUM1\n\n"
+		    "NUM0 - S-box number in [0,7]\n"
+		    "NUM1 - 0: non-inverse, 1: inverse\n",
+		    *argv);
+		return 1;
+	}
+
+	errno = 0;
+	tlong = strtol(argv[1], &end, 10);
+	if (errno || *end != '\0') {
+		fprintf(stderr, "%s: not a number: %s\n", *argv, argv[1]);
+		return 1;
+	}
+	if (tlong < 0 || tlong > 7) {
+		fprintf(stderr, "%s: S-box number outside range\n", *argv);
+		return 1;
+	}
+	sbox = tlong;
+
+	tlong = strtol(argv[2], &end, 10);
+	if (errno || *end != '\0') {
+		fprintf(stderr, "%s: not a number: %s\n", *argv, argv[2]);
+		return 1;
+	}
+	if (tlong != 0 && tlong != 1) {
+		fprintf(stderr, "%s: bad inverse type\n", *argv);
+		return 1;
+	}
+	inverse = tlong;
+
+	sprintf(path, "sbox_%hhu%s.cpp", sbox, inverse ? "_inv" : "");
 	if (!(out = fopen(path, "w"))) {
 		fprintf(stderr,
 		    "%s: failed to open file in write mode\n", *argv);
 		return 1;
 	}
 
-	printf("starting sbox=%d inverse=%s\n", sbox,
+	printf("starting sbox=%hhu inverse=%s\n", sbox,
 	    inverse ? "true" : "false");
 
 	brute_sbox(sbox, inverse, &seq);
