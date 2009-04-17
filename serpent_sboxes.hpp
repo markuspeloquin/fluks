@@ -52,11 +52,31 @@ sbox_0_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 {
 }
 
-// S1:    f c 2 7 9 0 5 a 1 b e 8 6 d 3 4
+// S1:    [f c 2 7 9 0 5 a 1 b e 8 6 d 3 4] in 17 gates (one less)
 inline void
 sbox_1(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11,
+	    t12, t13;
+	t0 = x2 ^ x3;
+	t1 = ~x1;
+	t2 = x0 | t1;
+	y2 = t0 ^ t2;
+	t3 = x0 ^ x1;
+	t4 = x2 ^ t3;
+	t5 = x3 & t0;
+	t6 = x1 | y2;
+	t7 = t4 | t5;
+	y0 = t6 ^ t7;
+	t8 = x0 ^ x3;
+	t9 = y2 ^ t3;
+	t10 = x1 | t8;
+	t11 = y0 | t9;
+	y3 = t10 ^ t11;
+	t12 = x2 ^ t11;
+	t13 = x3 & t8;
+	y1 = t12 ^ t13;
 }
 
 // Sinv1: 5 8 2 e f 6 c 3 b 4 7 9 1 d a 0
