@@ -660,7 +660,7 @@ static const u64 rc[R + 1] = {
 
 /* The core Whirlpool transform. */
 static void
-processBuffer(struct whirlpool_ctx *const structpointer)
+processBuffer(struct whirlpool_ctx *structpointer)
 {
     u64 K[8];        /* the round key */
     u64 block[8];    /* mu(buffer) */
@@ -969,7 +969,7 @@ processBuffer(struct whirlpool_ctx *const structpointer)
 
 /* Initialize the hashing state. */
 void
-whirlpool_init(struct whirlpool_ctx * const structpointer)
+whirlpool_init(struct whirlpool_ctx *structpointer)
 {
     int i;
 
@@ -1001,8 +1001,8 @@ whirlpool_init(struct whirlpool_ctx * const structpointer)
 /* Delivers input data to the hashing algorithm.
  * This method maintains the invariant: bufferBits < DIGESTBITS */
 void
-whirlpool_update(struct whirlpool_ctx * const structpointer,
-    const unsigned char * const source, size_t sz)
+whirlpool_update(struct whirlpool_ctx *structpointer,
+    const unsigned char *source, size_t sz)
 {
     /*
                        sourcePos
@@ -1118,8 +1118,8 @@ whirlpool_update(struct whirlpool_ctx * const structpointer,
 /* Get the hash value from the hashing state.
  * This method uses the invariant: bufferBits < DIGESTBITS */
 void
-whirlpool_end(struct whirlpool_ctx * const structpointer,
-    unsigned char * const result)
+whirlpool_end(struct whirlpool_ctx * structpointer,
+    unsigned char result[WHIRLPOOL_SZ_DIGEST])
 {
     int i;
     u8 *buffer      = structpointer->buffer;

@@ -58,10 +58,25 @@ struct whirlpool_ctx {
 
 __BEGIN_DECLS
 
-void	whirlpool_init(struct whirlpool_ctx *const ctx);
-void	whirlpool_update(struct whirlpool_ctx *const ctx,
-	    const uint8_t *const buf, size_t sz);
-void	whirlpool_end(struct whirlpool_ctx *const ctx, uint8_t *const buf);
+/** Initialize/reset a whirlpool context.
+ * \param ctx	The context.
+ */
+void	whirlpool_init(struct whirlpool_ctx *ctx);
+
+/** Add append data to the data being hashed.
+ * \param ctx	The context.
+ * \param buf	The data to be appended (big endian).
+ * \param sz	The size of the data in bytes.
+ */
+void	whirlpool_update(struct whirlpool_ctx *ctx,
+	    const uint8_t *buf, size_t sz);
+
+/** Mark the end of the hashed data and return the digest.
+ * \param[in] ctx	The context.
+ * \param[out] buf	The destination buffer of the digest.
+ */
+void	whirlpool_end(struct whirlpool_ctx *ctx,
+	    uint8_t buf[WHIRLPOOL_SZ_DIGEST]);
 
 __END_DECLS
 

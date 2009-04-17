@@ -25,12 +25,14 @@
 #	define INLINE static inline
 #endif
 
+/** Rotate left. */
 INLINE uint32_t
 ROL(uint32_t x, uint8_t n)
 {
 	return x << n | x >> (32 - n);
 }
 
+/** Rotate right. */
 INLINE uint32_t
 ROR(uint32_t x, uint8_t n)
 {

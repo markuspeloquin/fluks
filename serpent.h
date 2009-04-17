@@ -48,14 +48,33 @@ struct serpent_ctx {
 
 __BEGIN_DECLS
 
+/** Initialize a Serpent context.
+ *
+ * \param ctx	The context structure.
+ * \param key	The key, big endian byte order.
+ * \param sz	The size of the key in bytes.
+ * \retval SERPENT_BAD_KEY_MAT	The key size is invalid.
+ */
 enum serpent_return
 	serpent_init(struct serpent_ctx *ctx,
 	    const uint8_t *key, size_t sz);
 
+/** Encrypt a block of data.
+ *
+ * \param[in] ctx		The context structure.
+ * \param[out] plaintext	The data to encrypt, big endian order.
+ * \param[out] ciphertext	The encrypted data, big endian order.
+ */
 void	serpent_encrypt(const struct serpent_ctx *ctx,
 	    const uint8_t plaintext[SERPENT_BLOCK],
 	    uint8_t ciphertext[SERPENT_BLOCK]);
 
+/** Decrypt a block of data.
+ *
+ * \param[in] ctx		The context structure.
+ * \param[out] ciphertext	The data to decrypt, big endian order.
+ * \param[out] plaintext	The decrypted data, big endian order.
+ */
 void	serpent_decrypt(const struct serpent_ctx *ctx,
 	    const uint8_t ciphertext[SERPENT_BLOCK],
 	    uint8_t plaintext[SERPENT_BLOCK]);
