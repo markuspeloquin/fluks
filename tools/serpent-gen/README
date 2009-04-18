@@ -1,1 +1,2 @@
-Run `make', run `./brute' for usage.
+Run `make', run `./brute' for usage. Upon completion, the bit-slice sbox code
+is written out to a unique file (e.g. sbox_3_inv.cpp).
