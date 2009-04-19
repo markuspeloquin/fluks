@@ -73,7 +73,7 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 	uint32_t	v[8 + 4 * 33];
 	uint32_t	*w = v + 8;
 	uint8_t		*v8 = reinterpret_cast<uint8_t *>(w);
-	uint8_t		i; // [0,132]
+	int16_t		i; // [-32,132]
 
 	if(sz != 16 && sz != 24 && sz != 32)
 		return SERPENT_BAD_KEY_MAT;
