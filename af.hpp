@@ -39,7 +39,7 @@ void	af_split(const uint8_t *in, size_t sz, size_t stripes,
 
 /** Anti-forensic merge.
  *
- * The inverse of af_merge().
+ * The inverse of af_split().
  *
  * \param[in] in	The data to reduce, assumed to be of size
  *	<code>(sz * stripes)</code> bytes.

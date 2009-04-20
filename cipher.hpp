@@ -65,6 +65,16 @@ struct Cipher_traits {
 	 */
 	static const std::vector<enum cipher_type> &types();
 
+	/** Get all types that fluks supports
+	 * \param out Destination of supported types
+	 */
+	template <typename Out>
+	static void types(Out out)
+	{
+		const std::vector<enum cipher_type> &t = types();
+		std::copy(t.begin(), t.end(), out);
+	}
+
 	std::string name; /**< The cipher's name */
 	std::vector<uint16_t> key_sizes; /**< The possible key sizes */
 	uint16_t block_size; /**< The block size */
