@@ -37,6 +37,8 @@ inline void	Assert(bool cond, const std::string &msg)
 #endif
 }
 
+
+/** Specified crypto/hash spec was bad */
 struct Bad_spec : std::exception {
 	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ")
 	{	_msg += msg; }
@@ -70,6 +72,7 @@ struct Disk_error : std::exception {
 };
 
 
+/** Device mapper error */
 struct Dm_error : std::exception {
 	Dm_error(const std::string &msg) : _msg("Device mapper error: ")
 	{	_msg += msg; }
@@ -99,6 +102,7 @@ struct No_private_key : std::exception {
 };
 
 
+/** Thrown if something is probably a bad idea.  There is no work-around. */
 struct Safety : std::exception {
 	Safety(const std::string &msg) : _msg("Safety error: ")
 	{

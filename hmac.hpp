@@ -31,6 +31,7 @@ namespace fluks {
 
 /** Computes hash function digests using HMAC */
 struct Hmac_function {
+protected:
 	/** Init the hash properties
 	 * \param type The hash type
 	 */
@@ -42,6 +43,7 @@ struct Hmac_function {
 	 */
 	Hmac_function(const Hash_traits *traits) : _traits(traits) {}
 
+public:
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash spec.
 	 *
