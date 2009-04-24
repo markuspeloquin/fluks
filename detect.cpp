@@ -56,7 +56,7 @@ Crypto_detect::Crypto_detect()
 {
 	std::ifstream file_in("/proc/crypto");
 	// can't throw an exception
-	if (!file_in) return;
+	if (file_in) return;
 
 	boost::regex expr("(.+?)\\s*:\\s(.+)");
 
@@ -78,12 +78,10 @@ Crypto_detect::Crypto_detect()
 			type = "";
 		} else {
 			boost::smatch matches;
-			if (!boost::regex_match(line, matches, expr)) {
+			if (!boost::regex_match(line, matches, expr))
 				std::cerr << "/proc/crypto match failed: "
 				    << line << '\n';
-				continue;
-			}
-			if (matches[1] == "name") name = matches[2];
+			else if (matches[1] == "name") name = matches[2];
 			else if (matches[1] == "type") type = matches[2];
 		}
 	}
