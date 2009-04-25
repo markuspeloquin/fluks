@@ -713,10 +713,10 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	le_to_host64(temp, ctx->buf, ctx->sz);
 	i = ctx->sz;
 #if BYTE_ORDER == BIG_ENDIAN
-	temp8[i++ ^ 7] = ctx->version == 1 ? 1 : 0x80;
+	temp8[i++ ^ 7] = ctx->version == 1 ? 0x01 : 0x80;
 	while (i & 7) temp8[i++ ^ 7] = 0;
 #else
-	temp8[i++] = ctx->version == 1 ? 1 : 0x80;
+	temp8[i++] = ctx->version == 1 ? 0x01 : 0x80;
 	while (i & 7) temp8[i++] = 0;
 #endif
 

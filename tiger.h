@@ -43,7 +43,9 @@ __BEGIN_DECLS
 
 /** Initializes the context structure
  *
- * This function should be called before each hash computation.
+ * This function should be called before each hash computation.  The version
+ * number only is with regard to the padding style.  The linux kernel uses
+ * version 1 only.
  *
  * \param ctx		The hash context.
  * \param version	The version of Tiger (1 or 2).

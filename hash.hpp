@@ -184,11 +184,15 @@ class Hash_tiger : public Hash_function {
 public:
 	/** Create a Tiger hash object
 	 *
-	 * \param type the type of the Tiger hash, must be one of
-	 *	of { HT_TIGER128, TIGER160, TIGER_SZ_DIGEST }.
+	 * \param type		The type of the Tiger hash, must be one of
+	 *	of { HT_TIGER128, HT_TIGER160, HT_TIGER192 }.
+	 * \param version	The Tiger padding version to use.  Note that
+	 *	the Linux kernel uses version 1, so that's probably more
+	 *	appropriate.
 	 */
-	Hash_tiger(enum hash_type type) :
+	Hash_tiger(enum hash_type type, uint8_t version=1) :
 		Hash_function(type),
+		_version(version),
 		_valid(false)
 	{
 		Assert(
@@ -201,7 +205,7 @@ public:
 
 	void init() throw ()
 	{
-		tiger_init(&_ctx);
+		tiger_init(&_ctx, _version);
 		_valid = true;
 	}
 	void add(const uint8_t *buf, size_t sz) throw ()
@@ -224,6 +228,7 @@ public:
 
 private:
 	tiger_ctx	_ctx;
+	uint8_t		_version;
 	bool		_valid;
 };
 
