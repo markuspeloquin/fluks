@@ -450,15 +450,21 @@ kappa_km(uint32_t km[4], const uint32_t kappa[8])
 	km[3] = kappa[1];
 }
 
-/* encrypt in place */
-static inline void
-encrypt(const struct cast6_ctx *ctx, uint32_t block[4])
+void
+cast6_encrypt(const struct cast6_ctx *ctx,
+    const uint8_t plaintext[16], uint8_t ciphertext[16])
 {
+	uint32_t block[4];
 	register uint32_t b0, b1, b2, b3;
+
+	/* copy to a 32-bit block, fixing any potential alignment or endian
+	 * issues */
+	be_to_host32(block, plaintext, 16);
 	b0 = block[0];
 	b1 = block[1];
 	b2 = block[2];
 	b3 = block[3];
+
 	beta_q(b0,b1,b2,b3,	ctx->Kr[ 0], ctx->Km[ 0]);
 	beta_q(b0,b1,b2,b3,	ctx->Kr[ 1], ctx->Km[ 1]);
 	beta_q(b0,b1,b2,b3,	ctx->Kr[ 2], ctx->Km[ 2]);
@@ -471,21 +477,29 @@ encrypt(const struct cast6_ctx *ctx, uint32_t block[4])
 	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 9], ctx->Km[ 9]);
 	beta_qbar(b0,b1,b2,b3,	ctx->Kr[10], ctx->Km[10]);
 	beta_qbar(b0,b1,b2,b3,	ctx->Kr[11], ctx->Km[11]);
+
 	block[0] = b0;
 	block[1] = b1;
 	block[2] = b2;
 	block[3] = b3;
+	host_to_be32(ciphertext, block, 16);
 }
 
-/* decrypt in place */
-static inline void
-decrypt(const struct cast6_ctx *ctx, uint32_t block[4])
+void
+cast6_decrypt(const struct cast6_ctx *ctx,
+    const uint8_t ciphertext[16], uint8_t plaintext[16])
 {
+	uint32_t block[4];
 	register uint32_t b0, b1, b2, b3;
+
+	/* copy to a 32-bit block, fixing any potential alignment or endian
+	 * issues */
+	be_to_host32(block, ciphertext, 16);
 	b0 = block[0];
 	b1 = block[1];
 	b2 = block[2];
 	b3 = block[3];
+
 	beta_q(b0,b1,b2,b3,	ctx->Kr[11], ctx->Km[11]);
 	beta_q(b0,b1,b2,b3,	ctx->Kr[10], ctx->Km[10]);
 	beta_q(b0,b1,b2,b3,	ctx->Kr[ 9], ctx->Km[ 9]);
@@ -498,33 +512,11 @@ decrypt(const struct cast6_ctx *ctx, uint32_t block[4])
 	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 2], ctx->Km[ 2]);
 	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 1], ctx->Km[ 1]);
 	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 0], ctx->Km[ 0]);
+
 	block[0] = b0;
 	block[1] = b1;
 	block[2] = b2;
 	block[3] = b3;
-}
-
-void
-cast6_encrypt(const struct cast6_ctx *ctx,
-    const uint8_t plaintext[16], uint8_t ciphertext[16])
-{
-	/* copy to a 32-bit block, fixing any potential alignment or endian
-	 * issues */
-	uint32_t block[4];
-	be_to_host32(block, plaintext, 16);
-	encrypt(ctx, block);
-	host_to_be32(ciphertext, block, 16);
-}
-
-void
-cast6_decrypt(const struct cast6_ctx *ctx,
-    const uint8_t ciphertext[16], uint8_t plaintext[16])
-{
-	/* copy to a 32-bit block, fixing any potential alignment or endian
-	 * issues */
-	uint32_t block[4];
-	be_to_host32(block, ciphertext, 16);
-	decrypt(ctx, block);
 	host_to_be32(plaintext, block, 16);
 }
 

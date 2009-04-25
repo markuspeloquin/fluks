@@ -58,6 +58,8 @@ bool	cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz);
 
 /** Encrypt a block of data
  *
+ * It is fine if the two buffers are the same.
+ *
  * \param[in] ctx		Context
  * \param[in] plaintext		Data to encrypt
  * \param[out] ciphertext	Encrypted data
@@ -67,6 +69,8 @@ void	cast6_encrypt(const struct cast6_ctx *ctx,
 	    uint8_t ciphertext[CAST6_BLOCK]);
 
 /** Decrypt a block of data
+ *
+ * It is fine if the two buffers are the same.
  *
  * \param[in] ctx		Context
  * \param[in] ciphertext	Data to decrypt

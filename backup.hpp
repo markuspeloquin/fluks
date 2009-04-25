@@ -23,6 +23,12 @@
 
 namespace fluks {
 
+/** Back up the header and key material.
+ * \param device	The hard disk's device
+ * \param backup_path	A path to the output file
+ * \throw No_header	LUKS header couldn't be found
+ * \throw Unsupported_version	The version in the LUKS header is unrecognized
+ */
 void	make_backup(std::sys_fstream &device, const std::string &backup_path)
 	    throw (boost::system::system_error, Disk_error, No_header,
 	    Unsupported_version);
