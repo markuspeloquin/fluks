@@ -123,20 +123,12 @@ fluks::Hash_function::create(enum hash_type type)
 	case HT_SHA512:
 		return std::tr1::shared_ptr<Hash_function>(new Hash_sha512);
 	case HT_TIGER128:
-		return std::tr1::shared_ptr<Hash_function>(
-		    new Hash_tiger(type));
 	case HT_TIGER160:
-		return std::tr1::shared_ptr<Hash_function>(
-		    new Hash_tiger(type));
 	case HT_TIGER192:
 		return std::tr1::shared_ptr<Hash_function>(
 		    new Hash_tiger(type));
 	case HT_WHIRLPOOL256:
-		return std::tr1::shared_ptr<Hash_function>(
-		    new Hash_whirlpool(type));
 	case HT_WHIRLPOOL384:
-		return std::tr1::shared_ptr<Hash_function>(
-		    new Hash_whirlpool(type));
 	case HT_WHIRLPOOL512:
 		return std::tr1::shared_ptr<Hash_function>(
 		    new Hash_whirlpool(type));

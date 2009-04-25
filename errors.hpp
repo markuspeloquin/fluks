@@ -30,12 +30,14 @@ struct Assertion : std::exception {
 	std::string _msg;
 };
 
+#ifndef NDEBUG
 inline void	Assert(bool cond, const std::string &msg)
 {
-#ifndef NDEBUG
 	if (!cond) throw Assertion(msg);
-#endif
 }
+#else
+#define Assert(a,b) do{}while(0)
+#endif
 
 
 /** Specified crypto/hash spec was bad */

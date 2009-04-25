@@ -25,7 +25,7 @@
 #include "crypto_ops.h"
 #include "endian.h"
 
-const uint32_t S1[0x100] = {
+const uint32_t sbox1[0x100] = {
 	0x30fb40d4, 0x9fa0ff0b, 0x6beccd2f, 0x3f258c7a,
 	0x1e213f2f, 0x9c004dd3, 0x6003e540, 0xcf9fc949,
 	0xbfd4af27, 0x88bbbdb5, 0xe2034090, 0x98d09675,
@@ -92,7 +92,7 @@ const uint32_t S1[0x100] = {
 	0x427b169c, 0x5ac9f049, 0xdd8f0f00, 0x5c8165bf
 };
 
-const uint32_t S2[0x100] = {
+const uint32_t sbox2[0x100] = {
 	0x1f201094, 0xef0ba75b, 0x69e3cf7e, 0x393f4380,
 	0xfe61cf7a, 0xeec5207a, 0x55889c94, 0x72fc0651,
 	0xada7ef79, 0x4e1d7235, 0xd55a63ce, 0xde0436ba,
@@ -159,7 +159,7 @@ const uint32_t S2[0x100] = {
 	0x7160a539, 0x73bfbe70, 0x83877605, 0x4523ecf1
 };
 
-const uint32_t S3[0x100] = {
+const uint32_t sbox3[0x100] = {
 	0x8defc240, 0x25fa5d9f, 0xeb903dbf, 0xe810c907,
 	0x47607fff, 0x369fe44b, 0x8c1fc644, 0xaececa90,
 	0xbeb1f9bf, 0xeefbcaea, 0xe8cf1950, 0x51df07ae,
@@ -226,7 +226,7 @@ const uint32_t S3[0x100] = {
 	0xdfef4636, 0xa133c501, 0xe9d3531c, 0xee353783
 };
 
-const uint32_t S4[0x100] = {
+const uint32_t sbox4[0x100] = {
 	0x9db30420, 0x1fb6e9de, 0xa7be7bef, 0xd273a298,
 	0x4a4f7bdb, 0x64ad8c57, 0x85510443, 0xfa020ed1,
 	0x7e287aff, 0xe60fb663, 0x095f35a1, 0x79ebf120,
@@ -355,114 +355,153 @@ const uint8_t Tr[4][8] = {
 };
 
 static inline uint32_t
-f1(uint32_t D, uint8_t Kri, uint32_t Kmi)
+f1(uint32_t d, uint8_t kr, uint32_t km)
 {
-	register uint32_t I = ROL(Kmi + D, Kri);
+	register uint32_t i = ROL(km + d, kr);
 	return ((
-	    S1[I >> 24] ^
-	    S2[I >> 16 & 0xff]) -
-	    S3[I >> 8 & 0xff]) +
-	    S4[I & 0xff];
+	    sbox1[         (i >> 24)]  ^
+	    sbox2[(uint8_t)(i >> 16)]) -
+	    sbox3[(uint8_t)(i >> 8 )]) +
+	    sbox4[(uint8_t)(i      )];
 }
 
 static inline uint32_t
-f2(uint32_t D, uint8_t Kri, uint32_t Kmi)
+f2(uint32_t d, uint8_t kr, uint32_t km)
 {
-	register uint32_t I = ROL(Kmi ^ D, Kri);
+	register uint32_t i = ROL(km ^ d, kr);
 	return ((
-	    S1[I >> 24] -
-	    S2[I >> 16 & 0xff]) +
-	    S3[I >> 8 & 0xff]) ^
-	    S4[I & 0xff];
+	    sbox1[         (i >> 24)]  -
+	    sbox2[(uint8_t)(i >> 16)]) +
+	    sbox3[(uint8_t)(i >> 8 )]) ^
+	    sbox4[(uint8_t)(i      )];
 }
 
 static inline uint32_t
-f3(uint32_t D, uint8_t Kri, uint32_t Kmi)
+f3(uint32_t d, uint8_t kr, uint32_t km)
 {
-	register uint32_t I = ROL(Kmi - D, Kri);
+	register uint32_t i = ROL(km - d, kr);
 	return ((
-	    S1[I >> 24] +
-	    S2[I >> 16 & 0xff]) ^
-	    S3[I >> 8 & 0xff]) -
-	    S4[I & 0xff];
+	    sbox1[         (i >> 24)]  +
+	    sbox2[(uint8_t)(i >> 16)]) ^
+	    sbox3[(uint8_t)(i >> 8 )]) -
+	    sbox4[(uint8_t)(i      )];
 }
 
-/* BETA <- Qi(BETA) 'forward quad round' */
-static inline void
-beta_q(uint32_t B[4], const uint8_t *Kri, const uint32_t *Kmi)
-{
-	B[2] ^= f1(B[3], Kri[0], Kmi[0]);
-	B[1] ^= f2(B[2], Kri[1], Kmi[1]);
-	B[0] ^= f3(B[1], Kri[2], Kmi[2]);
-	B[3] ^= f1(B[0], Kri[3], Kmi[3]);
-}
+/* BETA <- Qi(BETA) 'forward quad round'; if I end up C++ifying this, it
+ * will be
+ *
+ *inline void
+ *beta_q(uint32_t &b0, uint32_t &b1, uint32_t &b2, uint32_t &b3,
+ *    const uint8_t kr[4], const uint32_t km[4]) */
+#define beta_q(b0,b1,b2,b3, kr, km)				do \
+{								\
+	b2 ^= f1(b3, kr[0], km[0]);				\
+	b1 ^= f2(b2, kr[1], km[1]);				\
+	b0 ^= f3(b1, kr[2], km[2]);				\
+	b3 ^= f1(b0, kr[3], km[3]);				\
+}								while(0)
 
-/* BETA <- QBARi(BETA) 'reverse quad round' */
-static inline void
-beta_qbar(uint32_t B[4], const uint8_t *Kri, const uint32_t *Kmi)
-{
-	B[3] ^= f1(B[0], Kri[3], Kmi[3]);
-	B[0] ^= f3(B[1], Kri[2], Kmi[2]);
-	B[1] ^= f2(B[2], Kri[1], Kmi[1]);
-	B[2] ^= f1(B[3], Kri[0], Kmi[0]);
-}
+/* BETA <- QBARi(BETA) 'reverse quad round'; if I end up C++ifying this, it
+ * will be
+ *
+ *beta_qbar(uint32_t &b0, uint32_t &b1, uint32_t &b2, uint32_t &b3,
+ *    const uint8_t kr[4], const uint32_t km[4]) */
+#define beta_qbar(b0,b1,b2,b3, kr, km)			do \
+{								\
+	b3 ^= f1(b0, kr[3], km[3]);				\
+	b0 ^= f3(b1, kr[2], km[2]);				\
+	b1 ^= f2(b2, kr[1], km[1]);				\
+	b2 ^= f1(b3, kr[0], km[0]);				\
+}								while(0)
 
 /* KAPPA <- Wi(KAPPA) 'forward octave' */
 static inline void
-kappa_w(uint32_t K[8], uint8_t i)
+kappa_w(uint32_t kappa[8], uint8_t i)
 {
 	assert(i < 24);
 	register uint8_t ir = i & 0x3;
-	K[6] ^= f1(K[7], Tr[ir][0], Tm[i][0]);
-	K[5] ^= f2(K[6], Tr[ir][1], Tm[i][1]);
-	K[4] ^= f3(K[5], Tr[ir][2], Tm[i][2]);
-	K[3] ^= f1(K[4], Tr[ir][3], Tm[i][3]);
-	K[2] ^= f2(K[3], Tr[ir][4], Tm[i][4]);
-	K[1] ^= f3(K[2], Tr[ir][5], Tm[i][5]);
-	K[0] ^= f1(K[1], Tr[ir][6], Tm[i][6]);
-	K[7] ^= f2(K[0], Tr[ir][7], Tm[i][7]);
+	kappa[6] ^= f1(kappa[7], Tr[ir][0], Tm[i][0]);
+	kappa[5] ^= f2(kappa[6], Tr[ir][1], Tm[i][1]);
+	kappa[4] ^= f3(kappa[5], Tr[ir][2], Tm[i][2]);
+	kappa[3] ^= f1(kappa[4], Tr[ir][3], Tm[i][3]);
+	kappa[2] ^= f2(kappa[3], Tr[ir][4], Tm[i][4]);
+	kappa[1] ^= f3(kappa[2], Tr[ir][5], Tm[i][5]);
+	kappa[0] ^= f1(kappa[1], Tr[ir][6], Tm[i][6]);
+	kappa[7] ^= f2(kappa[0], Tr[ir][7], Tm[i][7]);
 }
 
-/* Kr_(i) <- KAPPA */
+/* Kr_(i) <- KAPPA; (k)ey (r)otation */
 static inline void
-kappa_kr(uint8_t *Kri, const uint32_t K[8])
+kappa_kr(uint8_t kr[4], const uint32_t kappa[8])
 {
-	Kri[0] = K[0] & 0x1f;
-	Kri[1] = K[2] & 0x1f;
-	Kri[2] = K[4] & 0x1f;
-	Kri[3] = K[6] & 0x1f;
+	kr[0] = kappa[0] & 0x1f;
+	kr[1] = kappa[2] & 0x1f;
+	kr[2] = kappa[4] & 0x1f;
+	kr[3] = kappa[6] & 0x1f;
 }
 
-/* Km_(i) <- KAPPA */
+/* Km_(i) <- KAPPA; (k)ey (m)aterial */
 static inline void
-kappa_km(uint32_t *Kmi, const uint32_t K[8])
+kappa_km(uint32_t km[4], const uint32_t kappa[8])
 {
-	Kmi[0] = K[7];
-	Kmi[1] = K[5];
-	Kmi[2] = K[3];
-	Kmi[3] = K[1];
+	km[0] = kappa[7];
+	km[1] = kappa[5];
+	km[2] = kappa[3];
+	km[3] = kappa[1];
 }
 
 /* encrypt in place */
 static inline void
 encrypt(const struct cast6_ctx *ctx, uint32_t block[4])
 {
-	uint8_t i = 0;
-	for (; i < 6; i++)
-		beta_q(block, ctx->Kr[i], ctx->Km[i]);
-	for (; i < 12; i++)
-		beta_qbar(block, ctx->Kr[i], ctx->Km[i]);
+	register uint32_t b0, b1, b2, b3;
+	b0 = block[0];
+	b1 = block[1];
+	b2 = block[2];
+	b3 = block[3];
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 0], ctx->Km[ 0]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 1], ctx->Km[ 1]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 2], ctx->Km[ 2]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 3], ctx->Km[ 3]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 4], ctx->Km[ 4]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 5], ctx->Km[ 5]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 6], ctx->Km[ 6]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 7], ctx->Km[ 7]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 8], ctx->Km[ 8]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 9], ctx->Km[ 9]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[10], ctx->Km[10]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[11], ctx->Km[11]);
+	block[0] = b0;
+	block[1] = b1;
+	block[2] = b2;
+	block[3] = b3;
 }
 
 /* decrypt in place */
 static inline void
 decrypt(const struct cast6_ctx *ctx, uint32_t block[4])
 {
-	uint8_t i = 0;
-	for (; i < 6; i++)
-		beta_q(block, ctx->Kr[11-i], ctx->Km[11-i]);
-	for (; i < 12; i++)
-		beta_qbar(block, ctx->Kr[11-i], ctx->Km[11-i]);
+	register uint32_t b0, b1, b2, b3;
+	b0 = block[0];
+	b1 = block[1];
+	b2 = block[2];
+	b3 = block[3];
+	beta_q(b0,b1,b2,b3,	ctx->Kr[11], ctx->Km[11]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[10], ctx->Km[10]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 9], ctx->Km[ 9]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 8], ctx->Km[ 8]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 7], ctx->Km[ 7]);
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 6], ctx->Km[ 6]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 5], ctx->Km[ 5]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 4], ctx->Km[ 4]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 3], ctx->Km[ 3]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 2], ctx->Km[ 2]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 1], ctx->Km[ 1]);
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 0], ctx->Km[ 0]);
+	block[0] = b0;
+	block[1] = b1;
+	block[2] = b2;
+	block[3] = b3;
 }
 
 void
@@ -522,32 +561,32 @@ gen_tables()
 	printf("#include <stdint.h>\n\n"
 	    "const uint32_t Tm[%hhu][%hhu] = {", T_ROWS, T_COLS);
 	for (uint8_t i = 0; i < T_ROWS; i++) {
-		printf("%s{",
+		printf("%s\n    {",
 		    !i ?
-			"\n    " :
-			",\n    ");
+			"" : /* first line */
+			","); /* else */
 		for (uint8_t j = 0; j < T_COLS; j++)
 			printf("%s0x%08x",
 			    !j ?
-				"\t" :
+				"\t" : /* first value */
 			    j == 4 ?
-				",\n\t" :
-				", ",
+				",\n\t" : /* fifth value */
+				", ", /* else */
 			    Tm[i][j]);
 		printf("  }");
 	}
 
 	printf("\n};\n\nconst uint8_t Tr[%hhu][%hhu] = {", T_ROWS, T_COLS);
 	for (uint8_t i = 0; i < T_ROWS; i++) {
-		printf("%s{",
+		printf("%s\n    {",
 		    !i ?
-			"\n    " :
-			",\n    ");
+			"," : /* first line */
+			""); /* else */
 		for (uint8_t j = 0; j < T_COLS; j++)
 			printf("%s0x%02hhx",
 			    !j ?
-				"\t" :
-				", ",
+				"\t" : /* first value */
+				", ", /* else */
 			    Tr[i][j]);
 		printf("  }");
 	}

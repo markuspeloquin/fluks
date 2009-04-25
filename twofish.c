@@ -37,8 +37,6 @@
 #include "endian.h"
 #include "twofish.h"
 #include "twofish_tables.h"
-#define uint32_t uint32_t
-#define uint8_t uint8_t
 #define RS_MOD 0x14D
 
 const uint32_t RHO = 0x01010101UL;
