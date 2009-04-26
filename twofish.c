@@ -476,14 +476,18 @@ int main()
 }
 #endif /* TF_TESTING */
 
-void
+bool
 twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz)
 {
 	uint32_t *S;
 	uint8_t k;
+
+	if (sz != 16 && sz != 24 && sz != 32) return false;
+
 	keySched(keydata, sz * 8, &S, ctx->K, &k);
 	fullKey(S, k, ctx->QF);
 	free(S);
+	return true;
 }
 
 void

@@ -15,6 +15,7 @@
 #ifndef FLUKS_CIPHER_HPP
 #define FLUKS_CIPHER_HPP
 
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -154,6 +155,12 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
+		// Rijndael keys are set up differently depending if they're
+		// being used for encryption or decryption; the two choices
+		// are (1) store two AES contexts or (2) store one context
+		// and a copy of the key; (1) uses more memory than (2), and
+		// (1) uses less CPU than (2) if the Cipher_aes object
+		// doesn't get repurposed more than once
 		_key_data.reset(new uint8_t[sz]);
 		std::copy(key, key + sz, _key_data.get());
 		_sz = sz;
@@ -164,10 +171,6 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for AES
-			throw Crypt_error("for AES, input and output buffers "
-			    "should be different");
 		if (_dir != DIR_ENCRYPT) {
 			if (!AES_set_encrypt_key(_key_data.get(), _sz * 8,
 			    &_key))
@@ -180,10 +183,6 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for AES
-			throw Crypt_error("for AES, input and output buffers "
-			    "should be different");
 		if (_dir != DIR_DECRYPT) {
 			if (!AES_set_decrypt_key(_key_data.get(), _sz * 8,
 			    &_key))
@@ -207,8 +206,15 @@ public:
 	Cipher_blowfish() : Cipher(CT_BLOWFISH), _init(false) {}
 	~Cipher_blowfish() throw () {}
 
-	void init(const uint8_t *key, size_t sz) throw ()
+	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
+		// BF_set_key() doesn't check its input size (or silently
+		// fixes it)
+		const std::vector<uint16_t> &sizes =
+		    Cipher_traits::traits(CT_BLOWFISH)->key_sizes;
+		if (std::find(sizes.begin(), sizes.end(), sz) == sizes.end())
+			throw Crypt_error("bad key size");
+
 		_init = true;
 		BF_set_key(&_key, sz, key);
 	}
@@ -216,20 +222,12 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		if (in == out)
-			// TODO see if this is necessary for blowfish
-			throw Crypt_error("for Blowfish, input and output "
-			    "buffers should be different");
 		BF_ecb_encrypt(in, out, &_key, BF_ENCRYPT);
 	}
 	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for blowfish
-			throw Crypt_error("for Blowfish, input and output "
-			    "buffers should be different");
 		BF_ecb_encrypt(in, out, &_key, BF_DECRYPT);
 	}
 
@@ -247,9 +245,7 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
-		_init = false;
-		int val;
-		if ((val=Camellia_set_key(key, sz*8, &_ctx)) < 0)
+		if (Camellia_set_key(key, sz*8, &_ctx) < 0)
 			throw Crypt_error("bad key size");
 		_init = true;
 	}
@@ -257,20 +253,12 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		if (in == out)
-			// TODO see if this is necessary for camellia
-			throw Crypt_error("for Camellia, input and output "
-			    "buffers should be different");
 		Camellia_encrypt(in, out, &_ctx);
 	}
 	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for camellia
-			throw Crypt_error("for Camellia, input and output "
-			    "buffers should be different");
 		Camellia_decrypt(in, out, &_ctx);
 	}
 
@@ -288,6 +276,13 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw ()
 	{
+		// CAST_set_key() doesn't check its input size (or silently
+		// fixes it)
+		const std::vector<uint16_t> &sizes =
+		    Cipher_traits::traits(CT_CAST5)->key_sizes;
+		if (std::find(sizes.begin(), sizes.end(), sz) == sizes.end())
+			throw Crypt_error("bad key size");
+
 		_init = true;
 		CAST_set_key(&_key, sz, key);
 	}
@@ -295,20 +290,12 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		if (in == out)
-			// TODO see if this is necessary for cast5
-			throw Crypt_error("for CAST5, input and output "
-			    "buffers should be different");
 		CAST_ecb_encrypt(in, out, &_key, CAST_ENCRYPT);
 	}
 	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		if (in == out)
-			// TODO see if this is necessary for cast5
-			throw Crypt_error("for CAST5, input and output "
-			    "buffers should be different");
 		CAST_ecb_encrypt(in, out, &_key, CAST_DECRYPT);
 	}
 
@@ -326,7 +313,6 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
-		_init = false;
 		if (!cast6_init(&_ctx, key, sz))
 			throw Crypt_error("bad key size");
 		_init = true;
@@ -335,14 +321,12 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		// it's fine if in==out
 		cast6_encrypt(&_ctx, in, out);
 	}
 	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		// it's fine if in==out
 		cast6_decrypt(&_ctx, in, out);
 	}
 
@@ -361,7 +345,6 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
-		_init = false;
 		if (serpent_init(&_ctx, key, sz) == SERPENT_BAD_KEY_MAT)
 			throw Crypt_error("bad key size");
 		_init = true;
@@ -370,14 +353,12 @@ public:
 	{
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		// it's fine if in==out
 		serpent_encrypt(&_ctx, in, out);
 	}
 	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		// it's fine if in==out
 		serpent_decrypt(&_ctx, in, out);
 	}
 
@@ -393,23 +374,22 @@ public:
 	Cipher_twofish() : Cipher(CT_TWOFISH), _init(false) {}
 	~Cipher_twofish() throw () {}
 
-	void init(const uint8_t *key, size_t sz) throw ()
+	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
+		if (!twofish_init(&_ctx, key, sz))
+			throw Crypt_error("bad key size");
 		_init = true;
-		twofish_init(&_ctx, key, sz);
 	}
 	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		// it's fine if in==out
 		twofish_encrypt(&_ctx, in, out);
 	}
 	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		// it's fine if in==out
 		twofish_decrypt(&_ctx, in, out);
 	}
 

@@ -21,6 +21,7 @@
 #	include <cstddef>
 #	include <tr1/cstdint>
 #else
+#	include <stdbool.h>
 #	include <stddef.h>
 #	include <stdint.h>
 #endif
@@ -39,8 +40,9 @@ __BEGIN_DECLS
  * \param key		Twofish %key structure
  * \param keydata	The %key for en/decryption
  * \param sz		The size in bytes of the %key
+ * \retval true iff key size is fine
  */
-void	twofish_init(struct twofish_ctx *key, const uint8_t *keydata,
+bool	twofish_init(struct twofish_ctx *key, const uint8_t *keydata,
 	    size_t sz);
 
 /** Encrypt a block of plaintext
