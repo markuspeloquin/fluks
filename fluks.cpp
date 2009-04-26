@@ -306,10 +306,10 @@ main(int argc, char **argv)
 	}
 
 	bool pretend = !var_map["pretend"].empty();
+	bool info = !var_map["info"].empty();
 
-	// read device path and open device if needed
-	std::string device_path;
-	std::tr1::shared_ptr<std::sys_fstream> device;
+	// both --info and certain commands require a device
+	bool need_device = info;
 	switch (command) {
 	case CREATE:
 	case DUMP:
@@ -317,6 +317,14 @@ main(int argc, char **argv)
 	case ADD_PASS:
 	case REVOKE_PASS:
 	case UUID:
+		need_device = true;
+	default:;
+	}
+
+	// read device path and open device if needed
+	std::string device_path;
+	std::tr1::shared_ptr<std::sys_fstream> device;
+	if (need_device) {
 		if (var_map["device"].empty()) {
 			std::cerr << "must provide a device\n";
 			return 1;
@@ -330,8 +338,6 @@ main(int argc, char **argv)
 			device.reset(
 			    new std::sys_fstream(device_path.c_str(), mode));
 		}
-		break;
-	default:;
 	}
 
 	// check urandom if needed, seed the random number generator if it
@@ -345,7 +351,6 @@ main(int argc, char **argv)
 			time_t now = time(0);
 			RAND_seed(&now, sizeof(now));
 		}
-		break;
 	default:;
 	}
 
@@ -357,7 +362,6 @@ main(int argc, char **argv)
 	case REVOKE_PASS:
 	case UUID:
 		header.reset(new Luks_header(device));
-		break;
 	default:;
 	};
 
@@ -513,7 +517,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	if (!var_map["info"].empty()) {
+	if (info) {
 		if (header)
 			header->info();
 		else
