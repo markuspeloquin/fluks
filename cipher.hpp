@@ -23,6 +23,7 @@
 
 #include <openssl/aes.h>
 #include <openssl/blowfish.h>
+#include <openssl/camellia.h>
 #include <openssl/cast.h>
 
 #include "cast6.h"
@@ -144,7 +145,8 @@ private:
 	const Cipher_traits *_traits;
 };
 
-/** AES encryption, using OpenSSL */
+/** The Rijndael cipher.  Published in 1998.  AES winner, with CRYPTREC,
+ * NESSIE, NSA certifications.  OpenSSL implementation. */
 class Cipher_aes : public Cipher {
 public:
 	Cipher_aes() : Cipher(CT_AES), _init(false) {}
@@ -199,6 +201,7 @@ private:
 	bool			_init;
 };
 
+/** The Blowfish cipher.  Published in 1993.  OpenSSL implementation. */
 class Cipher_blowfish : public Cipher {
 public:
 	Cipher_blowfish() : Cipher(CT_BLOWFISH), _init(false) {}
@@ -235,6 +238,49 @@ private:
 	bool			_init;
 };
 
+/** The Camellia cipher.  Publish in 2000.  CRYPTREC, NESSIE certification.
+ * OpenSSL implementation. */
+class Cipher_camellia : public Cipher {
+public:
+	Cipher_camellia() : Cipher(CT_CAMELLIA), _init(false) {}
+	~Cipher_camellia() throw () {}
+
+	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
+	{
+		_init = false;
+		int val;
+		if ((val=Camellia_set_key(key, sz*8, &_ctx)) < 0)
+			throw Crypt_error("bad key size");
+		_init = true;
+	}
+	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no encryption key set");
+		if (in == out)
+			// TODO see if this is necessary for camellia
+			throw Crypt_error("for Camellia, input and output "
+			    "buffers should be different");
+		Camellia_encrypt(in, out, &_ctx);
+	}
+	void decrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
+	{
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		if (in == out)
+			// TODO see if this is necessary for camellia
+			throw Crypt_error("for Camellia, input and output "
+			    "buffers should be different");
+		Camellia_decrypt(in, out, &_ctx);
+	}
+
+private:
+	CAMELLIA_KEY		_ctx;
+	bool			_init;
+};
+
+/** The CAST-128 cipher.  Published in 1996 and in RFC 2144.  OpenSSL
+ * implementation. */
 class Cipher_cast5 : public Cipher {
 public:
 	Cipher_cast5() : Cipher(CT_CAST5), _init(false) {}
@@ -271,6 +317,8 @@ private:
 	bool			_init;
 };
 
+/** The CAST-256 cipher.  Published in 1998 and in RFC 2612.  Submitted to
+ * AES but not among the finalists.  Independent implementation. */
 class Cipher_cast6 : public Cipher {
 public:
 	Cipher_cast6() : Cipher(CT_CAST6), _init(false) {}
@@ -278,9 +326,10 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
-		_init = true;
+		_init = false;
 		if (!cast6_init(&_ctx, key, sz))
 			throw Crypt_error("bad key size");
+		_init = true;
 	}
 	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
@@ -302,6 +351,9 @@ private:
 	bool			_init;
 };
 
+/** The Serpent cipher.  Published in 1998.  Ranked second in the
+ * AES competition.  Arguably more secure, but slower, than Rijndael.
+ * Independent implementation. */
 class Cipher_serpent : public Cipher {
 public:
 	Cipher_serpent() : Cipher(CT_SERPENT), _init(false) {}
@@ -309,9 +361,10 @@ public:
 
 	void init(const uint8_t *key, size_t sz) throw (Crypt_error)
 	{
-		_init = true;
+		_init = false;
 		if (serpent_init(&_ctx, key, sz) == SERPENT_BAD_KEY_MAT)
 			throw Crypt_error("bad key size");
+		_init = true;
 	}
 	void encrypt(const uint8_t *in, uint8_t *out) throw (Crypt_error)
 	{
@@ -333,6 +386,8 @@ private:
 	bool			_init;
 };
 
+/** The Twofish cipher.  Published in 1998.  Ranked third in the
+ * AES competition.  Reference implementation. */
 class Cipher_twofish : public Cipher {
 public:
 	Cipher_twofish() : Cipher(CT_TWOFISH), _init(false) {}

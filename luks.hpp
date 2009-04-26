@@ -113,6 +113,7 @@ enum cipher_type {
 	CT_UNDEFINED = 0,
 	CT_AES,
 	CT_BLOWFISH,
+	CT_CAMELLIA,
 	CT_CAST5,
 	CT_CAST6,
 	CT_TWOFISH,
