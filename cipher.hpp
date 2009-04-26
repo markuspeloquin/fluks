@@ -212,7 +212,7 @@ public:
 		// fixes it)
 		const std::vector<uint16_t> &sizes =
 		    Cipher_traits::traits(CT_BLOWFISH)->key_sizes;
-		if (std::find(sizes.begin(), sizes.end(), sz) == sizes.end())
+		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
 			throw Crypt_error("bad key size");
 
 		_init = true;
@@ -280,7 +280,7 @@ public:
 		// fixes it)
 		const std::vector<uint16_t> &sizes =
 		    Cipher_traits::traits(CT_CAST5)->key_sizes;
-		if (std::find(sizes.begin(), sizes.end(), sz) == sizes.end())
+		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
 			throw Crypt_error("bad key size");
 
 		_init = true;
