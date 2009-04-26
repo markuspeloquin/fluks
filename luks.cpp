@@ -497,7 +497,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// XXX only *after* dm-crypt attempts to use them.
 
 	const std::vector<uint16_t> &sizes = cipher_traits->key_sizes;
-	if (std::find(sizes.begin(), sizes.end(), sz_key) == sizes.end()) {
+	if (!std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
 		// sz_key not compatible with the cipher
 		std::ostringstream out;
 		out << "cipher `" << cipher
@@ -522,8 +522,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
 		uint16_t size = ivhash_traits->digest_size;
-		if (std::find(sizes.begin(), sizes.end(), size) ==
-		    sizes.end()) {
+		if (!std::binary_search(sizes.begin(), sizes.end(), size)) {
 			std::ostringstream out;
 			out << "cipher `" << cipher
 			    << "' only supports keys of sizes";
