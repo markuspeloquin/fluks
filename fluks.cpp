@@ -111,15 +111,16 @@ list_modes()
 	}
 }
 
-/** Prompt for a password
+/** Prompt for a passphrase
  *
- * \param msg	The prompt message.
- * \retval ""	The terminal echo couldn't be reenabled (sorry) or the
- *	passwords didn't match.
- * \return	The password the user entered
+ * \param msg		The prompt message.
+ * \param repeat	Should the passphrase be repeated for verification?
+ * \retval ""		The terminal echo couldn't be reenabled (sorry) or the
+ *	passphrases didn't match.
+ * \return		The passphrase the user entered
  */
 std::string
-prompt_passwd(const std::string &msg)
+prompt_passwd(const std::string &msg, bool repeat)
 {
 	bool echo;
 
@@ -136,11 +137,15 @@ prompt_passwd(const std::string &msg)
 	std::cout << msg << (echo ? ": " : " (no echo): ");
 	std::string pass;
 	std::getline(std::cin, pass);
-
-	std::cout << "\nRepeat" << (echo ? ": " : " (no echo): ");
-	std::string pass2;
-	std::getline(std::cin, pass2);
 	std::cout << '\n';
+
+	boost::scoped_ptr<std::string> pass2;
+	if (repeat) {
+		std::cout << "Repeat" << (echo ? ": " : " (no echo): ");
+		pass2.reset(new std::string);
+		std::getline(std::cin, *pass2);
+		std::cout << '\n';
+	}
 
 	// enable echo
 	if (!echo) {
@@ -153,7 +158,7 @@ prompt_passwd(const std::string &msg)
 		}
 	}
 
-	if (pass != pass2) {
+	if (repeat && pass != *pass2) {
 		std::cerr << "Passphrases do not match\n";
 		return "";
 	}
@@ -405,8 +410,8 @@ main(int argc, char **argv)
 		header.reset(new Luks_header(device, sz_key, cipher, hash,
 		    iter, stripes));
 
-		// get a password
-		std::string pass = prompt_passwd("Initial passphrase");
+		// get a passphrase
+		std::string pass = prompt_passwd("Initial passphrase", true);
 		if (pass.empty())
 			return 1;
 		header->add_passwd(pass);
@@ -433,13 +438,13 @@ main(int argc, char **argv)
 	case OPEN: {
 		std::string name = var_map["open"].as<std::string>();
 
-		// read password
-		std::string pass = prompt_passwd("Initial passphrase");
+		// read passphrase
+		std::string pass = prompt_passwd("Passphrase", false);
 		if (pass.empty())
 			return 1;
 
 		if (!header->read_key(pass)) {
-			std::cout << "Incorrect password\n";
+			std::cout << "Incorrect passphrase\n";
 			return 1;
 		}
 
@@ -460,7 +465,8 @@ main(int argc, char **argv)
 	case ADD_PASS: {
 		std::cout << "First enter a passphrase that has already "
 		    "been established with the partition\n";
-		std::string passwd = prompt_passwd("Existing passphrase");
+		std::string passwd = prompt_passwd("Existing passphrase",
+		    false);
 		if (passwd.empty())
 			return 1;
 
@@ -469,8 +475,8 @@ main(int argc, char **argv)
 			return 1;
 		}
 
-		// get a password
-		std::string newpass = prompt_passwd("New passphrase");
+		// get a passphrase
+		std::string newpass = prompt_passwd("New passphrase", true);
 		if (newpass.empty())
 			return 1;
 
@@ -479,14 +485,15 @@ main(int argc, char **argv)
 		// write to disk
 		if (!pretend) {
 			header->save();
-			std::cout << "Password added to partition\n";
+			std::cout << "Passphrase added to partition\n";
 		}
 		break;
 	}
 	case REVOKE_PASS: {
-		std::cout << "First enter a passphrase that will not "
+		std::cout << "First enter a passphrase that will NOT "
 		    "be revoked\n";
-		std::string passwd = prompt_passwd("Existing passphrase");
+		std::string passwd = prompt_passwd("Existing passphrase",
+		    false);
 		if (passwd.empty())
 			return 1;
 
@@ -497,7 +504,8 @@ main(int argc, char **argv)
 
 		std::cout << "Master key decrypted.\n";
 
-		std::string revoke = prompt_passwd("Passphrase to revoke");
+		std::string revoke = prompt_passwd("Passphrase to revoke",
+		    false);
 		if (passwd.empty())
 			return 1;
 
