@@ -10,7 +10,7 @@ LUKS headers first must be created and written to the partition.  This includes 
 === Choosing a cipher spec ===
 
 <img src='http://fluks.googlecode.com/svn/wiki/do_not_want.png' align='right'>
-First, you must decide on a cipher spec.  Some fields are optional, but the format is `CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]]`.  For available values:
+First, you must decide on a cipher spec.  Some fields are optional, but the format is `CIPHER-BLOCK_MODE[-IV_MODE[:IV_HASH]]`.  For available values:
 
 {{{
 fluks --list
@@ -20,16 +20,14 @@ First, select a cipher (note that possible key sizes appear in parenthesis).  Th
 
 The block mode defaults to ECB, which you _do not want_ (see figure), so you should specify one.  Generally CBC is good, but the others (all being non-standard in LUKS) are good too.  For example, CTR or 'counter mode' is really easy to implement asynchronously.
 
-The IV (initial vector) generation mode defaults to 'plain' (except ECB, which has no IV), which uses the sector number as the IV and has no IV hash function.  This is probably safe for most purposes, but the paranoid should use ESSIV.
+The IV (initial vector) generation mode is required iff the block mode is not ECB, which has no IV.  With an IV mode 'plain', the sector number is used as the IV.  This is probably safe for most purposes, but the paranoid should use 'essiv'.  An IV hash function must be specified iff 'essiv' is used.
 
-An ESSIV (encrypted salt-sector IV) encrypts the sector number using the given cipher, using the hash of the sector number as the key.  As such, the digest size of the hash function must be an acceptable key size of the cipher.  You can correlate the sizes with the `fluks --info` command.
+An ESSIV (encrypted salt-sector IV) encrypts the sector number using the given cipher, using the hash of the sector number as the key.  The output of the encryption is used as the IV.  As such, the digest size of the hash function must be an acceptable key size of the cipher.  You can correlate the sizes with the `fluks --info` command.
 
-Here are some valid ciphers:
+Here are some valid cipher specs:
 {{{
-twofish                      # bad idea
-twofish-ecb                  # equally bad
-twofish-cbc                  # getting warmer
-twofish-cbc-plain            # equally warm
+twofish-ecb                  # bad idea
+twofish-cbc-plain            # getting warmer
 twofish-cbc-essiv:sha256     # sha256 has digest size 256, twofish can have a 256-bit key
 blowfish-ctr-essiv:tgr192    # a bit more exotic
 camilla-pcbc-essiv:wp256     # probably the best you can do right now
