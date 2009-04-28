@@ -1,10 +1,12 @@
 #summary Descriptions of what you can do with fluks
 
+<wiki:toc max_depth='2'>
+
 = Introduction =
 
 LUKS headers first must be created and written to the partition.  This includes cipher specs, a hash spec, and an encrypted private key.  When a LUKS header is set up, the user enters a passphrase, and this is used along with the given cipher/hash specs to encrypt the private key to the disk (immediately following the header).  The private key is what is used by device-mapper to encrypt/decrypt the data and filesystem residing on the remainder of the partition.
 
-== Creating a partition ==
+== Creating a LUKS partition header ==
 === Choosing a cipher spec ===
 
 <img src='http://fluks.googlecode.com/svn/wiki/do_not_want.png' align='right'>
