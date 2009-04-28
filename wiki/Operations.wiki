@@ -1,0 +1,84 @@
+#summary Descriptions of what you can do with fluks
+
+= Introduction =
+
+LUKS headers first must be created and written to the partition.  This includes cipher specs, a hash spec, and an encrypted private key.  When a LUKS header is set up, the user enters a passphrase, and this is used along with the given cipher/hash specs to encrypt the private key to the disk (immediately following the header).  The private key is what is used by device-mapper to encrypt/decrypt the data and filesystem residing on the remainder of the partition.
+
+== Creating a partition ==
+=== Choosing a cipher spec ===
+
+First, you must decide on a cipher spec.  Some fields are optional, but the format is `CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]]`.  For available values:
+
+`fluks --list`
+
+First, select a cipher (note that possible key sizes appear in parenthesis).  The NSA recommends AES :), but I recommend Serpent or Camilla (Camilla is not in the current version of LUKS).
+
+The block mode defaults to ECB, which you _do not want_, so you should specify one.  Generally CBC is good, but the others (all being non-standard in LUKS) are good too.  For example, CTR or 'counter mode' is really easy to implement symmetrically.
+
+The IV (initial vector) generation mode defaults to 'plain' (except ECB, which has no IV), which uses the sector number as the IV and has no IV hash function.  This is probably safe for most purposes, but the paranoid should use ESSIV.
+
+An ESSIV (encrypted salt-sector IV) encrypts the sector number using the given cipher, using the hash of the sector number as the key.  As such, the digest size of the hash function must be an acceptable key size of the cipher.  You can correlate the sizes with the `fluks --info` command.
+
+Here are some valid ciphers:
+{{{
+twofish                      # bad idea
+twofish-ecb                  # equally bad
+twofish-cbc                  # getting warmer
+twofish-cbc-plain            # equally warm
+twofish-cbc-essiv:sha256     # sha256 has digest size 256, twofish can have a 256-bit key
+blowfish-ctr-essiv:tgr192    # a bit more exotic
+camilla-pcbc-essiv:wp256     # probably the best you can do right now
+}}}
+
+=== Key size ===
+
+Now that you've committed to a cipher, you need to choose a key size.  There is no point to choosing anything other than the maximum size supported by the cipher.  Again, see `fluks --info` for more information.
+
+=== Hash function ===
+
+The hash function is used in two places.  To encrypt the master key to disk, the passphrase is expanded with the PBKDF2 algorithm (password-based key derivation function), and the result is used as the key to encrypt the master key.  The PBKDF2 expands the passphrase using the hash function.  For integrity checking, the PBKDF2 algorithm is also used to hash the master key, storing the digest in the header.
+
+To say that the master key is encrypted and decrypted is a bit misleading.  An anti-forensic algorithm is used to expand the size of the master key to an absurd size before encrypting, and this algorithm uses the specified hash function.
+
+As such, the hash function need not be very secure.  MD5 would be good enough by almost anybody's standards.  All supported hash functions can be found with `fluks --info`.
+
+=== Writing the header ===
+
+Now that you have cipher/hash specs figured out, you can write the header to disk.  Here's an example using the Camilla cipher, propagating cipher block chaining, ESSIV with the Whirlpool-256 hash function, and Whirlpool-512 as a hash function, writing it to the device /dev/sda8.  The partition is first overwritten with random data, which is a CPU-bound operation and will take a long time:
+
+{{{
+# ask self if you really want to go through with this
+cat /dev/urandom > /dev/sda8 # optional
+luks --create -s 256 -c camilla-pcbc-essiv:wp256 -h wp512 /dev/sda8
+}}}
+
+For this to be allowed, the cipher and hash function(s) used must be built into your kernel or loaded in as modules.
+
+== Using a LUKS partition ==
+
+This is so much easier.  Create the mapping, put a filesystem on it, and mount it.  This creates a mapping called 'stolen_movies', putting an XFS filesystem on it, and mounting it somewhere:
+
+{{{
+luks --open stolen_movies /dev/sda8
+mkfs.xfs /dev/mapper/stolen_movies
+mount /dev/mapper/stolen_movies /mnt
+}}}
+
+To remove the mapping for the same partition:
+
+{{{
+umount /mnt
+luks --close stolen_movies
+}}}
+
+== Adding/removing a passphrase ==
+
+If you want to add a passphrase (for instance, in the process of changing the passphrase), use `--pass`:
+
+`fluks --pass /dev/sda8`
+
+Then enter an established passphrase and the new passphrase, just like you'd do with `passwd(1)`.  To revoke a passphrase, a similar process occurs:
+
+`fluks --revoke /dev/sda8`
+
+Just follow the prompts.  You are asked to enter a passphrase that won't be removed first, to make sure you don't screw yourself over.
