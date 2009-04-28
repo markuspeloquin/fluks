@@ -108,9 +108,7 @@ struct No_private_key : std::exception {
 /** Thrown if something is probably a bad idea.  There is no work-around. */
 struct Safety : std::exception {
 	Safety(const std::string &msg) : _msg("Safety error: ")
-	{
-		_msg += msg;
-	}
+	{	_msg += msg; }
 	~Safety() throw () {}
 	const char *what() const throw ()
 	{	return _msg.c_str(); }

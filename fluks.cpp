@@ -219,7 +219,7 @@ main(int argc, char **argv)
 		"[required] master key size in bits")
 	    ("cipher,c", po::value<std::string>(),
 		"[required] cipher spec, formatted as\n"
-		"CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]])\n"
+		"CIPHER-BLOCK_MODE[-IV_MODE[:IV_HASH]])\n"
 		"  CIPHER: \tencryption cipher\n"
 		"  BLOCK_MODE: \tcipher block mode\n"
 		"  IV_MODE: \tIV generation mode\n"

@@ -64,12 +64,11 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 	    std::string &block_mode, std::string &ivmode, std::string &ivhash)
 {
 	// valid patterns:
-	// [^-]*
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
 	// [^-]* - [^-*] - [^:]* : .*
 	boost::regex expr(
-	    "([^-]+)  (?: - ([^-]+) )?  (?: - ([^:]+) )?  (?: : (.+) )?",
+	    "([^-]+) - ([^-]+)  (?: - ([^:]+) )?  (?: : (.+) )?",
 	    boost::regex_constants::normal |
 	    boost::regex_constants::mod_x); // ignore space
 
@@ -151,8 +150,12 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	std::copy(MAGIC, MAGIC + sizeof(MAGIC),_hdr->magic);
 	_hdr->version = 1;
 
-	std::copy(hash_spec.begin(), hash_spec.end(), _hdr->hash_spec);
-	_hdr->hash_spec[hash_spec.size()] = '\0';
+	// write the canonized hash name into the header
+	{
+		std::string hash = Hash_traits::traits(_hash_type)->name;
+		std::copy(hash.begin(), hash.end(), _hdr->hash_spec);
+		_hdr->hash_spec[hash.size()] = '\0';
+	}
 
 	if (!RAND_bytes(_hdr->mk_salt, SZ_SALT))
 		throw Ssl_error();
@@ -462,7 +465,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// are the specs supported by fluks?
 	if (_cipher_type == CT_UNDEFINED)
 		throw Bad_spec("unrecognized cipher: " + cipher);
-	if (block_mode.size() && _block_mode == BM_UNDEFINED)
+	if (_block_mode == BM_UNDEFINED)
 		throw Bad_spec("unrecognized block mode: " + block_mode);
 	if (ivmode.size() &&  _iv_mode == IM_UNDEFINED)
 		throw Bad_spec("unrecognized IV mode: " + ivmode);
@@ -510,8 +513,11 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	_hdr->sz_key = sz_key;
 
 	// are the specs compatible?
-	if (_block_mode == BM_ECB && _iv_mode == IM_UNDEFINED)
-		throw Bad_spec("ECB mode requires an IV mode");
+	if (_block_mode == BM_ECB && _iv_mode != IM_UNDEFINED)
+		throw Bad_spec("ECB cannot use an IV mode");
+	if (_block_mode != BM_ECB && _iv_mode == IM_UNDEFINED)
+		throw Bad_spec(
+		    "block modes other than ECB require an IV mode");
 	if (_iv_mode == IM_ESSIV && _iv_hash == HT_UNDEFINED)
 		throw Bad_spec("IV mode `essiv' requires an IV hash");
 	if (_iv_mode == IM_PLAIN && _iv_hash != HT_UNDEFINED)
@@ -535,10 +541,9 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 		}
 	}
 
-	// recreate a canonical cipher spec, canonize the hash spec; note
+	// recreate a canonical cipher spec; note
 	// that cipher and ivhash were already canonized
 	std::string mode = make_mode(block_mode, ivmode, ivhash);
-	std::string hash = Hash_traits::traits(_hash_type)->name;
 
 	// copy specs (back) into header
 	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);
