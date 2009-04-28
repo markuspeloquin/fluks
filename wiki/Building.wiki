@@ -15,6 +15,8 @@ boost is at [http://boost.org/ boost.org].  If you use C++ but not boost, your l
 
 After the libraries are installed, from the main source directory:
 
-`bjam release`
+{{{
+bjam release
+}}}
 
 bjam is derived from Perforce jam, is also known as Boost.Jam, and is a part of Boost.Build.
