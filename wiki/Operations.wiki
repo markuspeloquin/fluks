@@ -7,14 +7,14 @@ LUKS headers first must be created and written to the partition.  This includes 
 == Creating a partition ==
 === Choosing a cipher spec ===
 
+<img src='http://fluks.googlecode.com/svn/wiki/do_not_want.png' align='right'>
 First, you must decide on a cipher spec.  Some fields are optional, but the format is `CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]]`.  For available values:
 
 `fluks --list`
 
 First, select a cipher (note that possible key sizes appear in parenthesis).  The NSA recommends AES :), but I recommend Serpent or Camilla (Camilla is not in the current version of LUKS).
 
-<img src='do_not_want.jpg'>
-The block mode defaults to ECB, which you _do not want_, so you should specify one.  Generally CBC is good, but the others (all being non-standard in LUKS) are good too.  For example, CTR or 'counter mode' is really easy to implement symmetrically.
+The block mode defaults to ECB, which you _do not want_ (see figure), so you should specify one.  Generally CBC is good, but the others (all being non-standard in LUKS) are good too.  For example, CTR or 'counter mode' is really easy to implement symmetrically.
 
 The IV (initial vector) generation mode defaults to 'plain' (except ECB, which has no IV), which uses the sector number as the IV and has no IV hash function.  This is probably safe for most purposes, but the paranoid should use ESSIV.
 
