@@ -212,22 +212,20 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
 	if (!check_version_1(_hdr.get()))
 		throw Unsupported_version();
 
-	{
-		// recreate the cipher-spec string
-		std::string cipher_spec = _hdr->cipher_name;
-		if (*_hdr->cipher_mode) {
-			cipher_spec += '-';
-			cipher_spec += _hdr->cipher_mode;
-		}
-		init_cipher_spec(cipher_spec, _hdr->sz_key);
-	}
-
 	_hash_type = Hash_traits::type(_hdr->hash_spec);
 
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec(
 		    std::string("undefined hash spec in header: ") +
 		    _hdr->hash_spec);
+
+	// recreate the cipher-spec string
+	std::string cipher_spec = _hdr->cipher_name;
+	if (*_hdr->cipher_mode) {
+		cipher_spec += '-';
+		cipher_spec += _hdr->cipher_mode;
+	}
+	init_cipher_spec(cipher_spec, _hdr->sz_key);
 }
 
 bool

@@ -71,7 +71,9 @@ Crypto_detect::Crypto_detect()
 			// description
 			if (type == "cipher")
 				ciphers.insert(name);
-			else if (type == "digest")
+			else if (type == "digest" ||
+			    type == "shash" ||
+			    type == "ahash")
 				hashes.insert(name);
 
 			name = "";
