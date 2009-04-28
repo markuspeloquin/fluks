@@ -12,7 +12,9 @@ LUKS headers first must be created and written to the partition.  This includes 
 <img src='http://fluks.googlecode.com/svn/wiki/do_not_want.png' align='right'>
 First, you must decide on a cipher spec.  Some fields are optional, but the format is `CIPHER[-BLOCK_MODE[-IV_MODE[:IV_HASH]]]`.  For available values:
 
-`fluks --list`
+{{{
+fluks --list
+}}}
 
 First, select a cipher (note that possible key sizes appear in parenthesis).  The NSA recommends AES :), but I recommend Serpent or Camilla (Camilla is not in the current version of LUKS).
 
@@ -78,10 +80,14 @@ luks --close stolen_movies
 
 If you want to add a passphrase (for instance, in the process of changing the passphrase), use `--pass`:
 
-`fluks --pass /dev/sda8`
+{{{
+fluks --pass /dev/sda8
+}}}
 
 Then enter an established passphrase and the new passphrase, just like you'd do with `passwd(1)`.  To revoke a passphrase, a similar process occurs:
 
-`fluks --revoke /dev/sda8`
+{{{
+fluks --revoke /dev/sda8
+}}}
 
 Just follow the prompts.  You are asked to enter a passphrase that won't be removed first, to make sure you don't screw yourself over.
