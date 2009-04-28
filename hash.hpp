@@ -23,7 +23,6 @@
 #include <tr1/memory>
 #include <boost/scoped_array.hpp>
 
-//#include <openssl/err.h>
 #include <openssl/md5.h>
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>

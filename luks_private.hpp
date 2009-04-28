@@ -65,7 +65,7 @@ fluks::endian_switch(struct phdr1 *h, bool process_keys)
 	endian_switch(h->sz_key);
 	endian_switch(h->mk_iterations);
 	if (!process_keys) return;
-	for (size_t i = 0; i < NUM_KEYS; i++)
+	for (uint8_t i = 0; i < NUM_KEYS; i++)
 		endian_switch(h->keys + i);
 #endif
 }

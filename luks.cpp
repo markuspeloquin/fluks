@@ -171,7 +171,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	uint32_t km_sectors =
 	    (stripes * _hdr->sz_key + _sz_sect - 1) / _sz_sect;
 
-	for (size_t i = 0; i < NUM_KEYS; i++) {
+	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		_hdr->keys[i].active = KEY_DISABLED;
 		_hdr->keys[i].stripes = stripes;
 		_hdr->keys[i].off_km = off_base;
@@ -241,10 +241,10 @@ fluks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 
 	uint8_t master_key[_hdr->sz_key];
 	uint8_t key_digest[SZ_MK_DIGEST];
-	size_t i;
-	size_t max;
+	uint8_t i;
+	uint8_t max;
 
-	if (hint > 0 && static_cast<uint16_t>(hint) >= NUM_KEYS) hint = -1;
+	if (static_cast<uint16_t>(hint) >= NUM_KEYS) hint = -1;
 
 	if (hint >= 0) {
 		i = hint;
@@ -276,15 +276,15 @@ void
 fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
     throw (No_private_key, Slots_full)
 {
-	struct key *avail = 0;
-	size_t avail_idx = 0;
+	struct key	*avail = 0;
+	uint8_t		avail_idx = 0;
 
 	if (!_master_key) throw No_private_key();
 
 	set_mach_end(true);
 
 	// find an open slot
-	for (size_t i = 0; i < NUM_KEYS; i++) {
+	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		if (_hdr->keys[i].active == KEY_DISABLED) {
 			avail = _hdr->keys + i;
 			avail_idx = i;
@@ -354,7 +354,7 @@ fluks::Luks_header::info() const
 	    << "\nmaster key size                     " << _hdr->sz_key
 	    << "\nmaster key iterations               " << _hdr->mk_iterations
 	    << "\nuuid                                " << _hdr->uuid;
-	for (size_t i = 0; i < NUM_KEYS; i++) {
+	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		std::cout
 		    << "\nkey " << i << " state                         "
 		    << (_hdr->keys[i].active == KEY_ENABLED ?

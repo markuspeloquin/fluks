@@ -31,7 +31,8 @@ struct Assertion : std::exception {
 };
 
 #ifndef NDEBUG
-inline void	Assert(bool cond, const std::string &msg)
+inline void
+Assert(bool cond, const std::string &msg)
 {
 	if (!cond) throw Assertion(msg);
 }

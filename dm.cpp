@@ -15,7 +15,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 #include <boost/scoped_array.hpp>
 

@@ -58,7 +58,7 @@ uint8_t rand_index(uint8_t max)
 	// numbers as large as max_accept (e.g. if max is 25, max_accept
 	// is 250; if there are 250 possible values, they can be divided
 	// evenly into 25 groups)
-	uint8_t max_accept = 256 / max * max;
+	uint16_t max_accept = 256 / max * max;
 	uint8_t r;
 	do {
 		if (!RAND_bytes(&r, 1))
@@ -98,7 +98,7 @@ fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
 	for (uint8_t i = 0; i < NUM_PATTERNS; i++)
 		order[i] = i;
 	// randomize order
-	for (uint8_t i = 0; i < NUM_PATTERNS; i++) {
+	for (uint8_t i = 0; i < NUM_PATTERNS-1; i++) {
 		// swap value at order[i] with order[r], where r is random
 		// in [i:NUM_PATTERNS)
 		uint8_t r = i + rand_index(NUM_PATTERNS - i);

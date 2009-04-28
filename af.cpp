@@ -55,7 +55,7 @@ compute_d(const uint8_t *s, size_t sz, unsigned stripes,
 
 	std::fill(d_even, d_even + sz, 0);
 
-	for (size_t i = 1; i < stripes - 1; i++) {
+	for (unsigned i = 1; i < stripes - 1; i++) {
 		// d_even ^= i'th stripe
 		xor_bufs(d_even, s + i * sz, sz, d_even);
 		// d_odd = H(d_even)

@@ -2,7 +2,8 @@ DEBUG = -DDEBUG ;
 using gcc : # compiler version
 	: # c++ compile command
 	:
-	# -D_BSD_SOURCE needed for proper endian macros
+	# -D_BSD_SOURCE needed for proper endian macros; c++ cannot use
+	# -pedantic as <tr1/*> headers are needed
 	<cxxflags>"-std=c++98 -D_BSD_SOURCE $(DEBUG)"
 	<cflags>"-std=c99 -pedantic -D_BSD_SOURCE $(DEBUG)"
 	;
@@ -21,7 +22,7 @@ exe fluks :
 	af.cpp backup.cpp cipher.cpp crypt.cpp
 	detect.cpp dm.cpp errors.cpp fluks.cpp
 	hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
-	support.cpp util.cpp
+	support.cpp
 
 	# libraries
 	fluks_crypto/<link>static
@@ -31,7 +32,7 @@ exe fluks :
 exe run_test :
 	run_test.cpp
 	cipher.cpp crypt.cpp errors.cpp hash.cpp hmac.cpp
-	support.cpp util.cpp
+	support.cpp
 
 	# libraries
 	fluks_crypto/<link>static
