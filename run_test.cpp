@@ -260,8 +260,8 @@ main(int argc, char **argv)
 		std::string hash = argv[2];
 		std::string data = argv[3];
 
-		enum hash_type hash_ = Hash_traits::type(hash);
-		Assert(hash_ != HT_UNDEFINED, "undefined hash: " + hash);
+		enum hash_type hash_type = Hash_traits::type(hash);
+		Assert(hash_type != HT_UNDEFINED, "undefined hash: " + hash);
 		uint8_t databuf[data.size()];
 		size_t datasz;
 		if (data[0] == '-') {
@@ -273,7 +273,7 @@ main(int argc, char **argv)
 			datasz = data.size()/2;
 		}
 
-		test.reset(new Hash_test(hash_, databuf, datasz));
+		test.reset(new Hash_test(hash_type, databuf, datasz));
 	} else if (type == "hmac") {
 		if (argc != 5) {
 			usage();

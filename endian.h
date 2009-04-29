@@ -46,7 +46,6 @@
 INLINE void
 be_to_le32(void *out, const void *in, size_t sz)
 {
-	assert(!(sz & 3));
 	register uint8_t	*o8 = (uint8_t *)out;
 	register const uint8_t	*i8 = (const uint8_t *)in;
 	for (size_t i = 0; i < sz; i++)
@@ -120,6 +119,22 @@ le_to_host64(void *out, const void *in, size_t sz)
 INLINE void
 host_to_le64(void *out, const void *in, size_t sz)
 {	le_to_host64(out, in, sz); }
+
+/** Convert a be64 array to a host64 array */
+INLINE void
+be_to_host64(void *out, const void *in, size_t sz)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	memcpy(out, in, sz);
+#else
+	be_to_le64(out, in, sz);
+#endif
+}
+
+/** Convert a host64 array to a be64 array */
+INLINE void
+host_to_be64(void *out, const void *in, size_t sz)
+{	be_to_host64(out, in, sz); }
 
 
 #undef INLINE

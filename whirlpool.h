@@ -44,16 +44,13 @@ struct whirlpool_ctx {
 	uint64_t	hash[WHIRLPOOL_SZ_DIGEST / 8];
 
 	/* global number of hashed bits (256-bit counter) */
-	uint8_t		bitLength[32];
+	uint32_t	bit_count[8];
 
 	/* buffer of data to hash */
-	uint8_t		buffer[WHIRLPOOL_SZ_BLOCK];
+	uint8_t		buf[WHIRLPOOL_SZ_BLOCK];
 
-	/* current number of bits on the buffer */
-	uint16_t	bufferBits;
-
-	/* current (possibly incomplete) byte slot on the buffer */
-	uint8_t		bufferPos;
+	/* position in 'buf' */
+	uint8_t		pos;
 };
 
 __BEGIN_DECLS
