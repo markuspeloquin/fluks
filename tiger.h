@@ -20,20 +20,25 @@
 #ifdef __cplusplus
 #	include <cstddef>
 #	include <tr1/cstdint>
+
+	const size_t TIGER_SZ_BLOCK = 64;
+	const size_t TIGER128_SZ_DIGEST = 16;
+	const size_t TIGER160_SZ_DIGEST = 20;
+	const size_t TIGER_SZ_DIGEST = 24;
 #else
 #	include <stddef.h>
 #	include <stdint.h>
-#endif
 
-const size_t TIGER_SZ_BLOCK = 64;
-const size_t TIGER128_SZ_DIGEST = 16;
-const size_t TIGER160_SZ_DIGEST = 20;
-const size_t TIGER_SZ_DIGEST = 24;
+#	define TIGER_SZ_BLOCK 64
+#	define TIGER128_SZ_DIGEST 16
+#	define TIGER160_SZ_DIGEST 20
+#	define TIGER_SZ_DIGEST 24
+#endif
 
 /** Context structure for the Tiger hash function */
 struct tiger_ctx {
-	uint64_t	buf[8];
-	uint64_t	res[3];
+	uint64_t	buf[TIGER_SZ_BLOCK/8];
+	uint64_t	res[TIGER_SZ_DIGEST/8];
 	uint64_t	length;
 	uint8_t		sz;
 	uint8_t		version;
@@ -50,7 +55,7 @@ __BEGIN_DECLS
  * \param ctx		The hash context.
  * \param version	The version of Tiger (1 or 2).
  */
-void	tiger_init(struct tiger_ctx *ctx, uint8_t version=1);
+void	tiger_init(struct tiger_ctx *ctx, uint8_t version);
 
 /** Update a hash with new data
  *

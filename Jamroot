@@ -15,8 +15,8 @@ lib devmapper ;
 lib ssl ;
 lib uuid ;
 lib fluks_crypto :
-	serpent.cpp tiger.cpp
-	cast6.c twofish.c whirlpool.c
+	serpent.cpp
+	cast6.c tiger.c twofish.c whirlpool.c
 	;
 exe fluks :
 	af.cpp backup.cpp cipher.cpp crypt.cpp

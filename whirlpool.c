@@ -636,7 +636,7 @@ static const uint64_t rc[ROUNDS + 1] = {
 
 /* The core Whirlpool transform. */
 static void
-process_buffer(struct whirlpool_ctx *ctx)
+process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 {
 	uint64_t	K[8];        /* the round key */
 	uint64_t	block[8];    /* mu(buffer) */
@@ -645,31 +645,31 @@ process_buffer(struct whirlpool_ctx *ctx)
 
 #ifdef TRACE_INTERMEDIATE_VALUES
 	{
-		uint8_t		*buf = ctx->buf;
+		uint8_t		*buf_ = ctx->buf;
 		printf("The 8x8 matrix Z' derived from the data-string is "
 		    "as follows.\n");
 		for (uint8_t i = 0; i < WBLOCKBYTES/8; i++)
 			printf("    %02hhX %02hhX %02hhX %02hhX "
 			    "%02hhX %02hhX %02hhX %02hhX\n",
-			    buf[0], buf[1], buf[2], buf[3],
-			    buf[4], buf[5], buf[6], buf[7]);
-			buf += 8;
+			    buf_[0], buf_[1], buf_[2], buf_[3],
+			    buf_[4], buf_[5], buf_[6], buf_[7]);
+			buf_ += 8;
 		printf("\n");
 	}
 #endif /* ?TRACE_INTERMEDIATE_VALUES */
 
 	/* map the buffer to a block */
-	be_to_host64(block, ctx->buf, WBLOCKBYTES);
+	be_to_host64(block, buf, WBLOCKBYTES);
 
 	/* compute and apply K^0 to the cipher state */
-	state[0] = block[0] ^ (K[0] = ctx->hash[0]);
-	state[1] = block[1] ^ (K[1] = ctx->hash[1]);
-	state[2] = block[2] ^ (K[2] = ctx->hash[2]);
-	state[3] = block[3] ^ (K[3] = ctx->hash[3]);
-	state[4] = block[4] ^ (K[4] = ctx->hash[4]);
-	state[5] = block[5] ^ (K[5] = ctx->hash[5]);
-	state[6] = block[6] ^ (K[6] = ctx->hash[6]);
-	state[7] = block[7] ^ (K[7] = ctx->hash[7]);
+	state[0] = block[0] ^ (K[0] = hash[0]);
+	state[1] = block[1] ^ (K[1] = hash[1]);
+	state[2] = block[2] ^ (K[2] = hash[2]);
+	state[3] = block[3] ^ (K[3] = hash[3]);
+	state[4] = block[4] ^ (K[4] = hash[4]);
+	state[5] = block[5] ^ (K[5] = hash[5]);
+	state[6] = block[6] ^ (K[6] = hash[6]);
+	state[7] = block[7] ^ (K[7] = hash[7]);
 
 #ifdef TRACE_INTERMEDIATE_VALUES
 	printf("The K_0 matrix (from the initialization value IV) and "
@@ -903,14 +903,14 @@ process_buffer(struct whirlpool_ctx *ctx)
 
 	}
 	/* apply the Miyaguchi-Preneel compression function */
-	ctx->hash[0] ^= state[0] ^ block[0];
-	ctx->hash[1] ^= state[1] ^ block[1];
-	ctx->hash[2] ^= state[2] ^ block[2];
-	ctx->hash[3] ^= state[3] ^ block[3];
-	ctx->hash[4] ^= state[4] ^ block[4];
-	ctx->hash[5] ^= state[5] ^ block[5];
-	ctx->hash[6] ^= state[6] ^ block[6];
-	ctx->hash[7] ^= state[7] ^ block[7];
+	hash[0] ^= state[0] ^ block[0];
+	hash[1] ^= state[1] ^ block[1];
+	hash[2] ^= state[2] ^ block[2];
+	hash[3] ^= state[3] ^ block[3];
+	hash[4] ^= state[4] ^ block[4];
+	hash[5] ^= state[5] ^ block[5];
+	hash[6] ^= state[6] ^ block[6];
+	hash[7] ^= state[7] ^ block[7];
 
 #ifdef TRACE_INTERMEDIATE_VALUES
 	//printf("Intermediate hash value (after Miyaguchi-Preneel):\n");
@@ -919,14 +919,14 @@ process_buffer(struct whirlpool_ctx *ctx)
 	for (uint8_t i = 0; i < DIGESTBYTES/8; i++)
 		printf("    %02hhX %02hhX %02hhX %02hhX "
 		    "%02hhX %02hhX %02hhX %02hhX\n",
-		    (uint8_t)(ctx->hash[i] >> 56),
-		    (uint8_t)(ctx->hash[i] >> 48),
-		    (uint8_t)(ctx->hash[i] >> 40),
-		    (uint8_t)(ctx->hash[i] >> 32),
-		    (uint8_t)(ctx->hash[i] >> 24),
-		    (uint8_t)(ctx->hash[i] >> 16),
-		    (uint8_t)(ctx->hash[i] >>  8),
-		    (uint8_t)(ctx->hash[i]      ));
+		    (uint8_t)(hash[i] >> 56),
+		    (uint8_t)(hash[i] >> 48),
+		    (uint8_t)(hash[i] >> 40),
+		    (uint8_t)(hash[i] >> 32),
+		    (uint8_t)(hash[i] >> 24),
+		    (uint8_t)(hash[i] >> 16),
+		    (uint8_t)(hash[i] >>  8),
+		    (uint8_t)(hash[i]      ));
 	printf("\n");
 #endif /* ?TRACE_INTERMEDIATE_VALUES */
 }
@@ -971,14 +971,14 @@ whirlpool_update(struct whirlpool_ctx *ctx, const uint8_t *buf, size_t sz)
 	/* do first (full) block */
 	uint8_t bytes = WBLOCKBYTES - ctx->pos;
 	memcpy(ctx->buf + ctx->pos, buf, bytes);
-	process_buffer(ctx);
+	process_buffer(ctx->hash, ctx->buf);
 	buf += bytes;
 	sz -= bytes;
 
 	/* do subsequent (full) blocks */
 	while (sz >= WBLOCKBYTES) {
 		memcpy(ctx->buf, buf, WBLOCKBYTES);
-		process_buffer(ctx);
+		process_buffer(ctx->hash, ctx->buf);
 		buf += WBLOCKBYTES;
 		sz -= WBLOCKBYTES;
 	}
@@ -1009,17 +1009,18 @@ whirlpool_end(struct whirlpool_ctx *ctx, uint8_t result[WHIRLPOOL_SZ_DIGEST])
 	/* pad with zero bits to complete (N*WBLOCKBYTES - LENGTHBYTES) bits */
 
 	if (ctx->pos + LENGTHBYTES > WBLOCKBYTES) {
-		/* no room to fit the bit count */
+		/* no room to fit the bit count; that will go in the next
+		 * block */
 
-		if (ctx->pos < WBLOCKBYTES)
+		if (ctx->pos != WBLOCKBYTES)
 			/* fill remainder with zeros */
 			memset(ctx->buf + ctx->pos, 0,
 			    WBLOCKBYTES - ctx->pos);
 
-		process_buffer(ctx);
+		process_buffer(ctx->hash, ctx->buf);
 		ctx->pos = 0;
 	}
-	if (ctx->pos + LENGTHBYTES < WBLOCKBYTES) {
+	if (ctx->pos + LENGTHBYTES != WBLOCKBYTES) {
 		/* pad middle with zeros */
 		memset(ctx->buf + ctx->pos, 0,
 		    WBLOCKBYTES - (ctx->pos + LENGTHBYTES));
@@ -1028,8 +1029,8 @@ whirlpool_end(struct whirlpool_ctx *ctx, uint8_t result[WHIRLPOOL_SZ_DIGEST])
 
 	append_bit_count(ctx);
 
-	/* process data block */
-	process_buffer(ctx);
+	/* process final data block */
+	process_buffer(ctx->hash, ctx->buf);
 
 	/* return digest */
 	host_to_be64(result, ctx->hash, DIGESTBYTES);

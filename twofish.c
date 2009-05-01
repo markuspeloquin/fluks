@@ -55,7 +55,7 @@ const uint32_t RHO = 0x01010101UL;
 #define b2(x) (uint8_t)((x) >> 16)
 /* don't need to mask since all bits are in lower 8 - byte cast here saves
    nothing, but hey, what the hell, it doesn't hurt any */
-#define b3(x) (uint8_t)((x) >> 24)
+#define b3(x) ((x) >> 24)
 
 /*
    multiply two polynomials represented as uint32_t's, actually called with uint8_tS,
