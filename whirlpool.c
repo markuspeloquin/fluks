@@ -1001,7 +1001,7 @@ append_bit_count(struct whirlpool_ctx *ctx)
 /* Get the hash value from the hashing state.
  * This method uses the invariant: pos < WBLOCKBYTES */
 void
-whirlpool_end(struct whirlpool_ctx *ctx, uint8_t result[WHIRLPOOL_SZ_DIGEST])
+whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf)
 {
 	/* append a '1'-bit */
 	ctx->buf[ctx->pos++] = 0x80;
@@ -1033,5 +1033,6 @@ whirlpool_end(struct whirlpool_ctx *ctx, uint8_t result[WHIRLPOOL_SZ_DIGEST])
 	process_buffer(ctx->hash, ctx->buf);
 
 	/* return digest */
-	host_to_be64(result, ctx->hash, DIGESTBYTES);
+	if (sz_buf > DIGESTBYTES) sz_buf = DIGESTBYTES;
+	host_to_be64(buf, ctx->hash, sz_buf);
 }

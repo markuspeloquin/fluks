@@ -696,7 +696,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 }
 
 void
-tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
+tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 {
 	uint64_t temp[TIGER_SZ_BLOCK/8];
 	uint8_t *temp8 = (uint8_t *)temp;
@@ -733,9 +733,8 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	temp[7] = ctx->length * 8;
 	tiger_compress(temp, ctx->res);
 
-	((uint64_t *)res)[0] = ctx->res[0];
-	((uint64_t *)res)[1] = ctx->res[1];
-	((uint64_t *)res)[2] = ctx->res[2];
+	if (sz_res > TIGER_SZ_DIGEST) sz_res = TIGER_SZ_DIGEST;
+	le_to_host64(res, ctx->res, sz_res);
 }
 
 /* the original implementation of tiger(), with my annotations and coding

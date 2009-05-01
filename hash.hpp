@@ -215,13 +215,7 @@ public:
 	void end(uint8_t *buf) throw ()
 	{
 		if (!_valid) return;
-		if (traits()->digest_size < TIGER_SZ_DIGEST) {
-			// truncate output
-			uint8_t buf2[TIGER_SZ_DIGEST];
-			tiger_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + traits()->digest_size, buf);
-		} else
-			tiger_end(&_ctx, buf);
+		tiger_end(&_ctx, buf, traits()->digest_size);
 		_valid = false;
 	}
 
@@ -265,13 +259,7 @@ public:
 	void end(uint8_t *buf) throw ()
 	{
 		if (!_valid) return;
-		if (traits()->digest_size < WHIRLPOOL_SZ_DIGEST) {
-			// truncate output
-			uint8_t buf2[WHIRLPOOL_SZ_DIGEST];
-			whirlpool_end(&_ctx, buf2);
-			std::copy(buf2, buf2 + traits()->digest_size, buf);
-		} else
-			whirlpool_end(&_ctx, buf);
+		whirlpool_end(&_ctx, buf, traits()->digest_size);
 	}
 
 private:

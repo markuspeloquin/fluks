@@ -22,11 +22,10 @@
 #	include <cstddef>
 #	include <tr1/cstdint>
 
-// because I hate macros
-const size_t WHIRLPOOL256_SZ_DIGEST = 32;
-const size_t WHIRLPOOL384_SZ_DIGEST = 48;
-const size_t WHIRLPOOL_SZ_DIGEST = 64;
-const size_t WHIRLPOOL_SZ_BLOCK = 64;
+	const size_t WHIRLPOOL256_SZ_DIGEST = 32;
+	const size_t WHIRLPOOL384_SZ_DIGEST = 48;
+	const size_t WHIRLPOOL_SZ_DIGEST = 64;
+	const size_t WHIRLPOOL_SZ_BLOCK = 64;
 
 #else 
 /* C */
@@ -71,9 +70,10 @@ void	whirlpool_update(struct whirlpool_ctx *ctx,
 /** Mark the end of the hashed data and return the digest.
  * \param[in] ctx	The context.
  * \param[out] buf	The destination buffer of the digest.
+ * \param[in] sz_buf	The size of the output buffer.  Should be one of
+ *	{WHIRLPOOL256_SZ_DIGEST, WHIRLPOOL384_SZ_DIGEST, WHIRLPOOL_SZ_DIGEST}.
  */
-void	whirlpool_end(struct whirlpool_ctx *ctx,
-	    uint8_t buf[WHIRLPOOL_SZ_DIGEST]);
+void	whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf);
 
 __END_DECLS
 
