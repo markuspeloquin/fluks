@@ -406,7 +406,7 @@ f3(uint32_t d, uint8_t kr, uint32_t km)
  *
  *beta_qbar(uint32_t &b0, uint32_t &b1, uint32_t &b2, uint32_t &b3,
  *    const uint8_t kr[4], const uint32_t km[4]) */
-#define beta_qbar(b0,b1,b2,b3, kr, km)			do \
+#define beta_qbar(b0,b1,b2,b3, kr, km)				do \
 {								\
 	b3 ^= f1(b0, kr[3], km[3]);				\
 	b0 ^= f3(b1, kr[2], km[2]);				\

@@ -20,13 +20,16 @@
 #ifdef __cplusplus
 #	include <cstddef>
 #	include <tr1/cstdint>
+
+	const size_t TWOFISH_BLOCK = 16;
 #else
 #	include <stdbool.h>
 #	include <stddef.h>
 #	include <stdint.h>
+
+#	define TWOFISH_BLOCK 16
 #endif
 
-const size_t TWOFISH_BLOCK = 16;
 
 struct twofish_ctx {
 	uint32_t K[40];
