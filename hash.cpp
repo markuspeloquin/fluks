@@ -93,6 +93,8 @@ Lookup::Lookup()
 	_map_type["wp384"] = HT_WHIRLPOOL384;
 	_map_type["whirlpool512"] = HT_WHIRLPOOL512;
 	_map_type["wp512"] = HT_WHIRLPOOL512;
+	_map_type["whirlpool"] = HT_WHIRLPOOL512;
+	_map_type["wp"] = HT_WHIRLPOOL512;
 
 	for (std::map<enum hash_type, Hash_traits>::iterator i =
 	    _map_traits.begin(); i != _map_traits.end(); ++i)
