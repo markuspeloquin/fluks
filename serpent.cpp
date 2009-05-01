@@ -66,7 +66,7 @@ keying(uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3,
 	x3 ^= subkey[3];
 }
 
-enum serpent_return
+extern "C" enum serpent_return
 serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 {
 	// w starts at offset 8, allowing w to have some negative indices
@@ -139,7 +139,7 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 	return SERPENT_OKAY;
 }
 
-void
+extern "C" void
 serpent_encrypt(const struct serpent_ctx *ctx,
     const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK])
 {
@@ -291,7 +291,7 @@ serpent_encrypt(const struct serpent_ctx *ctx,
 	host_to_le32(out, buf, SERPENT_BLOCK);
 }
 
-void
+extern "C" void
 serpent_decrypt(const struct serpent_ctx *ctx,
     const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK])
 {

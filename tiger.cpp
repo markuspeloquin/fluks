@@ -552,15 +552,15 @@ round(uint64_t &a, uint64_t &b, uint64_t &c, uint64_t x, uint8_t mul)
 {
 	c ^= x;
 	a -=
-	    t1[static_cast<uint8_t>(c >> 0 * 8)] ^
-	    t2[static_cast<uint8_t>(c >> 2 * 8)] ^
-	    t3[static_cast<uint8_t>(c >> 4 * 8)] ^
-	    t4[static_cast<uint8_t>(c >> 6 * 8)];
+	    t1[static_cast<uint8_t>(c      )] ^
+	    t2[static_cast<uint8_t>(c >> 16)] ^
+	    t3[static_cast<uint8_t>(c >> 32)] ^
+	    t4[static_cast<uint8_t>(c >> 48)];
 	b +=
-	    t4[static_cast<uint8_t>(c >> 1 * 8)] ^
-	    t3[static_cast<uint8_t>(c >> 3 * 8)] ^
-	    t2[static_cast<uint8_t>(c >> 5 * 8)] ^
-	    t1[static_cast<uint8_t>(c >> 7 * 8)];
+	    t4[static_cast<uint8_t>(c >>  8)] ^
+	    t3[static_cast<uint8_t>(c >> 24)] ^
+	    t2[static_cast<uint8_t>(c >> 40)] ^
+	    t1[                    (c >> 56)];
 	b *= mul;
 }
 
@@ -613,9 +613,12 @@ tiger_compress(const uint64_t *str, uint64_t state[3])
 		}
 
 		// 'pass'
-		register uint8_t mul =
-		    pass_no == 0 ? 5 :
-		    pass_no == 1 ? 7 : 9;
+		register uint8_t mul;
+		switch (pass_no) {
+		case 0:		mul = 5; break;
+		case 1:		mul = 7; break;
+		default:	mul = 9;
+		}
 		round(a, b, c, x0, mul);
 		round(b, c, a, x1, mul);
 		round(c, a, b, x2, mul);
@@ -632,13 +635,9 @@ tiger_compress(const uint64_t *str, uint64_t state[3])
 	}
 
 	// 'feed forward'
-	a ^= aa;
-	b -= bb;
-	c += cc;
-
-	state[0] = a;
-	state[1] = b;
-	state[2] = c;
+	state[0] = a ^ aa;
+	state[1] = b - bb;
+	state[2] = c + cc;
 }
 
 extern "C" void
@@ -673,7 +672,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 		size_t bytes = TIGER_SZ_BLOCK - ctx->sz;
 		std::copy(buf, buf + bytes, ctxbuf8 + ctx->sz);
 #if BYTE_ORDER == BIG_ENDIAN
-		le_to_host64(temp, ctx->buf, TIGER_SZ_BLOCK);
+		host_to_le64(temp, ctx->buf, TIGER_SZ_BLOCK);
 		tiger_compress(temp, ctx->res);
 #else
 		// LE can run straight off ctx->buf
@@ -687,7 +686,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	while (sz > TIGER_SZ_BLOCK) {
 		// LE needs to copy for alignment issues, and BE needs to
 		// both copy (for alignment) and swith endians
-		le_to_host64(temp, buf, TIGER_SZ_BLOCK);
+		host_to_le64(temp, buf, TIGER_SZ_BLOCK);
 		tiger_compress(temp, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
@@ -710,7 +709,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t res[TIGER_SZ_DIGEST])
 	// then pad with zeros until the number of bytes is 0 mod 8; the
 	// buffer will have room; Tiger2 uses 0x80 instead of 1 for the next
 	// byte
-	le_to_host64(temp, ctx->buf, ctx->sz);
+	host_to_le64(temp, ctx->buf, ctx->sz);
 	i = ctx->sz;
 #if BYTE_ORDER == BIG_ENDIAN
 	temp8[i++ ^ 7] = ctx->version == 1 ? 0x01 : 0x80;
