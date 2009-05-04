@@ -49,7 +49,7 @@ be_to_le32(void *out, const void *in, size_t sz)
 	register uint8_t	*o8 = (uint8_t *)out;
 	register const uint8_t	*i8 = (const uint8_t *)in;
 	for (size_t i = 0; i < sz; i++)
-		o8[i ^ 3] = i8[i];
+		o8[i] = i8[i ^ 3];
 }
 
 /** Convert an le32 array to a byte/be32 array */
@@ -96,7 +96,7 @@ be_to_le64(void *out, const void *in, size_t sz)
 	register uint8_t	*o8 = (uint8_t *)out;
 	register const uint8_t	*i8 = (const uint8_t *)in;
 	for (size_t i = 0; i < sz; i++)
-		o8[i ^ 7] = i8[i];
+		o8[i] = i8[i ^ 7];
 }
 
 /** Convert a byte/be64 array to an le64 array */
