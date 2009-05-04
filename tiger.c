@@ -562,7 +562,7 @@ static inline uint8_t by7(uint64_t x) { return x >> 56; }
 }								while(0)
 
 static inline void
-tiger_compress(const uint64_t *str, uint64_t state[3])
+compress(const uint64_t *str, uint64_t state[3])
 {
 	/* 'register' probably gets ignored by the compiler, but it's a
 	 * hint from the original C89 macro-powered source */
@@ -670,21 +670,21 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 		memcpy(ctxbuf8 + ctx->sz, buf, bytes);
 #if BYTE_ORDER == BIG_ENDIAN
 		host_to_le64(temp, ctx->buf, TIGER_SZ_BLOCK);
-		tiger_compress(temp, ctx->res);
+		compress(temp, ctx->res);
 #else
 		/* LE can run straight off ctx->buf */
-		tiger_compress(ctx->buf, ctx->res);
+		compress(ctx->buf, ctx->res);
 #endif
 		buf += bytes;
 		sz -= bytes;
 		/* context buffer now empty */
 	}
 
-	while (sz > TIGER_SZ_BLOCK) {
+	while (sz >= TIGER_SZ_BLOCK) {
 		/* LE needs to copy for alignment issues, and BE needs to
 		 * both copy (for alignment) and swith endians */
 		host_to_le64(temp, buf, TIGER_SZ_BLOCK);
-		tiger_compress(temp, ctx->res);
+		compress(temp, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
 	}
@@ -717,12 +717,9 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 #endif
 
 	/* if number of bytes in temp is 64 (it is 0 mod 8, and so if it is
-	 * greater than 56, it can only be 64), then fill the rest of the
-	 * buffer with zeros and compress the block */
+	 * greater than 56, it can only be 64), then compress the block */
 	if (i > 56) {
-		/* I really doubt this loop ever does anything */
-		while (i < TIGER_SZ_BLOCK) temp8[i++] = 0;
-		tiger_compress(temp, ctx->res);
+		compress(temp, ctx->res);
 		i = 0;
 	}
 
@@ -731,7 +728,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 	 * the buffer; then compress this final buffer */
 	while (i < 56) temp8[i++] = 0;
 	temp[7] = ctx->length * 8;
-	tiger_compress(temp, ctx->res);
+	compress(temp, ctx->res);
 
 	if (sz_res > TIGER_SZ_DIGEST) sz_res = TIGER_SZ_DIGEST;
 	le_to_host64(res, ctx->res, sz_res);
@@ -762,9 +759,9 @@ tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 		/* switch endian to little, 8 bytes at a time */
 		for (j = 0; j < TIGER_SZ_BLOCK; j++)
 			temp[j ^ 7] = ((const uint8_t *)str)[j];
-		tiger_compress((uint64_t *)temp, res);
+		compress((uint64_t *)temp, res);
 #else
-		tiger_compress(str, res);
+		compress(str, res);
 #endif
 		str += 8;
 	}
@@ -791,7 +788,7 @@ tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 	if (j > 56) {
 		/* I really doubt this loop does anything */
 		while (j < TIGER_SZ_BLOCK) temp[j++] = 0;
-		tiger_compress((uint64_t *)temp, res);
+		compress((uint64_t *)temp, res);
 		j = 0;
 	}
 
@@ -800,6 +797,6 @@ tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 	 * the buffer; then compress this final buffer */
 	while (j < 56) temp[j++] = 0;
 	((uint64_t *)(temp + 56))[0] = length << 3;
-	tiger_compress((uint64_t *)temp, res);
+	compress((uint64_t *)temp, res);
 }
 #endif

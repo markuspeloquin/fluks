@@ -38,3 +38,6 @@ exe run_test :
 	fluks_crypto/<link>static
 	boost_system ssl
 	;
+install dist : fluks :
+	<variant>release:<location>release
+	<variant>debug:<location>debug ;

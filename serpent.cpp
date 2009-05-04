@@ -75,7 +75,7 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 	uint8_t		*v8 = reinterpret_cast<uint8_t *>(v);
 	int16_t		i; // [-32,132]
 
-	if(sz != 16 && sz != 24 && sz != 32)
+	if (sz != 16 && sz != 24 && sz != 32)
 		return SERPENT_BAD_KEY_MAT;
 
 	// internal representation is little-endian

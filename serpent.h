@@ -43,7 +43,7 @@ enum serpent_return {
 };
 
 struct serpent_ctx {
-      uint32_t	subkeys[33][4];
+	uint32_t	subkeys[33][4];
 };
 
 __BEGIN_DECLS

@@ -5,4 +5,4 @@ doc:
 	@doxygen
 
 clean:
-	rm -rf bin html
+	rm -rf bin debug html release
