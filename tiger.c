@@ -727,7 +727,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 	 * 8 before the end; length*8 is written to the final 64 bits of
 	 * the buffer; then compress this final buffer */
 	while (i < 56) temp8[i++] = 0;
-	temp[7] = ctx->length * 8;
+	temp[7] = htole64(ctx->length << 3);
 	compress(temp, ctx->res);
 
 	if (sz_res > TIGER_SZ_DIGEST) sz_res = TIGER_SZ_DIGEST;
