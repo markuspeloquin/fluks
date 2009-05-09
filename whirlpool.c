@@ -625,8 +625,7 @@ static const uint64_t c_7[0x100] = {
     0x28a0285d88507528LL, 0x5c6d5cda31b8865cLL, 0xf8c7f8933fed6bf8LL, 0x86228644a411c286LL,
 };
 
-static const uint64_t rc[ROUNDS + 1] = {
-    0x0000000000000000LL,
+static const uint64_t rc[ROUNDS] = {
     0x1823c6e887b8014fLL, 0x36a6d2f5796f9152LL,
     0x60bc9b8ea30c7b35LL, 0x1de0d7c22e4bfe57LL,
     0x157737e59ff04adaLL, 0x58c9290ab1a06b85LL,
@@ -634,7 +633,7 @@ static const uint64_t rc[ROUNDS + 1] = {
     0xfbee7c66dd17479eLL, 0xca2dbf07ad5a8333LL
 };
 
-/* The core Whirlpool transform. */
+/* The core Whirlpool transform */
 static void
 process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 {
@@ -661,7 +660,7 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 	/* map the buffer to a block */
 	be_to_host64(block, buf, WBLOCKBYTES);
 
-	/* compute and apply K^0 to the cipher state */
+	/* compute and apply K_0 to the cipher state */
 	state[0] = block[0] ^ (K[0] = hash[0]);
 	state[1] = block[1] ^ (K[1] = hash[1]);
 	state[2] = block[2] ^ (K[2] = hash[2]);
@@ -702,8 +701,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 #endif /* ?TRACE_INTERMEDIATE_VALUES */
 
 	/* iterate over all rounds */
-	for (uint8_t r = 1; r <= ROUNDS; r++) {
-		/* compute K^r from K^{r-1} */
+	for (uint8_t r = 0; r < ROUNDS; r++) {
+		/* compute K_r from K_{r-1} */
 		L[0] =
 		    c_0[         (K[0] >> 56)] ^
 		    c_1[(uint8_t)(K[7] >> 48)] ^
@@ -786,7 +785,7 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		K[6] = L[6];
 		K[7] = L[7];
 		/* apply the r-th round transformation */
-		L[0] =
+		L[0] ^=
 		    c_0[         (state[0] >> 56)] ^
 		    c_1[(uint8_t)(state[7] >> 48)] ^
 		    c_2[(uint8_t)(state[6] >> 40)] ^
@@ -794,9 +793,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[4] >> 24)] ^
 		    c_5[(uint8_t)(state[3] >> 16)] ^
 		    c_6[(uint8_t)(state[2] >>  8)] ^
-		    c_7[(uint8_t)(state[1]      )] ^
-		    K[0];
-		L[1] =
+		    c_7[(uint8_t)(state[1]      )];
+		L[1] ^=
 		    c_0[         (state[1] >> 56)] ^
 		    c_1[(uint8_t)(state[0] >> 48)] ^
 		    c_2[(uint8_t)(state[7] >> 40)] ^
@@ -804,9 +802,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[5] >> 24)] ^
 		    c_5[(uint8_t)(state[4] >> 16)] ^
 		    c_6[(uint8_t)(state[3] >>  8)] ^
-		    c_7[(uint8_t)(state[2]      )] ^
-		    K[1];
-		L[2] =
+		    c_7[(uint8_t)(state[2]      )];
+		L[2] ^=
 		    c_0[         (state[2] >> 56)] ^
 		    c_1[(uint8_t)(state[1] >> 48)] ^
 		    c_2[(uint8_t)(state[0] >> 40)] ^
@@ -814,9 +811,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[6] >> 24)] ^
 		    c_5[(uint8_t)(state[5] >> 16)] ^
 		    c_6[(uint8_t)(state[4] >>  8)] ^
-		    c_7[(uint8_t)(state[3]      )] ^
-		    K[2];
-		L[3] =
+		    c_7[(uint8_t)(state[3]      )];
+		L[3] ^=
 		    c_0[         (state[3] >> 56)] ^
 		    c_1[(uint8_t)(state[2] >> 48)] ^
 		    c_2[(uint8_t)(state[1] >> 40)] ^
@@ -824,9 +820,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[7] >> 24)] ^
 		    c_5[(uint8_t)(state[6] >> 16)] ^
 		    c_6[(uint8_t)(state[5] >>  8)] ^
-		    c_7[(uint8_t)(state[4]      )] ^
-		    K[3];
-		L[4] =
+		    c_7[(uint8_t)(state[4]      )];
+		L[4] ^=
 		    c_0[         (state[4] >> 56)] ^
 		    c_1[(uint8_t)(state[3] >> 48)] ^
 		    c_2[(uint8_t)(state[2] >> 40)] ^
@@ -834,9 +829,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[0] >> 24)] ^
 		    c_5[(uint8_t)(state[7] >> 16)] ^
 		    c_6[(uint8_t)(state[6] >>  8)] ^
-		    c_7[(uint8_t)(state[5]      )] ^
-		    K[4];
-		L[5] =
+		    c_7[(uint8_t)(state[5]      )];
+		L[5] ^=
 		    c_0[         (state[5] >> 56)] ^
 		    c_1[(uint8_t)(state[4] >> 48)] ^
 		    c_2[(uint8_t)(state[3] >> 40)] ^
@@ -844,9 +838,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[1] >> 24)] ^
 		    c_5[(uint8_t)(state[0] >> 16)] ^
 		    c_6[(uint8_t)(state[7] >>  8)] ^
-		    c_7[(uint8_t)(state[6]      )] ^
-		    K[5];
-		L[6] =
+		    c_7[(uint8_t)(state[6]      )];
+		L[6] ^=
 		    c_0[         (state[6] >> 56)] ^
 		    c_1[(uint8_t)(state[5] >> 48)] ^
 		    c_2[(uint8_t)(state[4] >> 40)] ^
@@ -854,9 +847,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[2] >> 24)] ^
 		    c_5[(uint8_t)(state[1] >> 16)] ^
 		    c_6[(uint8_t)(state[0] >>  8)] ^
-		    c_7[(uint8_t)(state[7]      )] ^
-		    K[6];
-		L[7] =
+		    c_7[(uint8_t)(state[7]      )];
+		L[7] ^=
 		    c_0[         (state[7] >> 56)] ^
 		    c_1[(uint8_t)(state[6] >> 48)] ^
 		    c_2[(uint8_t)(state[5] >> 40)] ^
@@ -864,8 +856,7 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		    c_4[(uint8_t)(state[3] >> 24)] ^
 		    c_5[(uint8_t)(state[2] >> 16)] ^
 		    c_6[(uint8_t)(state[1] >>  8)] ^
-		    c_7[(uint8_t)(state[0]      )] ^
-		    K[7];
+		    c_7[(uint8_t)(state[0]      )];
 		state[0] = L[0];
 		state[1] = L[1];
 		state[2] = L[2];
@@ -931,7 +922,7 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 #endif /* ?TRACE_INTERMEDIATE_VALUES */
 }
 
-/* Initialize the hashing state. */
+/* Initialize the hashing state */
 void
 whirlpool_init(struct whirlpool_ctx *ctx)
 {
