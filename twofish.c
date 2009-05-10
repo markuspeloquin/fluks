@@ -29,7 +29,7 @@ const uint16_t RS_MOD = 0x14D;
  * uint8_t'S, but since I'm not really going to too much work to optimize
  * key setup (since raw encryption speed is what I'm after), big deal. */
 static inline uint32_t
-polyMult(uint32_t a, uint32_t b)
+poly_mult(uint32_t a, uint32_t b)
 {
 	uint32_t	t = 0;
 	while (a) {
@@ -42,7 +42,7 @@ polyMult(uint32_t a, uint32_t b)
 
 /* take the polynomial t and return the t % modulus in GF(256) */
 static inline uint32_t
-gfMod(uint32_t t, uint32_t modulus)
+gf_mod(uint32_t t, uint32_t modulus)
 {
 	modulus <<= 7;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -55,30 +55,30 @@ gfMod(uint32_t t, uint32_t modulus)
 
 /* multiply a and b and return the modulus */
 static inline uint32_t
-gfMult(uint32_t a, uint32_t b, uint32_t modulus)
+gf_mult(uint32_t a, uint32_t b, uint32_t modulus)
 {
-	return gfMod(polyMult(a, b), modulus);
+	return gf_mod(poly_mult(a, b), modulus);
 }
 
 /* return a uint32_t containing the result of multiplying the RS Code matrix
  * by the sd matrix */
 static uint32_t
-RSMatrixMultiply(uint8_t sd[8])
+rs_mat_mult(uint8_t sd[8])
 {
 	uint8_t		result[4];
 
 	for (uint8_t j = 0; j < 4; j++) {
 		uint8_t t = 0;
 		for (uint8_t k = 0; k < 8; k++)
-			t ^= gfMult(RS[j][k], sd[k], RS_MOD);
-		result[3 - j] = t;
+			t ^= gf_mult(rs[j][k], sd[k], RS_MOD);
+		result[j ^ 3] = t;
 	}
 	return be32toh(*(uint32_t *)result);
 }
 
 /* the Zero-keyed h function (used by the key setup routine) */
 static uint32_t
-h(uint32_t X, uint32_t L[4], uint8_t k)
+tf_h(uint32_t X, uint32_t L[4], uint8_t k)
 {
 	uint8_t		y0,y1,y2,y3;
 	uint8_t		z0,z1,z2,z3;
@@ -89,20 +89,20 @@ h(uint32_t X, uint32_t L[4], uint8_t k)
 
 	switch(k) {
 	case 4:
-		y0 = Q1[y0] ^ b0(L[3]);
-		y1 = Q0[y1] ^ b1(L[3]);
-		y2 = Q0[y2] ^ b2(L[3]);
-		y3 = Q1[y3] ^ b3(L[3]);
+		y0 = q1[y0] ^ b0(L[3]);
+		y1 = q0[y1] ^ b1(L[3]);
+		y2 = q0[y2] ^ b2(L[3]);
+		y3 = q1[y3] ^ b3(L[3]);
 	case 3:
-		y0 = Q1[y0] ^ b0(L[2]);
-		y1 = Q1[y1] ^ b1(L[2]);
-		y2 = Q0[y2] ^ b2(L[2]);
-		y3 = Q0[y3] ^ b3(L[2]);
+		y0 = q1[y0] ^ b0(L[2]);
+		y1 = q1[y1] ^ b1(L[2]);
+		y2 = q0[y2] ^ b2(L[2]);
+		y3 = q0[y3] ^ b3(L[2]);
 	case 2:
-		y0 = Q1[  Q0 [ Q0[y0] ^ b0(L[1]) ] ^ b0(L[0]) ];
-		y1 = Q0[  Q0 [ Q1[y1] ^ b1(L[1]) ] ^ b1(L[0]) ];
-		y2 = Q1[  Q1 [ Q0[y2] ^ b2(L[1]) ] ^ b2(L[0]) ];
-		y3 = Q0[  Q1 [ Q1[y3] ^ b3(L[1]) ] ^ b3(L[0]) ];
+		y0 = q1[  q0 [ q0[y0] ^ b0(L[1]) ] ^ b0(L[0]) ];
+		y1 = q0[  q0 [ q1[y1] ^ b1(L[1]) ] ^ b1(L[0]) ];
+		y2 = q1[  q1 [ q0[y2] ^ b2(L[1]) ] ^ b2(L[0]) ];
+		y3 = q0[  q1 [ q1[y3] ^ b3(L[1]) ] ^ b3(L[0]) ];
 	}
 
 	/* inline the MDS matrix multiply */
@@ -116,31 +116,31 @@ h(uint32_t X, uint32_t L[4], uint8_t k)
 
 /* given the Sbox keys, create the fully keyed QF */
 static void
-fullKey(uint32_t L[4], uint8_t k, uint32_t QF[4][256])
+full_key(uint32_t L[4], uint8_t word_pairs, uint32_t QF[4][256])
 {
-	uint32_t	y0,y1,y2,y3;
+	uint8_t		y0,y1,y2,y3;
 	uint8_t		i = 0;
 
 	/* for all input values to the Q permutations */
 	do {
 		/* run the Q permutations */
 		y0 = y1 = y2 = y3 = i;
-		switch(k) {
+		switch (word_pairs) {
 		case 4:
-			y0 = Q1[y0] ^ b0(L[3]);
-			y1 = Q0[y1] ^ b1(L[3]);
-			y2 = Q0[y2] ^ b2(L[3]);
-			y3 = Q1[y3] ^ b3(L[3]);
+			y0 = q1[y0] ^ b0(L[3]);
+			y1 = q0[y1] ^ b1(L[3]);
+			y2 = q0[y2] ^ b2(L[3]);
+			y3 = q1[y3] ^ b3(L[3]);
 		case 3:
-			y0 = Q1[y0] ^ b0(L[2]);
-			y1 = Q1[y1] ^ b1(L[2]);
-			y2 = Q0[y2] ^ b2(L[2]);
-			y3 = Q0[y3] ^ b3(L[2]);
+			y0 = q1[y0] ^ b0(L[2]);
+			y1 = q1[y1] ^ b1(L[2]);
+			y2 = q0[y2] ^ b2(L[2]);
+			y3 = q0[y3] ^ b3(L[2]);
 		case 2:
-			y0 = Q1[  Q0 [ Q0[y0] ^ b0(L[1]) ] ^ b0(L[0]) ];
-			y1 = Q0[  Q0 [ Q1[y1] ^ b1(L[1]) ] ^ b1(L[0]) ];
-			y2 = Q1[  Q1 [ Q0[y2] ^ b2(L[1]) ] ^ b2(L[0]) ];
-			y3 = Q0[  Q1 [ Q1[y3] ^ b3(L[1]) ] ^ b3(L[0]) ];
+			y0 = q1[  q0 [ q0[y0] ^ b0(L[1]) ] ^ b0(L[0]) ];
+			y1 = q0[  q0 [ q1[y1] ^ b1(L[1]) ] ^ b1(L[0]) ];
+			y2 = q1[  q1 [ q0[y2] ^ b2(L[1]) ] ^ b2(L[0]) ];
+			y3 = q0[  q1 [ q1[y3] ^ b3(L[1]) ] ^ b3(L[0]) ];
 		}
 
 		/* now do the partial MDS matrix multiplies */
@@ -167,128 +167,161 @@ fullKey(uint32_t L[4], uint8_t k, uint32_t QF[4][256])
 	} while (++i); /* 256 iterations */
 }
 
-/* fully keyed h (aka g) function */
+/* g() (4.2) */
 static inline uint32_t
-fkh(uint32_t x, uint32_t S[4][256])
+tf_g(uint32_t x, uint32_t S[4][0x100])
 {
-	return (S[0][b0(x)] ^ S[1][b1(x)] ^ S[2][b2(x)] ^ S[3][b3(x)]);
+	return S[0][b0(x)] ^ S[1][b1(x)] ^ S[2][b2(x)] ^ S[3][b3(x)];
 }
 
-/* one encryption round */
-#define ENC_ROUND(t0, t1, r0, r1, r2, r3, round, K, S)		do \
+/* F() (4.1) */
+#define tf_F(r0,r1, f0,f1, round, K, S)	    			do \
 {								\
-	t0 = fkh(r0, S);					\
-	t1 = fkh(ROL(r1, 8), S);				\
-	r2 = ROR(r2 ^ (t1 + t0 + K[2 * round + 8]), 1);		\
-	r3 = ROL(r3, 1) ^ (2 * t1 + t0 + K[2 * round + 9]);	\
+	register uint32_t t0, t1;				\
+	t0 = tf_g(r0, S);					\
+	t1 = tf_g(ROL(r1, 8), S);				\
+	f0 = t0 +     t1 + K[2 * round + 8];			\
+	f1 = t0 + 2 * t1 + K[2 * round + 9];			\
+}								while(0)
+
+/* rotate result of F() for encryption */
+#define rot_enc(f0,f1, r2,r3)					do \
+{								\
+	r2 = ROR(r2 ^ f0, 1);					\
+	r3 = ROL(r3, 1) ^ f1;					\
+}								while(0)
+
+/* rotate result of F() for decryption */
+#define rot_dec(f0,f1, r2,r3)	    				do \
+{								\
+	r2 = ROL(r2, 1) ^ f0;					\
+	r3 = ROR(r3 ^ f1, 1);					\
+}								while(0)
+
+/* one encryption round */
+#define ENC_ROUND(r0,r1, r2,r3, round, K, S)			do \
+{								\
+	register uint32_t f0, f1;				\
+	tf_F(r0,r1, f0,f1, round, K, S);			\
+	rot_enc(f0,f1, r2,r3);					\
+}								while(0)
+
+/* one decryption round */
+#define DEC_ROUND(r0,r1, r2,r3, round, K, S)			do \
+{								\
+	register uint32_t f0, f1;				\
+	tf_F(r0,r1, f0,f1, round, K, S);			\
+	rot_dec(f0,f1, r2,r3);					\
 }								while(0)
 
 static inline void
-encrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t plaintext[16],
+encrypt(uint32_t K[40], uint32_t S[4][0x100], const uint8_t plaintext[16],
     uint8_t ciphertext[16])
 {
 	register uint32_t	r0,r1,r2,r3;
-	register uint32_t	t0,t1;
 
 	/* load/byteswap/whiten input */
-	r3 = K[3] ^ htole32(((uint32_t *)plaintext)[3]);
-	r2 = K[2] ^ htole32(((uint32_t *)plaintext)[2]);
-	r1 = K[1] ^ htole32(((uint32_t *)plaintext)[1]);
 	r0 = K[0] ^ htole32(((uint32_t *)plaintext)[0]);
+	r1 = K[1] ^ htole32(((uint32_t *)plaintext)[1]);
+	r2 = K[2] ^ htole32(((uint32_t *)plaintext)[2]);
+	r3 = K[3] ^ htole32(((uint32_t *)plaintext)[3]);
 
-	ENC_ROUND(t0, t1, r0, r1, r2, r3,  0, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1,  1, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3,  2, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1,  3, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3,  4, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1,  5, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3,  6, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1,  7, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3,  8, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1,  9, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3, 10, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1, 11, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3, 12, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1, 13, K, S);
-	ENC_ROUND(t0, t1, r0, r1, r2, r3, 14, K, S);
-	ENC_ROUND(t0, t1, r2, r3, r0, r1, 15, K, S);
+	ENC_ROUND(r0,r1, r2,r3,  0, K, S);
+	ENC_ROUND(r2,r3, r0,r1,  1, K, S);
+	ENC_ROUND(r0,r1, r2,r3,  2, K, S);
+	ENC_ROUND(r2,r3, r0,r1,  3, K, S);
+	ENC_ROUND(r0,r1, r2,r3,  4, K, S);
+	ENC_ROUND(r2,r3, r0,r1,  5, K, S);
+	ENC_ROUND(r0,r1, r2,r3,  6, K, S);
+	ENC_ROUND(r2,r3, r0,r1,  7, K, S);
+	ENC_ROUND(r0,r1, r2,r3,  8, K, S);
+	ENC_ROUND(r2,r3, r0,r1,  9, K, S);
+	ENC_ROUND(r0,r1, r2,r3, 10, K, S);
+	ENC_ROUND(r2,r3, r0,r1, 11, K, S);
+	ENC_ROUND(r0,r1, r2,r3, 12, K, S);
+	ENC_ROUND(r2,r3, r0,r1, 13, K, S);
+	ENC_ROUND(r0,r1, r2,r3, 14, K, S);
+	ENC_ROUND(r2,r3, r0,r1, 15, K, S);
 
 	/* load/byteswap/whiten output */
-	((uint32_t *)ciphertext)[3] = le32toh(r1 ^ K[7]);
-	((uint32_t *)ciphertext)[2] = le32toh(r0 ^ K[6]);
-	((uint32_t *)ciphertext)[1] = le32toh(r3 ^ K[5]);
 	((uint32_t *)ciphertext)[0] = le32toh(r2 ^ K[4]);
+	((uint32_t *)ciphertext)[1] = le32toh(r3 ^ K[5]);
+	((uint32_t *)ciphertext)[2] = le32toh(r0 ^ K[6]);
+	((uint32_t *)ciphertext)[3] = le32toh(r1 ^ K[7]);
 }
-
-/* one decryption round */
-#define DEC_ROUND(t0,t1, r0,r1,r2,r3, round, K, S)		do \
-{								\
-	t0 = fkh(r0, S);					\
-	t1 = fkh(ROL(r1, 8), S);				\
-	r2 = ROL(r2, 1) ^ (t0 + t1 + K[2 * round + 8]);		\
-	r3 = ROR(r3 ^ (t0 + 2 * t1 + K[2 * round + 9]), 1);	\
-}								while(0)
 
 static inline void
 decrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t ciphertext[16],
     uint8_t plaintext[16])
 {
 	register uint32_t r0,r1,r2,r3;
-	register uint32_t t0,t1;
 
 	/* load/byteswap/whiten input */
-	r3 = K[7] ^ htole32(((uint32_t *)ciphertext)[3]);
-	r2 = K[6] ^ htole32(((uint32_t *)ciphertext)[2]);
-	r1 = K[5] ^ htole32(((uint32_t *)ciphertext)[1]);
 	r0 = K[4] ^ htole32(((uint32_t *)ciphertext)[0]);
+	r1 = K[5] ^ htole32(((uint32_t *)ciphertext)[1]);
+	r2 = K[6] ^ htole32(((uint32_t *)ciphertext)[2]);
+	r3 = K[7] ^ htole32(((uint32_t *)ciphertext)[3]);
 
-	DEC_ROUND(t0, t1, r0, r1, r2, r3, 15, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1, 14, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3, 13, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1, 12, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3, 11, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1, 10, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3,  9, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1,  8, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3,  7, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1,  6, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3,  5, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1,  4, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3,  3, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1,  2, K, S);
-	DEC_ROUND(t0, t1, r0, r1, r2, r3,  1, K, S);
-	DEC_ROUND(t0, t1, r2, r3, r0, r1,  0, K, S);
+	DEC_ROUND(r0,r1, r2,r3, 15, K, S);
+	DEC_ROUND(r2,r3, r0,r1, 14, K, S);
+	DEC_ROUND(r0,r1, r2,r3, 13, K, S);
+	DEC_ROUND(r2,r3, r0,r1, 12, K, S);
+	DEC_ROUND(r0,r1, r2,r3, 11, K, S);
+	DEC_ROUND(r2,r3, r0,r1, 10, K, S);
+	DEC_ROUND(r0,r1, r2,r3,  9, K, S);
+	DEC_ROUND(r2,r3, r0,r1,  8, K, S);
+	DEC_ROUND(r0,r1, r2,r3,  7, K, S);
+	DEC_ROUND(r2,r3, r0,r1,  6, K, S);
+	DEC_ROUND(r0,r1, r2,r3,  5, K, S);
+	DEC_ROUND(r2,r3, r0,r1,  4, K, S);
+	DEC_ROUND(r0,r1, r2,r3,  3, K, S);
+	DEC_ROUND(r2,r3, r0,r1,  2, K, S);
+	DEC_ROUND(r0,r1, r2,r3,  1, K, S);
+	DEC_ROUND(r2,r3, r0,r1,  0, K, S);
 
 	/* load/byteswap/whiten output */
-	((uint32_t *)plaintext)[3] = le32toh(r1 ^ K[3]);
-	((uint32_t *)plaintext)[2] = le32toh(r0 ^ K[2]);
-	((uint32_t *)plaintext)[1] = le32toh(r3 ^ K[1]);
 	((uint32_t *)plaintext)[0] = le32toh(r2 ^ K[0]);
+	((uint32_t *)plaintext)[1] = le32toh(r3 ^ K[1]);
+	((uint32_t *)plaintext)[2] = le32toh(r0 ^ K[2]);
+	((uint32_t *)plaintext)[3] = le32toh(r1 ^ K[3]);
 }
 
 /* the key schedule routine */
 static void
-keySched(const uint8_t M[], uint16_t N, uint32_t *S, uint32_t K[40],
-    uint8_t k)
+key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40])
 {
 	uint32_t	Me[4];
 	uint32_t	Mo[4];
+	uint8_t		full_key_buf[TWOFISH_KEYMAX];
 	uint8_t		vector[8];
+	const uint8_t	*key;
+	/* full_sz = ceil(size/8)*8 */
+	uint8_t		full_sz = (sz + 7) & ~7;
+	uint8_t		word_pairs = full_sz / 8;
 
-	/* 2*i+1 gets as large as 127 */
-	for (uint8_t i = 0; i < k; i++) {
-		Me[i] = htole32(((const uint32_t*)M)[2 * i]);
-		Mo[i] = htole32(((const uint32_t*)M)[2 * i + 1]);
+	if (sz != full_sz) {
+		/* sz != 0 mod 8; copy to new buffer and pad with zeros
+		 * until it is */
+		memcpy(full_key_buf, user_key, sz);
+		memset(full_key_buf + sz, 0, full_sz - sz);
+		key = full_key_buf;
+	} else
+		key = user_key;
+
+	for (uint8_t i = 0; i < word_pairs; i++) {
+		Me[i] = htole32(((const uint32_t *)key)[2 * i    ]);
+		Mo[i] = htole32(((const uint32_t *)key)[2 * i + 1]);
+
+		/* copy b0(Me[i]) to vector[0], ...; LE systems need no
+		 * swap, but BE systems do */
+		((uint32_t *)vector)[0] = htole32(Me[i]);
+		((uint32_t *)vector)[1] = htole32(Mo[i]);
+		S[word_pairs - i - 1] = rs_mat_mult(vector);
 	}
 
-	for (uint8_t i = 0; i < k; i++) {
-		for (uint8_t j = 0; j < 4; j++) vector[j]     = b_n(Me[i], j);
-		for (uint8_t j = 0; j < 4; j++) vector[j + 4] = b_n(Mo[i], j);
-		S[k - i - 1] = RSMatrixMultiply(vector);
-	}
 	for (uint8_t i = 0; i < 20; i++) {
-		uint32_t A = h(2 * i * RHO, Me, k);
-		uint32_t B = ROL(h(2 * i * RHO + RHO, Mo, k), 8);
+		uint32_t A = tf_h(2 * i * RHO, Me, word_pairs);
+		uint32_t B = ROL(tf_h(2 * i * RHO + RHO, Mo, word_pairs), 8);
 		K[2 * i] = A + B;
 		K[2 * i + 1] = ROL(A + 2 * B, 9);
 	}
@@ -315,7 +348,6 @@ static void Itest(uint16_t n)
     uint32_t *KS;
     uint32_t K[40];
     int i;
-    uint8_t Kk;
 
     memset(ct, 0, 16);
     memset(nct, 0, 16);
@@ -325,13 +357,13 @@ static void Itest(uint16_t n)
     for (i=0; i<49; i++)
     {
 	uint32_t KS[4];
-	uint8_t Kk = (n + 63) / 64;
+	uint8_t word_pairs = (n + 63) / 64;
 
 	memcpy(k, k1, 16);
 	memcpy(k+16, k2, 16);
 
-	keySched(k, n, KS, K, Kk);
-	fullKey(KS, Kk, QF);
+	key_sched(k, n/8, KS, K);
+	full_key(KS, word_pairs, QF);
 	/*printSubkeys(K);*/
 	memcpy(nct, ct, 16);
 	encrypt(K, QF, nct, nct);
@@ -378,12 +410,12 @@ static void bench()
     double diff;
     uint32_t S[2];
     int i;
-    uint8_t k = 2;
+    uint8_t word_pairs = 2;
 
     memset(text, 0, 16);
     memset(key, 0, 32);
-    keySched(key, 128, S, K, k);
-    fullKey(S, k, QF);
+    key_sched(key, 16, S, K);
+    full_key(S, word_pairs, QF);
 
     gettimeofday(&tv_start, NULL);
     for (i=0; i < NUMTIMES; i++)
@@ -405,15 +437,15 @@ int main()
     uint8_t text[16];
     uint8_t key[32];
     uint32_t S[2];
-    uint8_t k = 2;
+    uint8_t word_pairs = 2;
 
     /* a few tests to make sure we didn't break anything */
 #if 1
     /*test encryption of null string with null key*/
     memset(text, 0, 16);
     memset(key, 0, 32);
-    keySched(key, 128, S, K, k);
-    fullKey(S, k, QF);
+    key_sched(key, 16, S, K);
+    full_key(S, word_pairs, QF);
     fflush(stdout);
 
     puts("before"); printHex(text, 16); printf("\n");
@@ -428,8 +460,8 @@ int main()
 	         "\xB6\xBF\xEC\x2F\x2A\xE8\xC3\x5A", 16);
     memcpy(text, "\xD4\x91\xDB\x16\xE7\xB1\xC3\x9E"
 	         "\x86\xCB\x08\x6B\x78\x9F\x54\x19", 16);
-    keySched(key, 128, S, K, k);
-    fullKey(S, k, QF);
+    key_sched(key, 16, S, K);
+    full_key(S, word_pairs, QF);
     printf("before-->"); printHex(text, 16); printf("\n");
     encrypt(K, QF, text, text);
     printf("after--->"); printHex(text, 16); printf("\n");
@@ -448,12 +480,12 @@ bool
 twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz)
 {
 	uint32_t	S[4];
-	uint8_t		k = sz / 8;
+	uint8_t		word_pairs = (sz + 7) / 8;
 
-	if (sz != 16 && sz != 24 && sz != 32) return false;
+	if (!sz || sz > 32) return false;
 
-	keySched(keydata, sz * 8, S, ctx->K, k);
-	fullKey(S, k, ctx->QF);
+	key_sched(keydata, sz, S, ctx->K);
+	full_key(S, word_pairs, ctx->QF);
 	return true;
 }
 

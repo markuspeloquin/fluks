@@ -21,12 +21,18 @@
 #	include <cstddef>
 #	include <tr1/cstdint>
 
+	const size_t TWOFISH_KEYMIN = 16;
+	const size_t TWOFISH_KEYMAX = 32;
+	const size_t TWOFISH_KEYSTEP = 8;
 	const size_t TWOFISH_BLOCK = 16;
 #else
 #	include <stdbool.h>
 #	include <stddef.h>
 #	include <stdint.h>
 
+#	define TWOFISH_KEYMIN 16
+#	define TWOFISH_KEYMAX 32
+#	define TWOFISH_KEYSTEP 8
 #	define TWOFISH_BLOCK 16
 #endif
 
