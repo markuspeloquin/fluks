@@ -1,11 +1,11 @@
 #summary How to build fluks.
 
-= Introduction =
+= Building fluks =
 
-fluks depends on a few libraries: libdevmapper, libuuid, and boost.  It also uses an obscure build system called bjam (with other names, as well).
+fluks depends on a few libraries: libdevmapper, libuuid, and boost.  It also uses an obscure build system called bjam (with other names, as well).  bjam (Boost.Jam) is derived from Perforce Jam, and is a part of Boost.Build.
 
 
-= Details =
+== Details ==
 
 libdevmapper comes with Device-mapper from [http://sources.redhat.com/dm/ sources.redhat.com/dm].
 
@@ -19,4 +19,8 @@ After the libraries are installed, from the main source directory:
 bjam release
 }}}
 
-bjam is derived from Perforce jam, is also known as Boost.Jam, and is a part of Boost.Build.
+The resulting binary will be found in the `release/` directory.
+
+== Source code documentation ==
+
+The source code documentation uses Doxygen.  Running `doxygen` or `make doc` will build the HTML.
