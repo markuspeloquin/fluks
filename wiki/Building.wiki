@@ -2,7 +2,7 @@
 
 = Building fluks =
 
-fluks depends on a few libraries: libdevmapper, libuuid, and boost.  It also uses an obscure build system called bjam (with other names, as well).  bjam (Boost.Jam) is derived from Perforce Jam, and is a part of Boost.Build.
+fluks depends on a few libraries: libdevmapper, libuuid, and boost.  It also uses an obscure build system called bjam (with other names, as well).  bjam (Boost.Jam) is derived from FTJam, Perforce Jam before that, and is a part of Boost.Build.
 
 
 == Details ==
