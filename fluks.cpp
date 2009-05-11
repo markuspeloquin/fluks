@@ -267,7 +267,7 @@ main(int argc, char **argv)
 		return 0;
 	}
 
-	enum { CLOSE, CREATE, DUMP, LIST_MODES, OPEN,
+	enum { NO_CMD, CLOSE, CREATE, DUMP, LIST_MODES, OPEN,
 	    ADD_PASS, REVOKE_PASS, UUID } command;
 	uint8_t command_count = 0;
 
@@ -372,6 +372,8 @@ main(int argc, char **argv)
 
 	// execute the command
 	switch (command) {
+	case NO_CMD:
+		break;
 	case CLOSE: {
 		std::string name = var_map["close"].as<std::string>();
 		if (!pretend) {
