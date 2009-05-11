@@ -30,14 +30,16 @@ struct Assertion : std::exception {
 	std::string _msg;
 };
 
-#ifndef NDEBUG
-inline void
-Assert(bool cond, const std::string &msg)
-{
-	if (!cond) throw Assertion(msg);
-}
+#ifndef NASSERT
+// use macro to short-circuit the second argument's evaluation
+#	define Assert(cond, msg)			do \
+	{						\
+		if (cond) throw Assertion(msg);		\
+	}						while(0)
 #else
-#define Assert(a,b) do{}while(0)
+#	define Assert(cond, msg)			do \
+	{						\
+	}						while(0)
 #endif
 
 

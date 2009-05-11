@@ -18,7 +18,8 @@ lib fluks_crypto
 
 	# -D_BSD_SOURCE needed for proper endian macros
 	: <define>_BSD_SOURCE
-#	<variant>release:<define>NDEBUG
+	<variant>release:<define>NDEBUG
+#	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
 exe fluks
@@ -32,7 +33,8 @@ exe fluks
 	boost_regex boost_system devmapper ssl uuid
 
 	: <define>_BSD_SOURCE
-#	<variant>release:<define>NDEBUG
+	<variant>release:<define>NDEBUG
+#	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
 exe run_test
@@ -44,7 +46,8 @@ exe run_test
 	boost_system ssl
 
 	: <define>_BSD_SOURCE
-#	<variant>release:<define>NDEBUG
+	<variant>release:<define>NDEBUG
+#	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
 install dist
