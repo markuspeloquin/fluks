@@ -92,7 +92,7 @@ public:
 	 *
 	 * \param type	The cipher to use
 	 * \return	An object to en/decrypt with.  It's meant to be used
-	 *	with the XXX_encrypt() and XXX_decrypt() functions.
+	 *	with the *_encrypt() and *_decrypt() functions.
 	 */
 	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
 
