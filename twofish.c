@@ -367,7 +367,6 @@ static void Itest(uint16_t n)
 	/*printSubkeys(K);*/
 	memcpy(nct, ct, 16);
 	encrypt(K, QF, nct, nct);
-	/*        encrypt(K, QF, nct, nct);   FIXME--ATC*/
 	printf("\nI=%d\n", i+1);
 	printf("KEY=");
 	printHex(k, n/8);

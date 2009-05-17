@@ -162,8 +162,9 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	_hdr->mk_iterations = mk_iterations;
 
 	// hash the master key
-	pbkdf2(_hash_type, _master_key.get(), _hdr->sz_key, _hdr->mk_salt,
-	    _hdr->mk_iterations, _hdr->mk_digest, SZ_MK_DIGEST);
+	pbkdf2(_hash_type, _master_key.get(), _hdr->sz_key,
+	    _hdr->mk_salt, SZ_SALT, _hdr->mk_iterations,
+	    _hdr->mk_digest, SZ_MK_DIGEST);
 
 	// LUKS defines off_base as
 	//	floor(sizeof(phdr) / sz_sect) + 1,
@@ -306,17 +307,18 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	// benchmark the PBKDF2 function
 	const uint16_t ITER = 1000;
 	uint32_t micros = pbkdf2(_hash_type,
-	    reinterpret_cast<const uint8_t *>(passwd.c_str()),
-	    passwd.size(), avail->salt, ITER, pw_digest,
-	    sizeof(pw_digest), true);
+	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
+	    avail->salt, SZ_SALT, ITER,
+	    pw_digest, sizeof(pw_digest),
+	    true);
 
 	avail->iterations = ITER * check_time / micros;
 
 	// compute digest for realsies
 	pbkdf2(_hash_type,
-	    reinterpret_cast<const uint8_t *>(passwd.c_str()),
-	    passwd.size(), avail->salt, avail->iterations, pw_digest,
-	    sizeof(pw_digest));
+	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
+	    avail->salt, SZ_SALT, avail->iterations,
+	    pw_digest, sizeof(pw_digest));
 
 	// encrypt the master key with pw_digest
 	_key_crypt[avail_idx].reset(new uint8_t[sizeof(split_key)]);
@@ -587,9 +589,9 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 
 	// password => pw_digest
 	pbkdf2(_hash_type,
-	    reinterpret_cast<const uint8_t *>(passwd.c_str()),
-	    passwd.size(), key->salt, key->iterations, pw_digest,
-	    sizeof(pw_digest));
+	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
+	    key->salt, SZ_SALT, key->iterations,
+	    pw_digest, sizeof(pw_digest));
 
 	// disk => key_crypt
 	if (!_device->seekg(key->off_km * _sz_sect, std::ios_base::beg))
@@ -611,7 +613,8 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 	    _hash_type, master_key);
 
 	// master_key => key_digest
-	pbkdf2(_hash_type, master_key, _hdr->sz_key,
-	    _hdr->mk_salt, _hdr->mk_iterations, key_digest,
-	    SZ_MK_DIGEST);
+	pbkdf2(_hash_type,
+	    master_key, _hdr->sz_key,
+	    _hdr->mk_salt, SZ_SALT, _hdr->mk_iterations,
+	    key_digest, SZ_MK_DIGEST);
 }

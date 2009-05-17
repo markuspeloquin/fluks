@@ -32,6 +32,7 @@ namespace fluks {
  * \param[in] in	The data to hash.
  * \param[in] sz_in	The size of <code>in</code> in bytes.
  * \param[in] salt	To taste.
+ * \param[in] sz_salt	Size of <code>salt</code> in bytes.
  * \param[in] iterations	In a sense, this is how many times you hit
  *	'blend'.
  * \param[out] derived_key	The digest.
@@ -41,7 +42,7 @@ namespace fluks {
  *	microseconds) is returned.  Otherwise you get a magical number.
  */
 uint32_t	pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
-		    const uint8_t salt[SZ_SALT], uint32_t iterations,
+		    const uint8_t *salt, size_t sz_salt, uint32_t iterations,
 		    uint8_t *derived_key, uint32_t sz_key,
 		    bool benchmark=false);
 
