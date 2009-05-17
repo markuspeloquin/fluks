@@ -34,7 +34,7 @@ struct Assertion : std::exception {
 // use macro to short-circuit the second argument's evaluation
 #	define Assert(cond, msg)			do \
 	{						\
-		if (cond) throw Assertion(msg);		\
+		if (!(cond)) throw Assertion(msg);	\
 	}						while(0)
 #else
 #	define Assert(cond, msg)			do \
