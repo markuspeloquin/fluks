@@ -50,6 +50,8 @@ exe run_test
 #	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
+exe test/test_tiger : test/test_tiger.cpp fluks_crypto ;
+exe test/test_whirlpool : test/test_whirlpool.cpp fluks_crypto ;
 install dist
 	: fluks
 
