@@ -31,15 +31,22 @@ struct Assertion : std::exception {
 };
 
 #ifndef NASSERT
-// use macro to short-circuit the second argument's evaluation
-#	define Assert(cond, msg)			do \
-	{						\
-		if (!(cond)) throw Assertion(msg);	\
-	}						while(0)
+inline void Assert(bool cond, const std::string &msg)
+{
+	if (!cond) throw Assertion(msg);
+}
+/* macro version, which short-circuits evaluation of second argument, but
+ * it doesn't work well with namespaces */
+/*
+#	define Assert(cond, msg)				do \
+	{							\
+		if (!(cond)) throw fluks::Assertion(msg);	\
+	}							while(0)
+*/
 #else
-#	define Assert(cond, msg)			do \
-	{						\
-	}						while(0)
+#	define Assert(cond, msg)				do \
+	{							\
+	}							while(0)
 #endif
 
 

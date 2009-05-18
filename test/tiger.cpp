@@ -1,54 +1,14 @@
 #include <algorithm>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <vector>
 #include <boost/scoped_array.hpp>
 
+#include "common.hpp"
 #include "../errors.hpp"
 #include "../tiger.h"
 
 char *prog;
 
 namespace test {
-
-using namespace fluks;
-
-uint8_t
-dehex(char c)
-{
-	if ('0' <= c && c <= '9')	return c - '0';
-	if ('A' <= c && c <= 'F')	return 10 + c - 'A';
-	if ('a' <= c && c <= 'f')	return 10 + c - 'a';
-	Assert(0, std::string("bad hex character: ") + c);
-	return 0;
-}
-
-uint8_t *
-dehex(const std::string &hex, uint8_t *buf)
-{
-	char byte[2];
-	uint8_t *start = buf;
-	for (size_t i = 0; i < hex.size(); i++) {
-		byte[i&1] = hex[i];
-		if (i&1)
-			*buf++ = dehex(byte[0]) << 4 | dehex(byte[1]);
-	}
-	return start;
-}
-
-std::string
-hex(const uint8_t *buf, size_t sz)
-{
-	std::ostringstream out;
-	out << std::hex << std::setfill('0');
-	for (size_t i = 0; i < sz; i++) {
-		if (i && i % 32 == 0)
-			out << '\n';
-		out << std::setw(2) << (short)buf[i];
-	}
-	return out.str();
-}
 
 struct Test {
 	Test() : buf(0) {}
@@ -102,8 +62,8 @@ struct Test {
 
 	boost::scoped_array<uint8_t> buf;
 	size_t sz;
-	uint8_t res[TIGER_SZ_DIGEST];
-	uint8_t res0[TIGER_SZ_DIGEST];
+	uint8_t res[TIGER_SZ_DIGEST]; // target hash
+	uint8_t res0[TIGER_SZ_DIGEST]; // computed hash
 };
 
 }
