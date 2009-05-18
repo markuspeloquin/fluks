@@ -7,6 +7,9 @@
 #include "../cast6.h"
 
 char *prog;
+extern uint8_t cast6_iv_rotk[12][4];
+extern uint32_t cast6_iv_mask[12][4];
+extern uint8_t cast6_iv_out[12][CAST6_BLOCK];
 
 extern "C" void
 	cast6_encrypt_test(const struct cast6_ctx *,
@@ -33,12 +36,36 @@ std::string mask_string(const uint32_t mask[4])
 	return out.str();
 }
 
-bool run(const uint8_t *key, uint16_t szkey,
-    const uint8_t in[CAST6_BLOCK],
-    const uint8_t out[CAST6_BLOCK],
+bool check(uint8_t round,
     const uint8_t rotk[4],
     const uint32_t mask[4],
-    uint8_t round, bool encrypt)
+    const uint8_t out[CAST6_BLOCK])
+{
+	uint8_t i = round-1;
+
+	if (!std::equal(rotk, rotk + 4, cast6_iv_rotk[i])) {
+		std::cerr << '\n' << "ROTK FAIL: " << rotk_string(rotk)
+		    << "\n      got: " << rotk_string(cast6_iv_rotk[i])
+		    << '\n';
+		return false;
+	}
+	if (!std::equal(mask, mask + 4, cast6_iv_mask[i])) {
+		std::cerr << '\n' << "MASK FAIL: " << mask_string(mask)
+		    << "\n      got: " << mask_string(cast6_iv_mask[i])
+		    << '\n';
+		return false;
+	}
+	if (!std::equal(out, out + CAST6_BLOCK, cast6_iv_out[i])) {
+		std::cerr << '\n' << "OUT FAIL: " << hex(out, CAST6_BLOCK)
+		    << "\n     got: " << hex(cast6_iv_out[i], CAST6_BLOCK)
+		    << '\n';
+		return false;
+	}
+	return true;
+}
+
+bool run(const uint8_t *key, uint16_t szkey, const uint8_t in[CAST6_BLOCK],
+    bool encrypt)
 {
 	uint8_t buf[CAST6_BLOCK];
 	cast6_ctx ctx;
@@ -48,44 +75,11 @@ bool run(const uint8_t *key, uint16_t szkey,
 		return false;
 	}
 
-	uint8_t pos;
-	if (encrypt) {
-		pos = round - 1;
-		cast6_encrypt_test(&ctx, in, buf, round);
-	} else {
-		pos = 12 - round;
-		cast6_decrypt_test(&ctx, in, buf, round);
-	}
-
-	if (!std::equal(rotk, rotk + 4, ctx.Kr[pos])) {
-		std::cout << '\n' << "ROTK FAIL: " << rotk_string(rotk)
-		    << "\n      got: " << rotk_string(ctx.Kr[pos]) << '\n';
-		return false;
-	}
-	if (!std::equal(mask, mask + 4, ctx.Km[pos])) {
-		std::cout << '\n' << "MASK FAIL: " << mask_string(mask)
-		    << "\n      got: " << mask_string(ctx.Km[pos]) << '\n';
-		return false;
-	}
-	if (!std::equal(buf, buf + CAST6_BLOCK, out)) {
-		std::cout << '\n' << "OUT FAIL: "
-		    << hex(out, CAST6_BLOCK)
-		    << "\n got: " << hex(buf, CAST6_BLOCK) << '\n';
-		return false;
-	}
-
+	if (encrypt)
+		cast6_encrypt(&ctx, in, buf);
+	else
+		cast6_decrypt(&ctx, in, buf);
 	return true;
-}
-
-void reverse(uint8_t *buf, size_t sz)
-{
-	size_t i = 0;
-	size_t j = sz - 1;
-	while (i < j) {
-		uint8_t t = buf[j];
-		buf[j--] = buf[i];
-		buf[i++] = t;
-	}
 }
 
 bool run_script(const std::string &path)
@@ -150,12 +144,12 @@ bool run_script(const std::string &path)
 		} else if (boost::regex_match(line, matches, re_out)) {
 			std::string s = matches[1];
 			dehex(s, out);
-			all_good &= run(key, keysize, in, out, rotk, mask,
-			    round, encrypt);
-			std::copy(out, out + CAST6_BLOCK, in);
+			all_good &= check(round, rotk, mask, out);
 		} else if (boost::regex_match(line, matches, re_round)) {
 			std::string s = matches[1];
 			round = atoi(s.c_str());
+			if (round == 1)
+				all_good &= run(key, keysize, in, encrypt);
 		} else if (boost::regex_match(line, matches, re_rotk)) {
 			std::string s = matches[1];
 			rotk[0] = strtol(s.c_str(), 0, 16);
