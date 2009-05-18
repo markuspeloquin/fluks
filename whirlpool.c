@@ -642,21 +642,6 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 	uint64_t	state[8];    /* the cipher state */
 	uint64_t	L[8];
 
-#ifdef TRACE_INTERMEDIATE_VALUES
-	{
-		uint8_t		*buf_ = ctx->buf;
-		printf("The 8x8 matrix Z' derived from the data-string is "
-		    "as follows.\n");
-		for (uint8_t i = 0; i < WBLOCKBYTES/8; i++)
-			printf("    %02hhX %02hhX %02hhX %02hhX "
-			    "%02hhX %02hhX %02hhX %02hhX\n",
-			    buf_[0], buf_[1], buf_[2], buf_[3],
-			    buf_[4], buf_[5], buf_[6], buf_[7]);
-			buf_ += 8;
-		printf("\n");
-	}
-#endif /* ?TRACE_INTERMEDIATE_VALUES */
-
 	/* map the buffer to a block */
 	be_to_host64(block, buf, WBLOCKBYTES);
 
@@ -669,36 +654,6 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 	state[5] = block[5] ^ (K[5] = hash[5]);
 	state[6] = block[6] ^ (K[6] = hash[6]);
 	state[7] = block[7] ^ (K[7] = hash[7]);
-
-#ifdef TRACE_INTERMEDIATE_VALUES
-	printf("The K_0 matrix (from the initialization value IV) and "
-	    "X'' matrix are as follows.\n");
-	for (uint8_t i = 0; i < DIGESTBYTES/8; i++)
-		printf("    %02hhX %02hhX %02hhX %02hhX "
-		    "%02hhX %02hhX %02hhX %02hhX        "
-		    "%02hhX %02hhX %02hhX %02hhX "
-		    "%02hhX %02hhX %02hhX %02hhX\n",
-		    (uint8_t)(K[i] >> 56),
-		    (uint8_t)(K[i] >> 48),
-		    (uint8_t)(K[i] >> 40),
-		    (uint8_t)(K[i] >> 32),
-		    (uint8_t)(K[i] >> 24),
-		    (uint8_t)(K[i] >> 16),
-		    (uint8_t)(K[i] >>  8),
-		    (uint8_t)(K[i]      ),
-		    (uint8_t)(state[i] >> 56),
-		    (uint8_t)(state[i] >> 48),
-		    (uint8_t)(state[i] >> 40),
-		    (uint8_t)(state[i] >> 32),
-		    (uint8_t)(state[i] >> 24),
-		    (uint8_t)(state[i] >> 16),
-		    (uint8_t)(state[i] >>  8),
-		    (uint8_t)(state[i]      ));
-	printf("\n");
-	printf("The following are (hexadecimal representations of) the "
-	    "successive values of the variables K_i for i = 1 to 10 and "
-	    "W'.\n\n");
-#endif /* ?TRACE_INTERMEDIATE_VALUES */
 
 	/* iterate over all rounds */
 	for (uint8_t r = 0; r < ROUNDS; r++) {
@@ -865,33 +820,6 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 		state[5] = L[5];
 		state[6] = L[6];
 		state[7] = L[7];
-
-#ifdef TRACE_INTERMEDIATE_VALUES
-		printf("i = %d:\n", r);
-		for (uint8_t i = 0; i < DIGESTBYTES/8; i++)
-		    printf("    %02hhX %02hhX %02hhX %02hhX "
-			"%02hhX %02hhX %02hhX %02hhX        "
-			"%02hhX %02hhX %02hhX %02hhX "
-			"%02hhX %02hhX %02hhX %02hhX\n",
-			    (uint8_t)(K[i] >> 56),
-			    (uint8_t)(K[i] >> 48),
-			    (uint8_t)(K[i] >> 40),
-			    (uint8_t)(K[i] >> 32),
-			    (uint8_t)(K[i] >> 24),
-			    (uint8_t)(K[i] >> 16),
-			    (uint8_t)(K[i] >>  8),
-			    (uint8_t)(K[i]      ),
-			    (uint8_t)(state[i] >> 56),
-			    (uint8_t)(state[i] >> 48),
-			    (uint8_t)(state[i] >> 40),
-			    (uint8_t)(state[i] >> 32),
-			    (uint8_t)(state[i] >> 24),
-			    (uint8_t)(state[i] >> 16),
-			    (uint8_t)(state[i] >>  8),
-			    (uint8_t)(state[i]      ));
-		printf("\n");
-#endif /* ?TRACE_INTERMEDIATE_VALUES */
-
 	}
 	/* apply the Miyaguchi-Preneel compression function */
 	hash[0] ^= state[0] ^ block[0];
@@ -902,24 +830,6 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 	hash[5] ^= state[5] ^ block[5];
 	hash[6] ^= state[6] ^ block[6];
 	hash[7] ^= state[7] ^ block[7];
-
-#ifdef TRACE_INTERMEDIATE_VALUES
-	//printf("Intermediate hash value (after Miyaguchi-Preneel):\n");
-	printf("The value of Y' output from the round-function is "
-	    "as follows.\n");
-	for (uint8_t i = 0; i < DIGESTBYTES/8; i++)
-		printf("    %02hhX %02hhX %02hhX %02hhX "
-		    "%02hhX %02hhX %02hhX %02hhX\n",
-		    (uint8_t)(hash[i] >> 56),
-		    (uint8_t)(hash[i] >> 48),
-		    (uint8_t)(hash[i] >> 40),
-		    (uint8_t)(hash[i] >> 32),
-		    (uint8_t)(hash[i] >> 24),
-		    (uint8_t)(hash[i] >> 16),
-		    (uint8_t)(hash[i] >>  8),
-		    (uint8_t)(hash[i]      ));
-	printf("\n");
-#endif /* ?TRACE_INTERMEDIATE_VALUES */
 }
 
 /* Initialize the hashing state */

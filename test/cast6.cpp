@@ -7,16 +7,10 @@
 #include "../cast6.h"
 
 char *prog;
+
 extern uint8_t cast6_iv_rotk[12][4];
 extern uint32_t cast6_iv_mask[12][4];
 extern uint8_t cast6_iv_out[12][CAST6_BLOCK];
-
-extern "C" void
-	cast6_encrypt_test(const struct cast6_ctx *,
-	    const uint8_t[16], uint8_t[16], uint8_t);
-extern "C" void
-	cast6_decrypt_test(const struct cast6_ctx *,
-	    const uint8_t[16], uint8_t[16], uint8_t);
 
 namespace test {
 
