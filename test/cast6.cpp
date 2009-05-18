@@ -1,4 +1,3 @@
-#include <libgen.h>
 #include <unistd.h>
 
 #include <fstream>
@@ -102,11 +101,10 @@ bool run_script(const std::string &path)
 	uint8_t out[CAST6_BLOCK];
 	uint8_t rotk[4];
 	uint32_t mask[4];
-	size_t keysize;
-	uint8_t round;
-
+	size_t keysize = 0;
+	uint8_t round = 0;
 	bool all_good = true;
-	bool encrypt;
+	bool encrypt = false;
 
 	boost::regex re_keysize("KEYSIZE=(128|192|256)");
 	boost::regex re_key("KEY=([0-9A-Fa-f]+)");
@@ -201,7 +199,6 @@ int main(int argc, char **argv)
 	}
 
 	bool all_good = run_script("cast6.txt");
-	if (all_good) std::cout << basename(prog) << ": all tests passed\n";
 
 	return all_good ? 0 : 1;
 }

@@ -95,12 +95,11 @@ bool run_script(const std::string &path, enum type type)
 	uint8_t key[SERPENT_KEYMAX];
 	uint8_t ct[SERPENT_BLOCK];
 	uint8_t pt[SERPENT_BLOCK];
-	size_t keysize;
-	uint16_t i;
-
+	size_t keysize = 0;
+	uint16_t i = 0;
 	bool all_good = true;
 	bool have_job = false;
-	bool encrypt;
+	bool encrypt = false;
 
 	boost::regex expr("(KEYSIZE|I|KEY|CT|PT)=(.*)");
 	boost::regex re_digits("([0-9]+).*");
@@ -190,30 +189,34 @@ int main(int argc, char **argv)
 		return 1;
 	}
 	
+	bool verbose = false;
 	char *base = basename(prog);
 	bool all_good = true;
 
 	// these tests take a minute to complete each
 	/*
-	std::cerr << '(' << base << ": Monte Carlo decrypt "
-	    "[takes about a minute])\n";
+	if (verbose)
+		std::cerr << '(' << base << ": Monte Carlo decrypt "
+		    "[takes about a minute])\n";
 	all_good &= run_script("serpent_mc_dec.txt", monte_carlo);
 
-	std::cerr << '(' << base  << ": Monte Carlo encrypt "
-	    "[takes about a minute])\n";
+	if (verbose)
+		std::cerr << '(' << base  << ": Monte Carlo encrypt "
+		    "[takes about a minute])\n";
 	all_good &= run_script("serpent_mc_enc.txt", monte_carlo);
 	*/
 
-	std::cerr << '(' << base  << ": variable key, known text)\n";
+	if (verbose)
+		std::cerr << '(' << base  << ": variable key, known text)\n";
 	all_good &= run_script("serpent_varkey.txt", variable_key);
 
-	std::cerr << '(' << base  << ": variable text, known key)\n";
+	if (verbose)
+		std::cerr << '(' << base  << ": variable text, known key)\n";
 	all_good &= run_script("serpent_vartxt.txt", variable_txt);
 
-	std::cerr << '(' << base  << ": table, known text)\n";
+	if (verbose)
+		std::cerr << '(' << base  << ": table, known text)\n";
 	all_good &= run_script("serpent_table.txt", table);
-
-	if (all_good) std::cout << base << ": all tests passed\n";
 
 	return all_good ? 0 : 1;
 }
