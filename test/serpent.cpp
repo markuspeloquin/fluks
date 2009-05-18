@@ -1,3 +1,6 @@
+#include <libgen.h>
+#include <unistd.h>
+
 #include <fstream>
 #include <boost/regex.hpp>
 
@@ -58,7 +61,7 @@ bool run(uint16_t i, const uint8_t *key, uint16_t szkey,
 		}
 
 		if (!std::equal(correct, correct + SERPENT_BLOCK, buf)) {
-			std::cout << '\n' << std::setw(2) << i << " FAIL: "
+			std::cout << std::setw(2) << i << " FAIL: "
 			    << hex(correct, SERPENT_BLOCK)
 			    << "\n    got: " << hex(buf, SERPENT_BLOCK)
 			    << '\n';
@@ -67,29 +70,6 @@ bool run(uint16_t i, const uint8_t *key, uint16_t szkey,
 	default:;
 	}
 
-	uint16_t tests;
-	switch (type) {
-	case monte_carlo:
-		tests = 400 * 3;
-		break;
-	case table:
-		tests = 512 * 3;
-		break;
-	case variable_key:
-		tests = 128 + 192 + 256;
-		break;
-	case variable_txt:
-		tests = 128 * 3;
-		break;
-	}
-
-	if (i) {
-		// this works roughly at best
-		uint8_t dots0 = (i - 1) * 80 / tests;
-		uint8_t dots1 = i * 80 / tests;
-		if (dots0 != dots1)
-			std::cerr << '.';
-	}
 	return true;
 }
 
@@ -192,37 +172,48 @@ bool run_script(const std::string &path, enum type type)
 		}
 	}
 
-	std::cerr << '\n';
-
 	return all_good;
 }
 
 }
 
+// usage: ./serpent [DIR]
+// DIR contains the test scripts
 int main(int argc, char **argv)
 {
 	using namespace test;
 
 	prog = *argv;
 
+	if (argc > 1 && chdir(argv[1]) == -1) {
+		perror(prog);
+		return 1;
+	}
+	
+	char *base = basename(prog);
 	bool all_good = true;
 
-	std::cerr << "Monte Carlo decrypt (takes about a minute):\n";
+	// these tests take a minute to complete each
+	/*
+	std::cerr << '(' << base << ": Monte Carlo decrypt "
+	    "[takes about a minute])\n";
 	all_good &= run_script("serpent_mc_dec.txt", monte_carlo);
 
-	std::cerr << "Monte Carlo encrypt (takes about a minute):\n";
+	std::cerr << '(' << base  << ": Monte Carlo encrypt "
+	    "[takes about a minute])\n";
 	all_good &= run_script("serpent_mc_enc.txt", monte_carlo);
+	*/
 
-	std::cerr << "Variable key, known text:\n";
+	std::cerr << '(' << base  << ": variable key, known text)\n";
 	all_good &= run_script("serpent_varkey.txt", variable_key);
 
-	std::cerr << "Variable text, known key:\n";
+	std::cerr << '(' << base  << ": variable text, known key)\n";
 	all_good &= run_script("serpent_vartxt.txt", variable_txt);
 
-	std::cerr << "Table, known text:\n";
+	std::cerr << '(' << base  << ": table, known text)\n";
 	all_good &= run_script("serpent_table.txt", table);
 
-	if (all_good) std::cout << prog << ": all tests passed\n";
+	if (all_good) std::cout << base << ": all tests passed\n";
 
 	return all_good ? 0 : 1;
 }

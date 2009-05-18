@@ -1,3 +1,5 @@
+import testing ;
+
 using gcc
 	: # compiler version
 	: # c++ compile command
@@ -50,9 +52,20 @@ exe run_test
 #	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
-exe test/serpent : test/serpent.cpp boost_regex fluks_crypto ;
-exe test/tiger : test/tiger.cpp fluks_crypto ;
-exe test/whirlpool : test/whirlpool.cpp fluks_crypto ;
+
+obj test/cast6_t.o : cast6.c : <define>CAST6_TEST <define>_BSD_SOURCE ;
+
+unit-test test/cast6
+	: test/cast6.cpp test/cast6_t.o boost_regex
+	: <testing.arg>test
+	;
+unit-test test/serpent
+	: test/serpent.cpp boost_regex fluks_crypto
+	: <testing.arg>test
+	;
+unit-test test/tiger : test/tiger.cpp fluks_crypto ;
+unit-test test/whirlpool : test/whirlpool.cpp fluks_crypto ;
+
 install dist
 	: fluks
 

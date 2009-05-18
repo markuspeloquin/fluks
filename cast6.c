@@ -454,6 +454,8 @@ void
 cast6_encrypt(const struct cast6_ctx *ctx,
     const uint8_t plaintext[16], uint8_t ciphertext[16])
 {
+	/* the body of this function must match cast6_encrypt_test()
+	 * (except that the test version executes just one round) */
 	uint32_t block[4];
 	register uint32_t b0, b1, b2, b3;
 
@@ -489,6 +491,8 @@ void
 cast6_decrypt(const struct cast6_ctx *ctx,
     const uint8_t ciphertext[16], uint8_t plaintext[16])
 {
+	/* the body of this function must match cast6_decrypt_test()
+	 * (except that the test version executes just one round) */
 	uint32_t block[4];
 	register uint32_t b0, b1, b2, b3;
 
@@ -519,6 +523,106 @@ cast6_decrypt(const struct cast6_ctx *ctx,
 	block[3] = b3;
 	host_to_be32(plaintext, block, 16);
 }
+
+#ifdef CAST6_TEST
+void
+cast6_encrypt_test(const struct cast6_ctx *ctx,
+    const uint8_t plaintext[16], uint8_t ciphertext[16], uint8_t round)
+{
+	uint32_t block[4];
+	register uint32_t b0, b1, b2, b3;
+
+	/* copy to a 32-bit block, fixing any potential alignment or endian
+	 * issues */
+	be_to_host32(block, plaintext, 16);
+	b0 = block[0];
+	b1 = block[1];
+	b2 = block[2];
+	b3 = block[3];
+
+	switch (round) {
+	case 1:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 0], ctx->Km[ 0]);	break;
+	case 2:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 1], ctx->Km[ 1]);	break;
+	case 3:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 2], ctx->Km[ 2]);	break;
+	case 4:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 3], ctx->Km[ 3]);	break;
+	case 5:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 4], ctx->Km[ 4]);	break;
+	case 6:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 5], ctx->Km[ 5]);	break;
+	case 7:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 6], ctx->Km[ 6]);	break;
+	case 8:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 7], ctx->Km[ 7]);	break;
+	case 9:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 8], ctx->Km[ 8]);	break;
+	case 10:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 9], ctx->Km[ 9]);	break;
+	case 11:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[10], ctx->Km[10]);	break;
+	case 12:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[11], ctx->Km[11]);
+	}
+
+	block[0] = b0;
+	block[1] = b1;
+	block[2] = b2;
+	block[3] = b3;
+	host_to_be32(ciphertext, block, 16);
+}
+
+void
+cast6_decrypt_test(const struct cast6_ctx *ctx,
+    const uint8_t ciphertext[16], uint8_t plaintext[16], uint8_t round)
+{
+	uint32_t block[4];
+	register uint32_t b0, b1, b2, b3;
+
+	/* copy to a 32-bit block, fixing any potential alignment or endian
+	 * issues */
+	be_to_host32(block, ciphertext, 16);
+	b0 = block[0];
+	b1 = block[1];
+	b2 = block[2];
+	b3 = block[3];
+
+	switch (round) {
+	case 1:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[11], ctx->Km[11]);	break;
+	case 2:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[10], ctx->Km[10]);	break;
+	case 3:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 9], ctx->Km[ 9]);	break;
+	case 4:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 8], ctx->Km[ 8]);	break;
+	case 5:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 7], ctx->Km[ 7]);	break;
+	case 6:
+	beta_q(b0,b1,b2,b3,	ctx->Kr[ 6], ctx->Km[ 6]);	break;
+	case 7:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 5], ctx->Km[ 5]);	break;
+	case 8:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 4], ctx->Km[ 4]);	break;
+	case 9:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 3], ctx->Km[ 3]);	break;
+	case 10:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 2], ctx->Km[ 2]);	break;
+	case 11:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 1], ctx->Km[ 1]);	break;
+	case 12:
+	beta_qbar(b0,b1,b2,b3,	ctx->Kr[ 0], ctx->Km[ 0]);
+	}
+
+	block[0] = b0;
+	block[1] = b1;
+	block[2] = b2;
+	block[3] = b3;
+	host_to_be32(plaintext, block, 16);
+}
+#endif
 
 #ifdef GEN_TABLES
 /* generate tables and write to stdout; these tables are as defined in

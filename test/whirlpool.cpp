@@ -1,3 +1,5 @@
+#include <libgen.h>
+
 #include <algorithm>
 #include <vector>
 #include <boost/scoped_array.hpp>
@@ -141,7 +143,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (all_good) {
-		std::cout << prog << ": all tests passed\n";
+		std::cout << basename(prog) << ": all tests passed\n";
 		return 0;
 	}
 	return 1;
