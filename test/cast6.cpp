@@ -101,18 +101,10 @@ bool run_script(const std::string &path)
 	uint8_t out[CAST6_BLOCK];
 	uint8_t rotk[4];
 	uint32_t mask[4];
-<<<<<<< HEAD:test/cast6.cpp
 	size_t keysize = 0;
 	uint8_t round = 0;
 	bool all_good = true;
 	bool encrypt = false;
-=======
-	size_t keysize;
-	uint8_t round;
-
-	bool all_good = true;
-	bool encrypt;
->>>>>>> origin/master:test/cast6.cpp
 
 	boost::regex re_keysize("KEYSIZE=(128|192|256)");
 	boost::regex re_key("KEY=([0-9A-Fa-f]+)");
@@ -207,10 +199,6 @@ int main(int argc, char **argv)
 	}
 
 	bool all_good = run_script("cast6.txt");
-<<<<<<< HEAD:test/cast6.cpp
-=======
-	if (all_good) std::cout << basename(prog) << ": all tests passed\n";
->>>>>>> origin/master:test/cast6.cpp
 
 	return all_good ? 0 : 1;
 }

@@ -64,6 +64,10 @@ unit-test test/serpent
 	: <testing.arg>test
 	;
 unit-test test/tiger : test/tiger.cpp fluks_crypto ;
+unit-test test/twofish
+	: test/twofish.cpp boost_regex fluks_crypto
+	: <testing.arg>test
+	;
 unit-test test/whirlpool : test/whirlpool.cpp fluks_crypto ;
 
 install dist
