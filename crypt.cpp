@@ -12,16 +12,16 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <arpa/inet.h>
-
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <tr1/cstdint>
 
 #include "cipher.hpp"
 #include "crypt.hpp"
 #include "errors.hpp"
 #include "hash.hpp"
+#include "support.hpp"
 #include "util.hpp"
 
 namespace fluks {
@@ -213,13 +213,14 @@ fluks::ctr_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 	// copy all but last 4 bytes from 'iv' to 'pre'
 	std::copy(iv, iv + sz_blk - 4, pre);
 	// copy last 4 bytes into 'iv_tail'
-	iv_tail = ntohl(*reinterpret_cast<const uint32_t *>(iv + sz_blk - 4));
+	iv_tail = be32toh(
+	    *reinterpret_cast<const uint32_t *>(iv + sz_blk - 4));
 
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
 		// in effect, pre = iv XOR counter
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
-		    htonl(i ^ iv_tail);
+		    htobe32(i ^ iv_tail);
 
 		cipher->encrypt(pre, out);
 		xor_bufs(out, in, sz_blk, out);
@@ -234,7 +235,7 @@ fluks::ctr_encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 		uint8_t post[sz_blk];
 
 		*reinterpret_cast<uint32_t *>(pre + sz_blk - 4) =
-		    htonl(blocks ^ iv_tail);
+		    htobe32(blocks ^ iv_tail);
 
 		cipher->encrypt(pre, post);
 		xor_bufs(post, in, left, out);
@@ -491,16 +492,18 @@ fluks::encrypt(enum cipher_type type, enum block_mode block_mode,
 		return;
 	}
 
+	Assert(sz_sector % sz_blk == 0,
+	    "sector size must be a multiple of the cipher's block size");
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
 		switch (iv_mode) {
 		case IM_PLAIN:
 			*reinterpret_cast<uint32_t *>(iv) =
-			    host_little(start_sector + s);
+			    htole32(start_sector + s);
 			break;
 		case IM_ESSIV:
 			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
-			    host_little(start_sector + s);
+			    htole32(start_sector + s);
 			iv_crypt->encrypt(pre_essiv.get(), iv);
 			break;
 		case IM_UNDEFINED:
@@ -529,6 +532,13 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
     const uint8_t *key, size_t sz_key,
     const uint8_t *data, size_t sz_data, uint8_t *out)
 {
+	const Hash_traits *hash_traits = Hash_traits::traits(iv_hash);
+	std::cerr << "decrypting with "
+	    << Cipher_traits::traits(type)->name << ' '
+	    << block_mode_info::name(block_mode) << ' '
+	    << iv_mode_info::name(iv_mode) << ' '
+	    << (hash_traits ? hash_traits->name : "<no IV hash>") << '\n';
+
 	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
 	std::tr1::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint8_t> pre_essiv;
@@ -577,16 +587,18 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
 		return;
 	}
 
+	Assert(sz_sector % sz_blk == 0,
+	    "sector size must be a multiple of the cipher's block size");
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
 		switch (iv_mode) {
 		case IM_PLAIN:
 			*reinterpret_cast<uint32_t *>(iv) =
-			    host_little(start_sector + s);
+			    htole32(start_sector + s);
 			break;
 		case IM_ESSIV:
 			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
-			    host_little(start_sector + s);
+			    htole32(start_sector + s);
 			iv_crypt->encrypt(pre_essiv.get(), iv);
 			break;
 		case IM_UNDEFINED:

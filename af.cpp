@@ -12,8 +12,6 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <arpa/inet.h>
-
 #include <algorithm>
 
 #include <openssl/rand.h>
@@ -92,7 +90,7 @@ hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 
 		hashfn->init();
 		// prefix with an IV
-		iv = htonl(i);
+		iv = htobe32(i);
 		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		hashfn->add(in, sz_blk);
 		hashfn->end(out);
@@ -108,7 +106,7 @@ hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 		uint8_t full[sz_blk];
 		hashfn->init();
 		// prefix with an IV
-		iv = htonl(whole);
+		iv = htobe32(whole);
 		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		hashfn->add(in, left);
 		hashfn->end(full);
@@ -136,7 +134,7 @@ hash2(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 
 		hashfn->init();
 		// prefix with an IV
-		iv = htonl(i);
+		iv = htobe32(i);
 		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		// key difference between hash1() and hash2() [part un]:
 		hashfn->add(in, sz);
@@ -152,7 +150,7 @@ hash2(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 		uint8_t full[sz_blk];
 		hashfn->init();
 		// prefix with an IV
-		iv = htonl(whole);
+		iv = htobe32(whole);
 		hashfn->add(reinterpret_cast<uint8_t *>(&iv), 4);
 		// key difference between hash1() and hash2() [part deux]:
 		hashfn->add(in, sz);

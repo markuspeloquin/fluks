@@ -35,6 +35,9 @@
 #ifndef BIG_ENDIAN
 #	error "BIG_ENDIAN not defined"
 #endif
+#ifndef LITTLE_ENDIAN
+#	error "LITTLE_ENDIAN not defined"
+#endif
 
 #ifdef __cplusplus
 #	define INLINE inline

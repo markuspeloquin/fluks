@@ -50,8 +50,8 @@ pbkdf2_f(Hmac_function *hmacfn,
 
 	uint8_t u[hmacfn->traits()->digest_size];
 
-	// switch from 0-indexing to 1-indexing
-	index = htonl(index + 1);
+	// '+ 1': switch from 0-indexing to 1-indexing
+	index = htobe32(index + 1);
 
 	// compute U_0
 	hmacfn->init(passwd, sz_passwd);

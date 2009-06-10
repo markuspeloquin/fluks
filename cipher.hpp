@@ -172,8 +172,8 @@ public:
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
 		if (_dir != DIR_ENCRYPT) {
-			if (!AES_set_encrypt_key(_key_data.get(), _sz * 8,
-			    &_key))
+			if (AES_set_encrypt_key(_key_data.get(), _sz * 8,
+			    &_key) < 0)
 				throw Ssl_crypt_error();
 			_dir = DIR_ENCRYPT;
 		}
@@ -184,8 +184,8 @@ public:
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
 		if (_dir != DIR_DECRYPT) {
-			if (!AES_set_decrypt_key(_key_data.get(), _sz * 8,
-			    &_key))
+			if (AES_set_decrypt_key(_key_data.get(), _sz * 8,
+			    &_key) < 0)
 				throw Ssl_crypt_error();
 			_dir = DIR_DECRYPT;
 		}

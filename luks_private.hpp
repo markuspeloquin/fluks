@@ -12,58 +12,16 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <arpa/inet.h>
-
 #include "endian.h"
-
-namespace fluks {
-
-inline void
-endian_switch(uint32_t &x)
-{	x = htonl(x); }
-
-inline void
-endian_switch(uint16_t &x)
-{	x = htons(x); }
-
-}
-
-inline uint16_t
-fluks::host_little(uint16_t x)
-{
-#if BYTE_ORDER == BIG_ENDIAN
-	return (x & 0x00ff) << 8 | (x & 0xff00) >> 8;
-#else
-	return x;
-#endif
-}
-
-inline uint32_t
-fluks::host_little(uint32_t x)
-{
-#if BYTE_ORDER == BIG_ENDIAN
-	return
-	    (x & 0x000000ff) << 24 |
-	    (x & 0x0000ff00) << 8 |
-	    (x & 0x00ff0000) >> 8 |
-	    (x & 0xff000000) >> 24;
-#else
-	return x;
-#endif
-}
 
 inline void
 fluks::endian_switch(struct phdr1 *h, bool process_keys)
 {
-#if BYTE_ORDER == BIG_ENDIAN
-	// don't bother with the rest of the function, though the preprocessor
-	// and the inlining compiler would eliminate most of it anyway
-	return;
-#else
-	endian_switch(h->version);
-	endian_switch(h->off_payload);
-	endian_switch(h->sz_key);
-	endian_switch(h->mk_iterations);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	h->version = htobe16(h->version);
+	h->off_payload = htobe32(h->off_payload);
+	h->sz_key = htobe32(h->sz_key);
+	h->mk_iterations = htobe32(h->mk_iterations);
 	if (!process_keys) return;
 	for (uint8_t i = 0; i < NUM_KEYS; i++)
 		endian_switch(h->keys + i);
@@ -73,12 +31,10 @@ fluks::endian_switch(struct phdr1 *h, bool process_keys)
 inline void
 fluks::endian_switch(struct key *k)
 {
-#if BYTE_ORDER == BIG_ENDIAN
-	return;
-#else
-	endian_switch(k->active);
-	endian_switch(k->iterations);
-	endian_switch(k->off_km);
-	endian_switch(k->stripes);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	k->active = htobe32(k->active);
+	k->iterations = htobe32(k->iterations);
+	k->off_km = htobe32(k->off_km);
+	k->stripes = htobe32(k->stripes);
 #endif
 }

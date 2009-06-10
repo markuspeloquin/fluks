@@ -172,10 +172,6 @@ enum hash_type {
 };
 
 
-// switch to/from LE
-inline uint16_t host_little(uint16_t);
-inline uint32_t	host_little(uint32_t);
-
 // switch to/from BE
 inline void	endian_switch(struct phdr1 *, bool process_keys);
 inline void	endian_switch(struct key *);
