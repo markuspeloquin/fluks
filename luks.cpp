@@ -343,13 +343,13 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	_dirty = true;
 }
 
-void
+std::string
 fluks::Luks_header::info() const
 {
 	const_cast<Luks_header *>(this)->set_mach_end(true);
+	std::ostringstream out;
 
-	std::cout
-	    <<   "version                             " << _hdr->version
+	out <<   "version                             " << _hdr->version
 	    << "\ncipher                              " << _hdr->cipher_name
 	    << "\ncipher mode                         " << _hdr->cipher_mode
 	    << "\nhash spec                           " << _hdr->hash_spec
@@ -357,9 +357,8 @@ fluks::Luks_header::info() const
 	    << "\nmaster key size                     " << _hdr->sz_key
 	    << "\nmaster key iterations               " << _hdr->mk_iterations
 	    << "\nuuid                                " << _hdr->uuid;
-	for (uint8_t i = 0; i < NUM_KEYS; i++) {
-		std::cout
-		    << "\nkey " << i << " state                         "
+	for (uint16_t i = 0; i < NUM_KEYS; i++) {
+		out << "\nkey " << i << " state                         "
 		    << (_hdr->keys[i].active == KEY_ENABLED ?
 		    "ENABLED" : "DISABLED")
 		    << "\nkey " << i << " iterations                    "
@@ -369,7 +368,7 @@ fluks::Luks_header::info() const
 		    << "\nkey " << i << " stripes                       "
 		    << _hdr->keys[i].stripes;
 	}
-	std::cout << '\n';
+	return out.str();
 }
 
 void
@@ -481,7 +480,8 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// empty string if it was empty initially
 	const Hash_traits *ivhash_traits = Hash_traits::traits(_iv_hash);
 	cipher = cipher_traits->name;
-	ivhash = ivhash_traits->name;
+	if (ivhash_traits)
+		ivhash = ivhash_traits->name;
 
 	// is the cipher spec supported by the system?
 	{

@@ -268,7 +268,7 @@ main(int argc, char **argv)
 	}
 
 	enum { NO_CMD, CLOSE, CREATE, DUMP, LIST_MODES, OPEN,
-	    ADD_PASS, REVOKE_PASS, UUID } command;
+	    ADD_PASS, REVOKE_PASS, UUID } command = NO_CMD;
 	uint8_t command_count = 0;
 
 	// get command
@@ -335,14 +335,12 @@ main(int argc, char **argv)
 			return 1;
 		}
 		device_path = var_map["device"].as<std::string>();
-		{
-			std::ios_base::openmode mode =
-			    std::ios_base::in | std::ios_base::binary;
-			if (!pretend)
-				mode |= std::ios_base::out;
-			device.reset(
-			    new std::sys_fstream(device_path.c_str(), mode));
-		}
+		std::ios_base::openmode mode =
+		    std::ios_base::in | std::ios_base::binary;
+		if (!pretend)
+			mode |= std::ios_base::out;
+		device.reset(
+		    new std::sys_fstream(device_path.c_str(), mode));
 	}
 
 	// check urandom if needed, seed the random number generator if it
@@ -361,14 +359,20 @@ main(int argc, char **argv)
 
 	// open the header as needed
 	std::tr1::shared_ptr<Luks_header> header;
+	bool need_header = false;
 	switch (command) {
+	case NO_CMD:
+		if (info) need_header = true;
+		break;
 	case OPEN:
 	case ADD_PASS:
 	case REVOKE_PASS:
 	case UUID:
-		header.reset(new Luks_header(device));
+		need_header = true;
 	default:;
 	};
+	if (need_header)
+		header.reset(new Luks_header(device));
 
 	// execute the command
 	switch (command) {
@@ -529,7 +533,7 @@ main(int argc, char **argv)
 
 	if (info) {
 		if (header)
-			header->info();
+			std::cout << header->info() << '\n';
 		else
 			std::cout
 			    << "cannot print --info with current command\n";

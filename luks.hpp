@@ -287,8 +287,10 @@ public:
 	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
 	    throw (No_private_key, Slots_full);
 
-	/** Print the values in the header, except for the salts and digest. */
-	void info() const;
+	/** Format the values in the header, except for the salts and digest.
+	 *
+	 * \return	A string representation of the header. */
+	std::string info() const;
 
 	/** Disable a password slot
 	 *

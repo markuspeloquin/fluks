@@ -529,7 +529,7 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
     const uint8_t *key, size_t sz_key,
     const uint8_t *data, size_t sz_data, uint8_t *out)
 {
-	std::tr1::shared_ptr<Cipher> cipher(Cipher::create(type));
+	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
 	std::tr1::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint8_t> pre_essiv;
 	uint8_t		iv[cipher->traits()->block_size];
