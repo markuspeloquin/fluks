@@ -14,7 +14,6 @@
 
 #include <algorithm>
 #include <functional>
-#include <iostream>
 #include <tr1/cstdint>
 
 #include "cipher.hpp"
@@ -532,13 +531,6 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
     const uint8_t *key, size_t sz_key,
     const uint8_t *data, size_t sz_data, uint8_t *out)
 {
-	const Hash_traits *hash_traits = Hash_traits::traits(iv_hash);
-	std::cerr << "decrypting with "
-	    << Cipher_traits::traits(type)->name << ' '
-	    << block_mode_info::name(block_mode) << ' '
-	    << iv_mode_info::name(iv_mode) << ' '
-	    << (hash_traits ? hash_traits->name : "<no IV hash>") << '\n';
-
 	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
 	std::tr1::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint8_t> pre_essiv;
