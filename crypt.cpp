@@ -20,7 +20,6 @@
 #include "crypt.hpp"
 #include "errors.hpp"
 #include "hash.hpp"
-#include "support.hpp"
 #include "util.hpp"
 
 namespace fluks {
