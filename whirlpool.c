@@ -637,9 +637,9 @@ static const uint64_t rc[ROUNDS] = {
 static void
 process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 {
-	uint64_t	K[8];        /* the round key */
-	uint64_t	block[8];    /* mu(buffer) */
-	uint64_t	state[8];    /* the cipher state */
+	uint64_t	K[8];		/* the round key */
+	uint64_t	block[8];	/* mu(buffer) */
+	uint64_t	state[8];	/* the cipher state */
 	uint64_t	L[8];
 
 	/* map the buffer to a block */
