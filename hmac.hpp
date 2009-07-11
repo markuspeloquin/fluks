@@ -124,7 +124,7 @@ public:
 	void init(const uint8_t *key, size_t sz) throw ();
 	void add(const uint8_t *buf, size_t sz) throw ()
 	{	_hashfn->add(buf, sz); }
-	void end(uint8_t *out) throw();
+	void end(uint8_t *out) throw ();
 
 private:
 	Hmac_impl(const Hmac_impl &h) : Hmac_function(0) {}

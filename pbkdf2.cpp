@@ -13,7 +13,6 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include <algorithm>
-#include <boost/timer.hpp>
 
 #include "hmac.hpp"
 #include "pbkdf2.hpp"
@@ -74,17 +73,16 @@ pbkdf2_f(Hmac_function *hmacfn,
 }} // end anonymous namespace
 
 // Password-Based Key Derivation Function, version 2 (from PKCS #5 v2.0)
-uint32_t
+void
 fluks::pbkdf2(enum hash_type type,
     const uint8_t *in, uint32_t sz_in,
     const uint8_t *salt, size_t sz_salt,
-    uint32_t iterations, uint8_t *derived_key, uint32_t sz_key,
-    bool benchmark)
+    uint32_t iterations,
+    uint8_t *derived_key, uint32_t sz_key)
+    throw (Bad_spec)
 {
-	if (type == HT_UNDEFINED) return 0;
-	std::auto_ptr<boost::timer> timer;
-	if (benchmark)
-		timer.reset(new boost::timer);
+	if (type == HT_UNDEFINED)
+		throw Bad_spec("PBKDF2 needs a hash function");
 	uint32_t sz_hash = Hash_traits::traits(type)->digest_size;
 
 	// 1.
@@ -126,10 +124,4 @@ fluks::pbkdf2(enum hash_type type,
 		std::copy(buf_partial, buf_partial + partial,
 		    derived_key + blocks * sz_hash);
 	}
-
-	if (benchmark)
-		return static_cast<uint32_t>(timer->elapsed() * 1000000.0);
-
-	// it's magic
-	return 0x6d616765;
 }

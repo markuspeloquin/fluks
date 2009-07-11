@@ -19,6 +19,7 @@
 #include <string>
 #include <tr1/cstdint>
 
+#include "errors.hpp"
 #include "luks.hpp"
 
 namespace fluks {
@@ -37,14 +38,14 @@ namespace fluks {
  *	'blend'.
  * \param[out] derived_key	The digest.
  * \param[in] sz_key	The size of <code>derived_key</code> in bytes.
- * \param[in] benchmark	Set to true to benchmark the algorithm.
- * \return	If <code>benchmark</code> is true, the time spent (in
- *	microseconds) is returned.  Otherwise you get a magical number.
+ * \throw Bad_spec	<code>type</code> is invalid.
  */
-uint32_t	pbkdf2(enum hash_type type, const uint8_t *in, uint32_t sz_in,
-		    const uint8_t *salt, size_t sz_salt, uint32_t iterations,
-		    uint8_t *derived_key, uint32_t sz_key,
-		    bool benchmark=false);
+void		pbkdf2(enum hash_type type,
+		    const uint8_t *in, uint32_t sz_in,
+		    const uint8_t *salt, size_t sz_salt,
+		    uint32_t iterations,
+		    uint8_t *derived_key, uint32_t sz_key)
+		    throw (Bad_spec);
 
 }
 

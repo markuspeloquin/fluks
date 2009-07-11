@@ -126,7 +126,7 @@ struct Safety : std::exception {
 
 
 struct Slots_full : std::exception {
-	~Slots_full() throw() {}
+	~Slots_full() throw () {}
 	const char *what() const throw ()
 	{	return "All key slots are used."; }
 };
@@ -135,7 +135,7 @@ struct Slots_full : std::exception {
 /** An SSL error wrapping exception type. */
 struct Ssl_error : virtual std::exception {
 	Ssl_error();
-	~Ssl_error() throw() {}
+	~Ssl_error() throw () {}
 	const char *what() throw ()
 	{	return _msg.c_str(); }
 

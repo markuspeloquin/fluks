@@ -17,6 +17,7 @@
 #include <iostream>
 #include <sstream>
 #include <boost/regex.hpp>
+#include <boost/timer.hpp>
 
 #include <openssl/rand.h>
 
@@ -35,6 +36,8 @@
 
 namespace fluks {
 namespace {
+
+const uint16_t	PBKDF2_BENCH_ITER = 10000;
 
 std::string	make_mode(const std::string &, const std::string &,
 		    const std::string &);
@@ -305,14 +308,14 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	uint8_t pw_digest[_hdr->sz_key];
 
 	// benchmark the PBKDF2 function
-	const uint16_t ITER = 1000;
-	uint32_t micros = pbkdf2(_hash_type,
+	boost::timer timer;
+	pbkdf2(_hash_type,
 	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
-	    avail->salt, SZ_SALT, ITER,
-	    pw_digest, sizeof(pw_digest),
-	    true);
-
-	avail->iterations = ITER * check_time / micros;
+	    avail->salt, SZ_SALT, PBKDF2_BENCH_ITER,
+	    pw_digest, sizeof(pw_digest));
+	// timer.elapsed() gives seconds
+	avail->iterations = static_cast<uint32_t>(
+	    PBKDF2_BENCH_ITER * check_time / (timer.elapsed() * 1000000));
 
 	// compute digest for realsies
 	pbkdf2(_hash_type,
