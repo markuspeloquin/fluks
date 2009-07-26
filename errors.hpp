@@ -61,6 +61,16 @@ struct Bad_spec : std::exception {
 	std::string _msg;
 };
 
+struct Bad_uuid : std::exception {
+	Bad_uuid(const std::string &uuid) : _msg("Bad UUID: ")
+	{	_msg += uuid; }
+	~Bad_uuid() throw () {}
+	const char *what() const throw ()
+	{	return _msg.c_str(); }
+
+	std::string _msg;
+};
+
 
 struct Crypt_error : virtual std::exception {
 	Crypt_error(const std::string &msg) : _msg("Crypto error:")

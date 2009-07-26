@@ -19,6 +19,8 @@
 #include <string>
 #include <tr1/cstdint>
 
+#include <uuid/uuid.h>
+
 #include "errors.hpp"
 
 namespace fluks {
@@ -39,12 +41,16 @@ void	dm_close(const std::string &name) throw (Dm_error);
  *	documentation)
  * \param key		The master key
  * \param sz_key	The size of the key in bytes
+ * \param uuid		The UUID of the device
  * \param device_path	The pathname of the device
  * \throw Dm_error	An error occurred
  */
-void	dm_open(const std::string &name, uint64_t start_sector,
-	    uint64_t num_sectors, const std::string &cipher_spec,
-	    const uint8_t *key, size_t sz_key, const std::string &device_path)
+void	dm_open(const std::string &name,
+	    uint64_t start_sector, uint64_t num_sectors,
+	    const std::string &cipher_spec,
+	    const uint8_t *key, size_t sz_key,
+	    const uuid_t uuid,
+	    const std::string &device_path)
 	    throw (Dm_error);
 }
 

@@ -96,6 +96,8 @@ public:
 			throw Dm_error(log_output);
 	}
 
+	void set_uuid(const uuid_t uuid) throw (Dm_error);
+
 	void run() throw (Dm_error)
 	{
 		log_output = "";
@@ -148,6 +150,17 @@ Device_mapper::add_crypt_target(
 		throw Dm_error(log_output);
 }
 
+void
+Device_mapper::set_uuid(const uuid_t uuid) throw (Dm_error)
+{
+	char uuid_hex[2 * sizeof(uuid_t) + 1];
+	uuid_unparse(uuid, uuid_hex);
+
+	log_output = "";
+	if (!dm_task_set_uuid(_task, uuid_hex))
+		throw Dm_error(log_output);
+}
+
 } // end anon namespace
 }
 
@@ -160,13 +173,17 @@ fluks::dm_close(const std::string &name) throw (Dm_error)
 }
 
 void
-fluks::dm_open(const std::string &name, uint64_t start_sector,
-    uint64_t num_sectors, const std::string &cipher_spec,
-    const uint8_t *key, size_t sz_key, const std::string &device_path)
+fluks::dm_open(const std::string &name,
+    uint64_t start_sector, uint64_t num_sectors,
+    const std::string &cipher_spec,
+    const uint8_t *key, size_t sz_key,
+    const uuid_t uuid,
+    const std::string &device_path)
     throw (Dm_error)
 {
 	Device_mapper task(DM_DEVICE_CREATE);
 	task.set_name(name);
+	task.set_uuid(uuid);
 	task.add_crypt_target(start_sector, num_sectors, cipher_spec,
 	    key, sz_key, device_path);
 	task.run();

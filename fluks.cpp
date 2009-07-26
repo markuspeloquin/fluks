@@ -170,9 +170,14 @@ void
 usage(const boost::program_options::options_description &desc)
 {
 	std::cout
-	    << "usage: " << prog << " COMMAND [OPTION ...] [DEVICE]\n\n"
-	    "DEVICE is usually required, except for the --close and\n"
-	    "--list-modes commands\n"
+	    << "Usage: " << prog << " COMMAND [OPTION ...] [DEVICE]\n"
+	    "DEVICE is usually required, except for the --close and "
+	    "--list-modes commands\n\n"
+	    "Most common:\n"
+	    "    " << prog
+	    << " --create -sSIZE -cCIPHER_SPEC -hHASH [OPTION ...] DEVICE\n"
+	    "    " << prog << " --open NAME [OPTION ...] DEVICE\n"
+	    "    " << prog << " --close NAME [OPTION ...]\n"
 	    << desc;
 }
 
@@ -459,10 +464,17 @@ main(int argc, char **argv)
 		uint32_t num_sect = num_sectors(*device);
 
 		if (!pretend) {
-			dm_open(name, header->sectors(),
-			    num_sect - header->sectors(),
-			    header->cipher_spec(), master_key.first,
-			    master_key.second, device_path);
+			std::string uuid_str = header->uuid();
+			uuid_t uuid;
+			if (uuid_parse(uuid_str.c_str(), uuid) != 0)
+				throw Bad_uuid(uuid_str);
+
+			dm_open(name,
+			    header->sectors(), num_sect - header->sectors(),
+			    header->cipher_spec(),
+			    master_key.first, master_key.second,
+			    uuid,
+			    device_path);
 			std::cout << "Mapping added\n";
 		}
 
