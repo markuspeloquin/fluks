@@ -444,9 +444,11 @@ fluks::encrypt(enum cipher_type type, enum block_mode block_mode,
 {
 	std::tr1::shared_ptr<Cipher> cipher(Cipher::create(type));
 	std::tr1::shared_ptr<Cipher> iv_crypt;
-	boost::scoped_array<uint8_t> pre_essiv;
-	uint8_t		iv[cipher->traits()->block_size];
+	boost::scoped_array<uint32_t> pre_essiv32;
+	uint32_t	iv32[cipher->traits()->block_size / 4];
 
+	uint8_t		*iv = reinterpret_cast<uint8_t *>(iv32);
+	uint8_t 	*pre_essiv = 0;
 	size_t		sz_blk = cipher->traits()->block_size;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
@@ -459,8 +461,9 @@ fluks::encrypt(enum cipher_type type, enum block_mode block_mode,
 		break;
 	case IM_ESSIV:
 		iv_crypt = make_essiv_cipher(type, iv_hash, key, sz_key);
-		pre_essiv.reset(new uint8_t[sz_blk]);
-		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
+		pre_essiv32.reset(new uint32_t[sz_blk / 4]);
+		pre_essiv = reinterpret_cast<uint8_t *>(pre_essiv32.get());
+		std::fill(pre_essiv, pre_essiv + sz_blk, 0);
 		break;
 	}
 
@@ -496,13 +499,11 @@ fluks::encrypt(enum cipher_type type, enum block_mode block_mode,
 		// generate a new IV for this sector
 		switch (iv_mode) {
 		case IM_PLAIN:
-			*reinterpret_cast<uint32_t *>(iv) =
-			    htole32(start_sector + s);
+			iv32[0] = htole32(start_sector + s);
 			break;
 		case IM_ESSIV:
-			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
-			    htole32(start_sector + s);
-			iv_crypt->encrypt(pre_essiv.get(), iv);
+			pre_essiv32.get()[0] = htole32(start_sector + s);
+			iv_crypt->encrypt(pre_essiv, iv);
 			break;
 		case IM_UNDEFINED:
 			// IV never changes
@@ -532,9 +533,11 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
 {
 	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
 	std::tr1::shared_ptr<Cipher> iv_crypt;
-	boost::scoped_array<uint8_t> pre_essiv;
-	uint8_t		iv[cipher->traits()->block_size];
+	boost::scoped_array<uint32_t> pre_essiv32;
+	uint32_t	iv32[cipher->traits()->block_size / 4];
 
+	uint8_t		*iv = reinterpret_cast<uint8_t *>(iv32);
+	uint8_t		*pre_essiv = 0;
 	size_t		sz_blk = cipher->traits()->block_size;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
@@ -547,8 +550,9 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
 		break;
 	case IM_ESSIV:
 		iv_crypt = make_essiv_cipher(type, iv_hash, key, sz_key);
-		pre_essiv.reset(new uint8_t[sz_blk]);
-		std::fill(pre_essiv.get(), pre_essiv.get() + sz_blk, 0);
+		pre_essiv32.reset(new uint32_t[sz_blk / 4]);
+		pre_essiv = reinterpret_cast<uint8_t *>(pre_essiv32.get());
+		std::fill(pre_essiv, pre_essiv + sz_blk, 0);
 		break;
 	}
 
@@ -584,13 +588,11 @@ fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
 		// generate a new IV for this sector
 		switch (iv_mode) {
 		case IM_PLAIN:
-			*reinterpret_cast<uint32_t *>(iv) =
-			    htole32(start_sector + s);
+			iv32[0] = htole32(start_sector + s);
 			break;
 		case IM_ESSIV:
-			*reinterpret_cast<uint32_t *>(pre_essiv.get()) =
-			    htole32(start_sector + s);
-			iv_crypt->encrypt(pre_essiv.get(), iv);
+			pre_essiv32.get()[0] = htole32(start_sector + s);
+			iv_crypt->encrypt(pre_essiv, iv);
 			break;
 		case IM_UNDEFINED:
 			// IV does not change

@@ -63,15 +63,18 @@ gf_mult(uint32_t a, uint32_t b, uint32_t modulus)
 static uint32_t
 rs_mat_mult(uint8_t sd[8])
 {
-	uint8_t		result[4];
+	union {
+		uint8_t		buf[4];
+		uint32_t	word;
+	} result;
 
 	for (uint8_t j = 0; j < 4; j++) {
 		uint8_t t = 0;
 		for (uint8_t k = 0; k < 8; k++)
 			t ^= gf_mult(rs[j][k], sd[k], RS_MOD);
-		result[j ^ 3] = t;
+		result.buf[j ^ 3] = t;
 	}
-	return be32toh(*(uint32_t *)result);
+	return be32toh(result.word);
 }
 
 /* the Zero-keyed h function (used by the key setup routine) */
@@ -291,7 +294,10 @@ key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40])
 	uint32_t	Me[4];
 	uint32_t	Mo[4];
 	uint8_t		full_key_buf[TWOFISH_KEYMAX];
-	uint8_t		vector[8];
+	union {
+		uint8_t		buf[8];
+		uint32_t	words[2];
+	} vector;
 	const uint8_t	*key;
 	/* full_sz = ceil(size/8)*8 */
 	uint8_t		full_sz = (sz + 7) & ~7;
@@ -310,11 +316,11 @@ key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40])
 		Me[i] = htole32(((const uint32_t *)key)[2 * i    ]);
 		Mo[i] = htole32(((const uint32_t *)key)[2 * i + 1]);
 
-		/* copy b0(Me[i]) to vector[0], ...; LE systems need no
+		/* copy b0(Me[i]) to vector.buf[0], ...; LE systems need no
 		 * swap, but BE systems do */
-		((uint32_t *)vector)[0] = htole32(Me[i]);
-		((uint32_t *)vector)[1] = htole32(Mo[i]);
-		S[word_pairs - i - 1] = rs_mat_mult(vector);
+		(vector.words)[0] = htole32(Me[i]);
+		(vector.words)[1] = htole32(Mo[i]);
+		S[word_pairs - i - 1] = rs_mat_mult(vector.buf);
 	}
 
 	for (uint8_t i = 0; i < 20; i++) {
