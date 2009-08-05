@@ -336,7 +336,7 @@ main(int argc, char **argv)
 	std::tr1::shared_ptr<std::sys_fstream> device;
 	if (need_device) {
 		if (var_map["device"].empty()) {
-			std::cerr << "must provide a device\n";
+			std::cout << "must provide a device\n";
 			return 1;
 		}
 		device_path = var_map["device"].as<std::string>();
@@ -346,6 +346,11 @@ main(int argc, char **argv)
 			mode |= std::ios_base::out;
 		device.reset(
 		    new std::sys_fstream(device_path.c_str(), mode));
+
+		if (!*device) {
+			std::cerr << prog << ": failed to open device\n";
+			return 1;
+		}
 	}
 
 	// check urandom if needed, seed the random number generator if it
