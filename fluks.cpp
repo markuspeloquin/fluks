@@ -34,6 +34,8 @@ char *prog;
 namespace fluks {
 namespace {
 
+const unsigned NUM_TRIES = 3;
+
 void
 list_modes()
 {
@@ -455,17 +457,23 @@ main(int argc, char **argv)
 		std::string name = var_map["open"].as<std::string>();
 
 		// read passphrase
-		std::string pass = prompt_passwd("Passphrase", false);
-		if (pass.empty())
-			return 1;
+		for (unsigned i = 0; i < NUM_TRIES; i++) {
+			std::string pass = prompt_passwd("Passphrase", false);
+			if (pass.empty())
+				return 1;
 
-		if (!header->read_key(pass)) {
-			std::cout << "Incorrect passphrase\n";
-			return 1;
+			if (!header->read_key(pass))
+				std::cout << "Incorrect passphrase\n";
+			else
+				break;
 		}
 
 		std::pair<const uint8_t *, size_t> master_key =
 		    header->master_key();
+		if (!master_key.first)
+			// could not be decrypted
+			return 1;
+
 		uint32_t num_sect = num_sectors(*device);
 
 		if (!pretend) {
