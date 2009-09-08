@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+# used by the Makefile to edit Doxyfile
+
+use strict;
+use warnings;
+
+sub usage {
+	print "Usage: $0 PROPERTY0 VALUE0 [PROPERTY1 VALUE1]...\n";
+}
+
+if (@ARGV < 2 || @ARGV % 2) {
+	usage;
+	exit 1;
+}
+
+my %map;
+for (my $i = 0; $i < @ARGV; $i += 2) {
+	$map{$ARGV[$i]} = $ARGV[$i + 1];
+}
+
+my $path_in = 'Doxyfile';
+my $path_out = '.Doxyfile.tmp';
+
+open my $doxy_in, '<', $path_in
+    or die "$0: failed to open $path_in: $!";
+open my $doxy_out, '>', $path_out
+    or die "$1: failed to open $path_out: $!";
+
+my $changes = 0;
+while (<$doxy_in>) {
+	my ($pfx, $name0) = /^(([A-Za-z_][A-Za-z0-9_]*) \s* = \s*)/x;
+	my $res;
+
+	if (defined $pfx and exists $map{$name0}) {
+		$res = "$pfx$map{$name0}\n";
+
+		# only replace the first match
+		delete $map{$name0};
+	} else {
+		# not a name=value line or wrong name
+		$res = $_;
+	}
+
+	print $doxy_out $res;
+}
+
+close $doxy_in;
+close $doxy_out;
+
+if (keys %map) {
+	print STDERR "$0: properties not found: ", join(', ', keys %map),
+	    "\n";
+	unlink $path_out;
+	exit 1;
+}
+
+unless (rename $path_out, $path_in) {
+	my $err = "$0: failed to replace $path_in: $!";
+	unlink $path_out;
+	die $err;
+}
+
+exit 0;
