@@ -11,6 +11,7 @@ lib boost_filesystem ;
 lib boost_program_options ;
 lib boost_regex ;
 lib boost_system ;
+lib crypto ;
 lib devmapper ;
 lib ssl ;
 lib uuid ;
@@ -21,6 +22,8 @@ lib fluks_crypto
 	# -D_BSD_SOURCE needed for proper endian macros
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
+# commented out until no asserts ever fire ever, which they don't but then
+# I'm the only user
 #	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
@@ -30,9 +33,19 @@ exe fluks
 	hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
 	support.cpp
 
+	# external libs, using static linking as a precaution (static
+	# libstdc++ absent, it isn't doable)
+	boost_filesystem/<link>static
+	boost_program_options/<link>static
+	boost_regex/<link>static
+	boost_system/<link>static
+	crypto/<link>static
+	devmapper/<link>static
+	ssl/<link>static
+	uuid/<link>static
+
+	# internal lib
 	fluks_crypto/<link>static
-	boost_filesystem boost_program_options
-	boost_regex boost_system devmapper ssl uuid
 
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
@@ -44,8 +57,12 @@ exe run_test
 	cipher.cpp crypt.cpp errors.cpp hash.cpp hmac.cpp
 	support.cpp
 
+	# external libs
+	boost_system
+	ssl
+
+	# internal lib
 	fluks_crypto/<link>static
-	boost_system ssl
 
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG

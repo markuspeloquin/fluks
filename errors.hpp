@@ -73,7 +73,7 @@ struct Bad_uuid : std::exception {
 
 
 struct Crypt_error : virtual std::exception {
-	Crypt_error(const std::string &msg) : _msg("Crypto error:")
+	Crypt_error(const std::string &msg) : _msg("Crypto error: ")
 	{	_msg += msg; }
 	~Crypt_error() throw () {}
 	const char *what() const throw ()
@@ -85,7 +85,7 @@ protected:
 
 
 struct Disk_error : std::exception {
-	Disk_error(const std::string &msg) : _msg("Disk error:")
+	Disk_error(const std::string &msg) : _msg("Disk error: ")
 	{	_msg += msg; }
 	~Disk_error() throw () {}
 	const char *what() const throw ()
