@@ -14,6 +14,7 @@ if (@ARGV < 2 || @ARGV % 2) {
 	exit 1;
 }
 
+# convert args to a map
 my %map;
 for (my $i = 0; $i < @ARGV; $i += 2) {
 	$map{$ARGV[$i]} = $ARGV[$i + 1];
@@ -29,14 +30,19 @@ open my $doxy_out, '>', $path_out
 
 my $changes = 0;
 while (<$doxy_in>) {
-	my ($pfx, $name0) = /^(([A-Za-z_][A-Za-z0-9_]*) \s* = \s*)/x;
+	# lines like:
+	#   "ID = VALUE_0"
+	# are replaced with if ID is in the map
+	#   "ID = VALUE_1"
+	my ($pfx, $name) = /^(([A-Za-z_][A-Za-z0-9_]*) \s* = \s*)/x;
 	my $res;
 
-	if (defined $pfx and exists $map{$name0}) {
-		$res = "$pfx$map{$name0}\n";
+	if (defined $pfx and exists $map{$name}) {
+		$res = "$pfx$map{$name}\n";
+		print "$0: Setting $name = $map{$name}\n";
 
 		# only replace the first match
-		delete $map{$name0};
+		delete $map{$name};
 	} else {
 		# not a name=value line or wrong name
 		$res = $_;
@@ -55,6 +61,7 @@ if (keys %map) {
 	exit 1;
 }
 
+# replace old Doxfile with new Doxyfile
 unless (rename $path_out, $path_in) {
 	my $err = "$0: failed to replace $path_in: $!";
 	unlink $path_out;
