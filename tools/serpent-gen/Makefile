@@ -1,4 +1,4 @@
-CFLAGS = -Wall -pipe -std=c99
+CFLAGS = -Wall -pipe -std=c99 -pedantic
 CFLAGS += -O3
 #CFLAGS += -O0 -g
 

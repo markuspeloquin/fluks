@@ -267,7 +267,7 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 		/* for each column in y[], find a column in vals[] that
 		 * matches */
 		for (i = 0; i < 4; i++) {
-			// already found
+			/* already found */
 			if (seq.indices[i] < MAX_VALS) continue;
 
 			/* check only the last column of vals[]; all
