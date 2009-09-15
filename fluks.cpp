@@ -212,6 +212,8 @@ main(int argc, char **argv)
 	    ("pass", "add a passphrase to a LUKS partition")
 	    ("revoke", "revoke a passphrase of a LUKS partition")
 	    ("uuid", "print the UUID of a LUKS partition")
+	    ("wipe", "securely erase the LUKS header (will prompt for "
+		"confirmation)")
 	    ;
 
 	po::options_description general_desc("General Options");
@@ -275,7 +277,7 @@ main(int argc, char **argv)
 	}
 
 	enum { NO_CMD, CLOSE, CREATE, DUMP, LIST_MODES, OPEN,
-	    ADD_PASS, REVOKE_PASS, UUID } command = NO_CMD;
+	    ADD_PASS, REVOKE_PASS, UUID, WIPE } command = NO_CMD;
 	uint8_t command_count = 0;
 
 	// get command
@@ -311,6 +313,10 @@ main(int argc, char **argv)
 		command = UUID;
 		command_count++;
 	}
+	if (!var_map["wipe"].empty()) {
+		command = WIPE;
+		command_count++;
+	}
 
 	if (command_count > 1) {
 		std::cout << "must specify at most one command\n";
@@ -329,6 +335,7 @@ main(int argc, char **argv)
 	case ADD_PASS:
 	case REVOKE_PASS:
 	case UUID:
+	case WIPE:
 		need_device = true;
 	default:;
 	}
@@ -360,6 +367,7 @@ main(int argc, char **argv)
 	switch (command) {
 	case CREATE:
 	case ADD_PASS:
+	case WIPE:
 		if (!fs::exists(fs::path("/dev/urandom"))) {
 			std::cerr << "/dev/urandom not found, "
 			    "seeding PRNG with clock\n";
@@ -380,6 +388,7 @@ main(int argc, char **argv)
 	case ADD_PASS:
 	case REVOKE_PASS:
 	case UUID:
+	case WIPE:
 		need_header = true;
 	default:;
 	};
@@ -553,6 +562,24 @@ main(int argc, char **argv)
 	}
 	case UUID:
 		std::cout << header->uuid() << '\n';
+		break;
+	case WIPE:
+		std::cout << "Are you certain you want to wipe the header, "
+		    "making all data inaccessible?\n";
+		std::string passwd = prompt_passwd("Enter passphrase",
+		    false);
+		if (passwd.empty())
+			return 1;
+		if (!header->read_key(passwd)) {
+			std::cerr << "Matching key material not found\n";
+			return 1;
+		}
+
+		if (!pretend) {
+			header->wipe();
+			std::cout << "LUKS header wiped.  I hope you knew "
+			    "what you were doing.\n";
+		}
 		break;
 	}
 

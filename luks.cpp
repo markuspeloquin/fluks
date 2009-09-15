@@ -392,6 +392,16 @@ fluks::Luks_header::revoke_slot(uint8_t which) throw (Safety)
 }
 
 void
+fluks::Luks_header::wipe() throw (Disk_error, Safety)
+{
+	if (!_master_key)
+		throw Safety("will not allow the header to be wiped while "
+		    "the master key is unknown");
+
+	gutmann_erase(*_device, 0, _hdr->off_payload);
+}
+
+void
 fluks::Luks_header::save() throw (Disk_error)
 {
 	if (!_dirty) return;

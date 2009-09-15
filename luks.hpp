@@ -313,6 +313,8 @@ public:
 		return true;
 	}
 
+	void wipe() throw (Disk_error, Safety);
+
 	void save() throw (Disk_error);
 
 private:
