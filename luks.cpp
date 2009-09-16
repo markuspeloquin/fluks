@@ -142,7 +142,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	_key_need_erase(NUM_KEYS, false)
 {
 	init_cipher_spec(cipher_spec, sz_key);
-	_master_key.reset(new uint8_t[_hdr->sz_key]); // FIXME
+	_master_key.reset(new uint8_t[_hdr->sz_key]);
 
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec("unrecognized hash");
