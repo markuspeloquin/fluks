@@ -177,7 +177,7 @@ usage(const boost::program_options::options_description &desc)
 	    "--list-modes commands\n\n"
 	    "Most common:\n"
 	    "    " << prog
-	    << " --create -sSIZE -cCIPHER_SPEC -hHASH [OPTION ...] DEVICE\n"
+	    << " --create [-sSIZE] -cCIPHER_SPEC -hHASH [OPTION ...] DEVICE\n"
 	    "    " << prog << " --open NAME [OPTION ...] DEVICE\n"
 	    "    " << prog << " --close NAME [OPTION ...]\n"
 	    << desc;
