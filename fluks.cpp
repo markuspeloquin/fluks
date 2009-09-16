@@ -225,7 +225,7 @@ main(int argc, char **argv)
 	po::options_description create_desc("Creation Options");
 	create_desc.add_options()
 	    ("size,s", po::value<unsigned>(),
-		"[required] master key size in bits")
+		"master key size in bits (default: maximum possible)")
 	    ("cipher,c", po::value<std::string>(),
 		"[required] cipher spec, formatted as\n"
 		"CIPHER-BLOCK_MODE[-IV_MODE[:IV_HASH]])\n"
@@ -409,10 +409,7 @@ main(int argc, char **argv)
 	}
 	case CREATE: {
 		// check for mandatory options
-		if (var_map["size"].empty()) {
-			std::cout << "--create requires a --size option\n";
-			return 1;
-		} else if (var_map["cipher"].empty()) {
+		if (var_map["cipher"].empty()) {
 			std::cout << "--create requires a --cipher option\n";
 			return 1;
 		} else if (var_map["hash"].empty()) {
@@ -420,18 +417,24 @@ main(int argc, char **argv)
 			return 1;
 		}
 
-		unsigned sz_key = var_map["size"].as<unsigned>();
+		int sz_key;
 		std::string cipher = var_map["cipher"].as<std::string>();
 		std::string hash = var_map["hash"].as<std::string>();
 		unsigned iter = var_map["iter"].as<unsigned>();
 		unsigned stripes = var_map["stripes"].as<unsigned>();
 
-		if (sz_key & 7) {
-			std::cerr << "--size argument must be a multiple "
-			    "of 8\n";
-			return 1;
+		if (var_map["size"].empty())
+			sz_key = -1;
+		else {
+			sz_key = static_cast<int>(
+			    var_map["size"].as<unsigned>());
+			if (sz_key & 7) {
+				std::cerr << "--size argument must be a "
+				    "multiple of 8\n";
+				return 1;
+			}
+			sz_key /= 8;
 		}
-		sz_key /= 8;
 
 		// create the header
 		header.reset(new Luks_header(device, sz_key, cipher, hash,

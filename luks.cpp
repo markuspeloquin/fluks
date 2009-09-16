@@ -128,12 +128,12 @@ fluks::check_version_1(const struct phdr1 *header)
 }
 
 fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
-    uint32_t sz_key, const std::string &cipher_spec,
+    int32_t sz_key, const std::string &cipher_spec,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
     throw (boost::system::system_error, Bad_spec) :
 	_device(device),
 	_hdr(new struct phdr1),
-	_master_key(new uint8_t[sz_key]),
+	_master_key(0),
 	_sz_sect(sector_size(*device)),
 	_hash_type(Hash_traits::type(hash_spec)),
 	_proved_passwd(-1),
@@ -142,6 +142,8 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	_key_need_erase(NUM_KEYS, false)
 {
 	init_cipher_spec(cipher_spec, sz_key);
+	_master_key.reset(new uint8_t[_hdr->sz_key]); // FIXME
+
 	if (_hash_type == HT_UNDEFINED)
 		throw Bad_spec("unrecognized hash");
 
@@ -457,7 +459,7 @@ fluks::Luks_header::save() throw (Disk_error)
 // throwing Bad_spec as necessary
 void
 fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
-    size_t sz_key)
+    int32_t sz_key)
 {
 	set_mach_end(true);
 
@@ -513,7 +515,10 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 	// XXX only *after* dm-crypt attempts to use them.
 
 	const std::vector<uint16_t> &sizes = cipher_traits->key_sizes;
-	if (!std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
+	if (sz_key == -1)
+		// use the largest possible size
+		sz_key = sizes.back();
+	else if (!std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
 		// sz_key not compatible with the cipher
 		std::ostringstream out;
 		out << "cipher `" << cipher
@@ -523,6 +528,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 			if (i != sizes.begin()) out << ',';
 			out << ' ' << *i * 8;
 		}
+		out << " (not " << sz_key << ')';
 		throw Bad_spec(out.str());
 	}
 	_hdr->sz_key = sz_key;
