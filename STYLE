@@ -1,15 +1,15 @@
 Header include order:
  - Alphabetize within subgroups, newlines between groups
- - Group 1
+ - System group
    - linux/*
    - sys/types.h
    - sys/*
    - networking
- - Group 2
-   - headers directly in /usr/include (e.g. stdint.h, unistd.h)
- - Group 3
+ - C group
+   - headers directly in /usr/include (e.g. fcntl.h, unistd.h)
+ - C++ group
    - Standard C++ headers
    - TR1 headers (e.g. tr1/memory)
    - Boost headers
- - Group 4
+ - Library groups
    - external libraries (e.g. OpenSSL), grouped by library

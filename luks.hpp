@@ -183,7 +183,8 @@ public:
 	/** Create a new header
 	 *
 	 * \param device	The device to read/write
-	 * \param sz_key	The byte length of the master key.
+	 * \param sz_key	The byte length of the master key, or -1
+	 *	for the largest possible for the cipher.
 	 * \param cipher_spec	Cipher to encrypt with.  Format is
 	 *	CIPHER [ - CHAINMODE [ - IV_OPTS [ : IV_MODE ]]], where
 	 *	brackets indicate optional parts and without spaces.
@@ -198,7 +199,7 @@ public:
 	 *	determining the sector size.
 	 */
 	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
-	    uint32_t sz_key, const std::string &cipher_spec,
+	    int32_t sz_key, const std::string &cipher_spec,
 	    const std::string &hash_spec, uint32_t mk_iterations=NUM_MK_ITER,
 	    uint32_t stripes=NUM_STRIPES)
 	    throw (boost::system::system_error, Bad_spec);
@@ -313,8 +314,17 @@ public:
 		return true;
 	}
 
+	/** Securely erase the LUKS header using the Gutmann algorithm.
+	 *
+	 * \throw Disk_error	Some write/seek failure.
+	 * \throw Safety	The private key hasn't been decrypted yet.
+	 */
 	void wipe() throw (Disk_error, Safety);
 
+	/** Commit the header and/or new key material to the disk.
+	 *
+	 * \throw Disk_error	Some write/seek failure.
+	 */
 	void save() throw (Disk_error);
 
 private:
@@ -325,7 +335,7 @@ private:
 			_mach_end = which;
 		}
 	}
-	void init_cipher_spec(const std::string &cipher_spec, size_t sz_key);
+	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key);
 
 	int8_t locate_passwd(const std::string &passwd) throw (Disk_error);
 
