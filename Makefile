@@ -10,7 +10,10 @@ Doxyfile:
     BUILTIN_STL_SUPPORT 	YES \
     EXTRACT_ALL 		YES \
     EXTRACT_LOCAL_CLASSES 	NO \
-    GENERATE_LATEX 		NO
+    GENERATE_LATEX 		NO \
+    MACRO_EXPANSION		YES \
+    EXPAND_ONLY_PREDEF		YES \
+    PREDEFINED			"__BEGIN_DECLS="
 
 clean:
 	rm -rf Doxyfile bin debug html release

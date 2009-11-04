@@ -34,15 +34,18 @@ while (<$doxy_in>) {
 	#   "ID = VALUE_0"
 	# are replaced with if ID is in the map
 	#   "ID = VALUE_1"
-	my ($pfx, $name) = /^(([A-Za-z_][A-Za-z0-9_]*) \s* = \s*)/x;
+	my ($pfx, $name) = /^(([A-Za-z_][A-Za-z0-9_]*) \s* =)/x;
 	my $res;
 
 	if (defined $pfx and exists $map{$name}) {
-		$res = "$pfx$map{$name}\n";
+		chomp $pfx;
+		$res = "$pfx $map{$name}\n";
 		print "$0: Setting $name = $map{$name}\n";
 
 		# only replace the first match
 		delete $map{$name};
+
+		print "`$_' changed to `$res'\n";
 	} else {
 		# not a name=value line or wrong name
 		$res = $_;
@@ -55,8 +58,8 @@ close $doxy_in;
 close $doxy_out;
 
 if (keys %map) {
-	print STDERR "$0: properties not found: ", join(', ', keys %map),
-	    "\n";
+	print STDERR "$0: properties not found: ",
+	    join(', ', sort keys %map), "\n";
 	unlink $path_out;
 	exit 1;
 }
