@@ -1,0 +1,39 @@
+fluks, 'free LUKS', is my unencumbered and nicer (than cryptsetup)
+implementation of the LUKS (Linux Unified Key Setup) standard for disk
+cryptography.  Basically, a header is written to disk that includes the
+private key in encrypted form, which is used to read/write from the disk.
+The private key can be encrypted by multiple passphrases, allowing for
+(1) easy to remember passphrases and (2) the ability to add, revoke, or
+change the allowed passphrases.
+
+A better place to find build/usage information:
+http://wiki.github.com/markuspeloquin/fluks
+
+Markus Peloquin <markus@cs.wisc.edu>
+
+========================================
+
+BUILDING
+
+    Dependencies:
+	libdevmapper from Device-mapper (sources.redhat.com/dm)
+	boost (boost.org), at least version 1.35.0
+	Boost.Build
+	libuuid (multiple sources):
+	    e2fsprogs-libs (e2fsprogs.sf.net)
+	    util-linux (freshmeat.net/projects/util-linux)
+	OpenSSL (openssl.org)
+
+    If you were wondering, libuuid is one of the few BSD-licensed libraries
+    in e2fsprogs/util-linux.  Now just run
+
+	$ bjam release
+
+    This will put a (mostly) statically-linked binary in the `release'
+    directory.
+
+INSTALLING
+
+    There is no installer.  Just copy the binary to a bin directory.
+
+	$ sudo cp release/fluks /usr/local/sbin

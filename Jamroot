@@ -22,8 +22,8 @@ lib fluks_crypto
 	# -D_BSD_SOURCE needed for proper endian macros
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
-# commented out until no asserts ever fire ever, which they don't but then
-# I'm the only user
+# commented out until no asserts ever fire ever in the program; they don't
+# but then I'm the only user
 #	<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
