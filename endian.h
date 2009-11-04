@@ -30,13 +30,13 @@
 #endif
 
 #ifndef BYTE_ORDER
-#	error "BYTE_ORDER not defined"
+#	error "BYTE_ORDER not defined, is _BSD_SOURCE defined?"
 #endif
 #ifndef BIG_ENDIAN
-#	error "BIG_ENDIAN not defined"
+#	error "BIG_ENDIAN not defined, is _BSD_SOURCE defined?"
 #endif
 #ifndef LITTLE_ENDIAN
-#	error "LITTLE_ENDIAN not defined"
+#	error "LITTLE_ENDIAN not defined, is _BSD_SOURCE defined?"
 #endif
 
 #ifdef __cplusplus
