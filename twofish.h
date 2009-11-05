@@ -63,8 +63,9 @@ bool	twofish_init(struct twofish_ctx *key, const uint8_t *keydata,
  * \param[in] in	The plaintext
  * \param[out] out	The ciphertext buffer
  */
-void	twofish_encrypt(struct twofish_ctx *key, const uint8_t *in,
-	    uint8_t *out);
+void	twofish_encrypt(struct twofish_ctx *key,
+	    const uint8_t in[TWOFISH_BLOCK],
+	    uint8_t out[TWOFISH_BLOCK]);
 
 /** Decrypt a block of ciphertext
  *
@@ -75,8 +76,9 @@ void	twofish_encrypt(struct twofish_ctx *key, const uint8_t *in,
  * \param[in] in	The ciphertext
  * \param[out] out	The plaintext buffer
  */
-void	twofish_decrypt(struct twofish_ctx *key, const uint8_t *in,
-	    uint8_t *out);
+void	twofish_decrypt(struct twofish_ctx *key,
+	    const uint8_t in[TWOFISH_BLOCK],
+	    uint8_t out[TWOFISH_BLOCK]);
 
 __END_DECLS
 
