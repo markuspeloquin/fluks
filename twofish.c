@@ -345,13 +345,15 @@ twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz)
 }
 
 void
-twofish_encrypt(struct twofish_ctx *ctx, const uint8_t *in, uint8_t *out)
+twofish_encrypt(struct twofish_ctx *ctx, const uint8_t in[TWOFISH_BLOCK],
+    uint8_t out[TWOFISH_BLOCK])
 {
 	encrypt(ctx->K, ctx->QF, in, out);
 }
 
 void
-twofish_decrypt(struct twofish_ctx *ctx, const uint8_t *in, uint8_t *out)
+twofish_decrypt(struct twofish_ctx *ctx, const uint8_t in[TWOFISH_BLOCK],
+    uint8_t out[TWOFISH_BLOCK])
 {
 	decrypt(ctx->K, ctx->QF, in, out);
 }
