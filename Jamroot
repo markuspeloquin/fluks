@@ -7,8 +7,8 @@ using gcc
 	<cxxflags>"-std=c++98"
 	<cflags>"-std=c99 -pedantic"
 	;
-lib boost_filesystem ;
-lib boost_program_options ;
+lib boost_filesystem-mt ;
+lib boost_program_options-mt ;
 lib boost_regex ;
 lib boost_system ;
 lib crypto ;
@@ -33,8 +33,8 @@ exe fluks
 	hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
 	support.cpp
 
-	boost_filesystem
-	boost_program_options
+	boost_filesystem-mt
+	boost_program_options-mt
 	boost_regex
 	boost_system
 	crypto
