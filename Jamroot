@@ -22,9 +22,9 @@ lib fluks_crypto
 	# -D_BSD_SOURCE needed for proper endian macros
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
-# commented out until no asserts ever fire ever in the program; they don't
-# but then I'm the only user
-#	<variant>release:<define>NASSERT
+	# commented out until no asserts ever fire ever in the program; they
+	# don't but then I'm the only user
+	#<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
 exe fluks
@@ -47,19 +47,13 @@ exe fluks
 
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
-#	<variant>release:<define>NASSERT
+	#<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 
-# using static linking as a precaution; I cannot seem to get it to link
-# completely staticly except manually:
-#	cc -o OUT -Wl,--start-group OBJ0 OBJ1 ... AR0 AR1 ... \
-#     	    -Wl,-Bstatic -lLIB0 -lLIB1 ... -lstdc++ -Wl,--end-group \
-#           -static -pthread
-# OBJ# => an object file (.o)
-# AR#  => an archive (.a)
-# LIB# => a library used directly (e.g. ssl, crypto)
-# with -O2 and stripped on amd64: 2.34 MB
+	# completely static linking
 	<link>static
+	<runtime-link>static
+	<threading>multi
 	;
 exe run_test
 	: run_test.cpp
@@ -75,7 +69,7 @@ exe run_test
 
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
-#	<variant>release:<define>NASSERT
+	#<variant>release:<define>NASSERT
 	<variant>debug:<define>DEBUG
 	;
 
