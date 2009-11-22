@@ -56,6 +56,7 @@ Lookup::type(const std::string &name)
 
 Lookup::Lookup()
 {
+	// name, min_key, max_key, key_step, blocksize, version
 	_map_traits[CT_AES] = Cipher_traits("aes", 16, 32, 8, 16, 1);
 	_map_traits[CT_BLOWFISH] = Cipher_traits("blowfish", 4, 56, 1, 8, 0);
 	_map_traits[CT_CAMELLIA] = Cipher_traits("camellia", 16, 32, 8, 16, 0);
