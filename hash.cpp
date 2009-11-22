@@ -56,6 +56,7 @@ Lookup::type(const std::string &name)
 
 Lookup::Lookup()
 {
+	// name, blocksize, digestsize, LUKS version
 	_map_traits[HT_MD5] = Hash_traits("md5", 64, 16, 0);
 	_map_traits[HT_RMD160] = Hash_traits("rmd160", 64, 20, 1);
 	_map_traits[HT_SHA1] = Hash_traits("sha1", 64, 20, 1);
