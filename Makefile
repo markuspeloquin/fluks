@@ -17,5 +17,3 @@ Doxyfile:
 
 clean:
 	rm -rf Doxyfile bin debug html release
-
-.PHONY: test
