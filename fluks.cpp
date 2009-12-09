@@ -168,6 +168,35 @@ prompt_passwd(const std::string &msg, bool repeat)
 	return pass;
 }
 
+/** Read in a passphrase from a file
+ *
+ * \param path	The pathname of the file.
+ * \retval ""	Error opening/reading file.
+ * \return	The passphrase the user entered.
+ */
+std::string
+read_passfile(const std::string &pathname)
+{
+	std::ifstream file(pathname.c_str());
+	if (!file) {
+		std::cerr << prog << ": failed to open passphrase file `"
+		    << pathname << "'\n";
+		return "";
+	}
+
+	std::string line;
+	if (!std::getline(file, line)) {
+		std::cerr << prog << ": failed to read passphrase file `"
+		    << pathname << "'\n";
+		return "";
+	}
+
+	// ideally, there will always be a newline
+	if (line[line.size()-1] == '\n')
+		line.resize(line.size()-1);
+	return line;
+}
+
 void
 usage(const boost::program_options::options_description &desc)
 {
@@ -219,6 +248,13 @@ main(int argc, char **argv)
 	po::options_description general_desc("General Options");
 	general_desc.add_options()
 	    ("info,i", "print the information in the header (after changes)")
+	    ("passfile", po::value <std::string>(),
+		"use the first line of this file instead of prompting for "
+		"the passphrase")
+	    ("newpassfile", po::value <std::string>(),
+		"like --passfile but for use with --pass command")
+	    ("revokepassfile", po::value <std::string>(),
+		"like --passfile but for use with --revoke command")
 	    ("pretend,p", "do not commit the changes to disk")
 	    ;
 
@@ -325,6 +361,9 @@ main(int argc, char **argv)
 
 	bool pretend = !var_map["pretend"].empty();
 	bool info = !var_map["info"].empty();
+	bool use_passfile = !var_map["passfile"].empty();
+	bool use_newpassfile = !var_map["newpassfile"].empty();
+	bool use_revokepassfile = !var_map["revokepassfile"].empty();
 
 	// both --info and certain commands require a device
 	bool need_device = info;
@@ -441,7 +480,12 @@ main(int argc, char **argv)
 		    iter, stripes));
 
 		// get a passphrase
-		std::string pass = prompt_passwd("Initial passphrase", true);
+		std::string pass;
+		if (use_passfile)
+			pass = read_passfile(
+			    var_map["passfile"].as<std::string>());
+		else
+			pass = prompt_passwd("Initial passphrase", true);
 		if (pass.empty())
 			return 1;
 		header->add_passwd(pass);
@@ -469,16 +513,26 @@ main(int argc, char **argv)
 		std::string name = var_map["open"].as<std::string>();
 
 		// read passphrase
-		for (unsigned i = 0; i < NUM_TRIES; i++) {
-			std::string pass = prompt_passwd("Passphrase", false);
+		std::string pass;
+		if (use_passfile) {
+			pass = read_passfile(
+			    var_map["passfile"].as<std::string>());
 			if (pass.empty())
 				return 1;
-
 			if (!header->read_key(pass))
 				std::cout << "Incorrect passphrase\n";
-			else
-				break;
-		}
+		} else
+			for (unsigned i = 0; i < NUM_TRIES; i++) {
+				std::string pass = prompt_passwd("Passphrase",
+				    false);
+				if (pass.empty())
+					return 1;
+
+				if (!header->read_key(pass))
+					std::cout << "Incorrect passphrase\n";
+				else
+					break;
+			}
 
 		std::pair<const uint8_t *, size_t> master_key =
 		    header->master_key();
@@ -508,18 +562,29 @@ main(int argc, char **argv)
 	case ADD_PASS: {
 		std::cout << "First enter a passphrase that has already "
 		    "been established with the partition\n";
-		std::string passwd = prompt_passwd("Existing passphrase",
-		    false);
-		if (passwd.empty())
+
+		// read passphrase
+		std::string pass;
+		if (use_passfile)
+			pass = read_passfile(
+			    var_map["passfile"].as<std::string>());
+		else
+			pass = prompt_passwd("Existing passphrase", false);
+		if (pass.empty())
 			return 1;
 
-		if (!header->read_key(passwd)) {
+		if (!header->read_key(pass)) {
 			std::cerr << "Matching key material not found\n";
 			return 1;
 		}
 
-		// get a passphrase
-		std::string newpass = prompt_passwd("New passphrase", true);
+		// read NEW passphrase
+		std::string newpass;
+		if (use_newpassfile)
+			newpass = read_passfile(
+			    var_map["newpassfile"].as<std::string>());
+		else
+			newpass = prompt_passwd("New passphrase", true);
 		if (newpass.empty())
 			return 1;
 
@@ -535,21 +600,33 @@ main(int argc, char **argv)
 	case REVOKE_PASS: {
 		std::cout << "First enter a passphrase that will NOT "
 		    "be revoked\n";
-		std::string passwd = prompt_passwd("Existing passphrase",
-		    false);
-		if (passwd.empty())
+
+		// read passphrase
+		std::string pass;
+		if (use_passfile)
+			pass = read_passfile(
+			    var_map["passfile"].as<std::string>());
+		else
+			pass = prompt_passwd("Existing passphrase", false);
+		if (pass.empty())
 			return 1;
 
-		if (!header->read_key(passwd)) {
+		if (!header->read_key(pass)) {
 			std::cerr << "Matching key material not found\n";
 			return 1;
 		}
 
 		std::cout << "Master key decrypted.\n";
 
+		// read REVOKE passphrase
+		std::string revoke;
+		if (use_revokepassfile)
+			revoke = read_passfile(
+			    var_map["revokepassfile"].as<std::string>());
+		else
 		std::string revoke = prompt_passwd("Passphrase to revoke",
 		    false);
-		if (passwd.empty())
+		if (revoke.empty())
 			return 1;
 
 		if (!header->revoke_passwd(revoke)) {
@@ -569,11 +646,18 @@ main(int argc, char **argv)
 	case WIPE:
 		std::cout << "Are you certain you want to wipe the header, "
 		    "making all data inaccessible?\n";
-		std::string passwd = prompt_passwd("Enter passphrase",
-		    false);
-		if (passwd.empty())
+
+		// read passphrase
+		std::string pass;
+		if (use_passfile)
+			pass = read_passfile(
+			    var_map["passfile"].as<std::string>());
+		else
+			pass = prompt_passwd("Enter passphrase", false);
+		if (pass.empty())
 			return 1;
-		if (!header->read_key(passwd)) {
+
+		if (!header->read_key(pass)) {
 			std::cerr << "Matching key material not found\n";
 			return 1;
 		}
