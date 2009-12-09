@@ -24,6 +24,8 @@
 namespace fluks {
 namespace {
 
+const size_t UUID_STR_LEN = 36;
+
 std::string log_output;
 
 extern "C" void
@@ -153,7 +155,7 @@ Device_mapper::add_crypt_target(
 void
 Device_mapper::set_uuid(const uuid_t uuid) throw (Dm_error)
 {
-	char uuid_hex[2 * sizeof(uuid_t) + 1];
+	char uuid_hex[UUID_STR_LEN + 1];
 	uuid_unparse(uuid, uuid_hex);
 
 	log_output = "";
