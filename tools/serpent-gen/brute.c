@@ -11,35 +11,42 @@
 #define MAX_VALS (MAX_OPS + 1)
 
 enum op_type { OP_BEGIN=0, OP_XOR=0, OP_AND, OP_OR, OP_NOT, OP_END };
-uint8_t op_args[] = { 2, 2, 2, 1, 0 };
+/* number of arguments of each op_type
+ * (op_type(i) takes OP_ARGS[i] arguments)*/
+uint8_t OP_ARGS[] = { 2, 2, 2, 1, 0 };
 
 struct op {
-	enum op_type type;
+	enum op_type	type;
 
-	/* if type==OP_NOT, j ignored; else, i<j */
-	uint8_t i;
-	uint8_t j;
+	/* indices of the operand temporaries (in vals); if type==OP_NOT,
+	 * j ignored; else, i<j */
+	uint8_t		i;
+	uint8_t		j;
 };
 
 struct op_chain {
-	struct op ops[MAX_OPS];
+	struct op	ops[MAX_OPS];
 	/* y_i's should be equal to the temporary corresponding to
-	 * column indices[i] in vals */
-	uint8_t indices[4];
-	/* operations with positions less than this should not change */
-	uint8_t hold;
-	/* ops used */
-	uint8_t sz;
+	 * column indices[i] in vals; put differently, vals contains all
+	 * intermediate and final values, and indices[i] is the index into
+	 * vals of the final value y_i */
+	uint8_t		indices[4];
+	/* the number of operations that will remain unchanged as they
+	 * produced a final y_i value */
+	uint8_t		hold;
+	/* the number of operations that currently are used; whenever a final
+	 * y_i value is found, hold==sz */
+	uint8_t		sz;
 
 	/* computed values for this configuration */
-	uint8_t vals[16][MAX_VALS];
-	bool dirty[MAX_VALS];
+	uint8_t		vals[16][MAX_VALS];
+	bool		dirty[MAX_VALS];
 };
 
 static void
 op_chain_init(struct op_chain *seq)
 {
-	uint8_t i;
+	uint8_t	i;
 
 	for (i = 0; i < MAX_OPS; i++) {
 		seq->ops[i].type = OP_BEGIN;
@@ -66,11 +73,11 @@ op_chain_init(struct op_chain *seq)
 static bool
 op_advance(struct op_chain *seq, uint8_t which_op)
 {
-	struct op *op = seq->ops + which_op;
-	bool push_type = false;
+	struct op	*op = seq->ops + which_op;
+	bool		push_type = false;
 
 	/* advance indices */
-	if (op_args[op->type] == 1) {
+	if (OP_ARGS[op->type] == 1) {
 		/* advance i */
 		if (++op->i == which_op + 4) {
 			/* i cannot advance; reset the only used index */
@@ -109,8 +116,8 @@ op_advance(struct op_chain *seq, uint8_t which_op)
 static void
 op_chain_advance(struct op_chain *seq)
 {
-	struct op *op;
-	uint8_t i = seq->sz;
+	uint8_t	i = seq->sz;
+
 	while (i > seq->hold) {
 		/* advance last op */
 		if (op_advance(seq, i - 1))
@@ -120,8 +127,8 @@ op_chain_advance(struct op_chain *seq)
 	}
 	if (i != seq->hold) return;
 
-	/* cannot advance the existing operators any more; advance  */
-	op = seq->ops + seq->sz++;
+	/* cannot advance the existing operators any more; add an operator  */
+	seq->sz++;
 }
 
 static inline void
@@ -136,7 +143,7 @@ run_chain(struct op_chain *seq)
 
 		/* for each input value */
 		for (uint8_t j = 0; j < 16; j++) {
-			register uint8_t r;
+			register uint8_t	r;
 
 			switch (op->type) {
 			case OP_XOR:
@@ -177,7 +184,8 @@ print_chain(FILE *out, const struct op_chain *seq)
 	}
 	fprintf(out, ";\n");
 	for (uint8_t i = 0; i < seq->sz; i++) {
-		char type = '\0';
+		char	type = '\0';
+
 		switch (seq->ops[i].type) {
 		case OP_XOR:
 			type = '^';
@@ -196,7 +204,7 @@ print_chain(FILE *out, const struct op_chain *seq)
 		}
 
 		fprintf(out, "\tt%hhu = ", i);
-		switch(op_args[seq->ops[i].type]) {
+		switch(OP_ARGS[seq->ops[i].type]) {
 		case 1:
 			fprintf(out, "%c", type);
 			print_var(out, true, seq->ops[i].i);
@@ -223,19 +231,19 @@ void
 brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 {
 	/* all outputs */
-	uint8_t y[16][4];
+	uint8_t		y[16][4];
 
-	struct op_chain seq;
-	uint8_t i;
-	uint8_t found;
-	uint8_t last_len;
+	struct op_chain	seq;
+	uint8_t		i;
+	uint8_t		found;
+	uint8_t		last_len;
 
 	op_chain_init(&seq);
 
 	/* precompute results of sbox cumputations using slow method */
 	for (i = 0; i < 16; i++) {
-		uint32_t x0[4];
-		uint32_t y0[4];
+		uint32_t	x0[4];
+		uint32_t	y0[4];
 
 		for (uint8_t j = 0; j < 4; j++)
 			x0[j] = seq.vals[i][j];
@@ -267,16 +275,19 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 		/* for each column in y[], find a column in vals[] that
 		 * matches */
 		for (i = 0; i < 4; i++) {
+			uint8_t	j;
+			bool	match;
+
 			/* already found */
 			if (seq.indices[i] < MAX_VALS) continue;
 
 			/* check only the last column of vals[]; all
 			 * possible permutations of the previous columns
 			 * have already been seen and yielded no fruits */
-			uint8_t j = seq.sz + 3;
+			j = seq.sz + 3;
 
 			/* check each number in the column with y */
-			bool match = true;
+			match = true;
 			for (uint8_t k = 0; k < 16; k++) {
 				if (y[k][i] != seq.vals[k][j]) {
 					match = false;
@@ -304,26 +315,30 @@ void
 print_function(FILE *out, uint8_t sbox, bool inverse,
     const struct op_chain *seq)
 {
-	fprintf(out, "inline void\nsbox_%hhu%s", sbox, inverse ? "_inv" : "");
-	fprintf(out, "(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,\n");
-	fprintf(out, "    uint32_t &y0, uint32_t &y1, "
-	    "uint32_t &y2, uint32_t &y3)\n{\n");
+	fprintf(out,
+"inline void\n"
+"sbox_%hhu%s(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,\n"
+"    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)\n"
+"{\n",
+	    sbox, inverse ? "_inv" : "");
 
 	print_chain(out, seq);
 
-	fprintf(out, "}\n");
+	fprintf(out,
+"}\n"
+	    );
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	struct	op_chain	seq;
 	char			path[80];
-
-	long		tlong;
-	char		*end;
-	FILE		*out;
-	uint8_t		sbox;
-	bool		inverse;
+	long			tlong;
+	char			*end;
+	FILE			*out;
+	uint8_t			sbox;
+	bool			inverse;
 
 	if (argc != 3) {
 		printf(
