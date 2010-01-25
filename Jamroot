@@ -19,6 +19,8 @@ lib fluks_crypto
 	: serpent.cpp
 	cast6.c tiger.c twofish.c whirlpool.c
 
+	boost_system
+
 	# -D_BSD_SOURCE needed for proper endian macros
 	: <define>_BSD_SOURCE
 	<variant>release:<define>NDEBUG
@@ -83,12 +85,12 @@ unit-test test/serpent
 	: test/serpent.cpp boost_regex fluks_crypto
 	: <testing.arg>test
 	;
-unit-test test/tiger : test/tiger.cpp fluks_crypto ;
+unit-test test/tiger : test/tiger.cpp boost_system fluks_crypto ;
 unit-test test/twofish
 	: test/twofish.cpp boost_regex fluks_crypto
 	: <testing.arg>test
 	;
-unit-test test/whirlpool : test/whirlpool.cpp fluks_crypto ;
+unit-test test/whirlpool : test/whirlpool.cpp boost_system fluks_crypto ;
 
 install dist
 	: fluks

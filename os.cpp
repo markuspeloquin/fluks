@@ -23,21 +23,9 @@
 
 #include <cerrno>
 #include <boost/system/linux_error.hpp>
+#include <boost/system/system_error.hpp>
 
 #include "os.hpp"
-
-namespace {
-
-void
-throw_errno(int e) throw (boost::system::system_error)
-{
-	// wow
-	throw boost::system::system_error(
-	    boost::system::linux_error::make_error_code(
-	    static_cast<boost::system::linux_error::linux_errno>(e)));
-}
-
-}
 
 uint32_t
 fluks::num_sectors(int fd) throw (boost::system::system_error)

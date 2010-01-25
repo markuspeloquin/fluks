@@ -17,6 +17,8 @@
 
 #include <exception>
 #include <string>
+#include <boost/system/linux_error.hpp>
+#include <boost/system/system_error.hpp>
 
 namespace fluks {
 
@@ -174,6 +176,8 @@ struct Unsupported_version : std::exception {
 	const char *what() const throw ()
 	{	return "unsupported LUKS header version"; }
 };
+
+void	throw_errno(int e) throw (boost::system::system_error);
 
 }
 

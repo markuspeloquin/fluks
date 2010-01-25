@@ -43,3 +43,12 @@ fluks::Ssl_error::Ssl_error()
 	_msg = "OpenSSL error: ";
 	_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
 }
+
+void
+fluks::throw_errno(int e) throw (boost::system::system_error)
+{
+	// wow
+	throw boost::system::system_error(
+	    boost::system::linux_error::make_error_code(
+	    static_cast<boost::system::linux_error::linux_errno>(e)));
+}

@@ -16,7 +16,8 @@
 #define FLUKS_OS_HPP
 
 #include <string>
-#include <boost/system/system_error.hpp>
+
+#include "errors.hpp"
 
 namespace fluks {
 

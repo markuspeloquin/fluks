@@ -79,6 +79,7 @@ void write_pattern(Fstream &file, off_t pos,
 		throw Disk_error("Gutmann erase: write failed");
 
 	file.flush();
+	file.sync();
 }
 
 } // end anon namespace

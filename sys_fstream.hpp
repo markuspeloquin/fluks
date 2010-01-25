@@ -17,6 +17,8 @@
 
 #include <fstream>
 
+#include "os.hpp"
+
 namespace std {
 
 template<typename _CharT, typename _Traits>
@@ -120,6 +122,13 @@ public:
 	void close()
 	{	if (!_buf.close()) this->setstate(ios_base::failbit); }
 
+	void sync()
+	{
+		if (fsync(_buf.fd()) == -1)
+			// not the best architecture
+			fluks::throw_errno(errno);
+	}
+
 	int fd()
 	{	return _buf.fd(); }
 
@@ -207,6 +216,12 @@ public:
 
 	void close()
 	{	if (!_buf.close()) this->setstate(ios_base::failbit); }
+
+	void sync()
+	{
+		if (fsync(_buf.fd()) == -1)
+			fluks::throw_errno(errno);
+	}
 
 	int fd()
 	{	return _buf.fd(); }
@@ -300,6 +315,12 @@ public:
 
 	void close()
 	{	if (!_buf.close()) this->setstate(ios_base::failbit); }
+
+	void sync()
+	{
+		if (fsync(_buf.fd()) == -1)
+			fluks::throw_errno(errno);
+	}
 
 	int fd()
 	{	return _buf.fd(); }
