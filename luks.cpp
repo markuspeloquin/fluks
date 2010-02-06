@@ -62,6 +62,7 @@ make_mode(const std::string &block_mode, const std::string &ivmode,
 }
 
 
+// TODO use parse_cipher_spec() instead
 bool
 parse_cipher(const std::string &cipher_spec, std::string &cipher,
 	    std::string &block_mode, std::string &ivmode, std::string &ivhash)
@@ -131,6 +132,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
     int32_t sz_key, const std::string &cipher_spec,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
     throw (boost::system::system_error, Bad_spec) :
+	_crypter(), // TODO use this
 	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(0),
@@ -198,6 +200,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
     throw (boost::system::system_error, Bad_spec, Disk_error, No_header,
     Unsupported_version) :
+	_crypter(), // TODO use this
 	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(*device)),

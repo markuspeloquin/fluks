@@ -345,6 +345,7 @@ private:
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
+	std::tr1::shared_ptr<Crypter>	_crypter;
 	std::tr1::shared_ptr<std::sys_fstream>
 					_device;
 	boost::scoped_ptr<struct phdr1>	_hdr;
