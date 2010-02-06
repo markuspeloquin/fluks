@@ -23,6 +23,114 @@
 namespace fluks {
 
 class Cipher;
+class Hash_function;
+
+void	parse_cipher_spec(const std::string &spec, ssize_t sz_key,
+	    enum cipher_type *out_cipher_type,
+	    enum block_mode *out_block_mode,
+	    enum iv_mode *out_iv_mode,
+	    enum hash_type *out_iv_hash,
+	    std::string *out_canonical_cipher,
+	    std::string *out_canonical_mode) throw (Bad_spec);
+
+class Crypter {
+	// CRYPTER! CRYPTER! CRYPTER!
+public:
+	Crypter(const uint8_t *key, ssize_t sz_key,
+	    const std::string &cipher_spec) throw (Bad_spec);
+	Crypter(const uint8_t *key, ssize_t sz_key,
+	    enum cipher_type cipher,
+	    enum block_mode block_mode=BM_UNDEFINED,
+	    enum iv_mode iv_mode=IM_UNDEFINED,
+	    enum hash_type iv_hash=HT_UNDEFINED) throw (Bad_spec);
+
+	/** Get the number of bytes required to encrypt data
+	 *
+	 * \param sz_data	The size of the plaintext in bytes
+	 * \return		The size buffer the ciphertext will require
+	 */
+	size_t ciphertext_size(size_t sz_data) const;
+
+	/** Encrypt data spanning across sectors
+	 *
+	 * \param start_sector	The sector the data will start at
+	 * \param sz_sector	The size of the sectors
+	 * \param data		The data to encrypt
+	 * \param sz_data	The size of the plaintext in bytes
+	 * \param[out] out	The output buffer for the ciphertext.  The
+	 *	number of bytes required in the buffer can be obtained from
+	 *	ciphertext_size()
+	 */
+	void encrypt(uint32_t start_sector, size_t sz_sector,
+	    const uint8_t *data, size_t sz_data, uint8_t *out);
+
+	/** Encrypt data spanning across blocks
+	 *
+	 * This encryption method uses only the cipher type and block modes
+	 * specified in the object.
+	 *
+	 * \param[in] iv	Initial vector.  The size equals the block
+	 *	size of the cipher.  Ignored for ECB
+	 * \param[in] in	Plaintext
+	 * \param[in] sz_plain	The size of the plaintext
+	 * \param[out] out	The ciphertext.  Its size is obtainable from
+	 *	ciphertext_size(), since some block modes may require padding
+	 */
+	void encrypt(const uint8_t *iv, const uint8_t *in, size_t sz_plain,
+	    uint8_t *out)
+	{
+		get_encrypt_fn()(_cipher.get(), iv, in, sz_plain, out);
+	}
+
+	/** Decrypt data spanning across sectors
+	 *
+	 * \param start_sector	The sector the data starts at
+	 * \param sz_sector	The size of the sectors
+	 * \param data		The ciphertext to decrypt
+	 * \param sz_data	The size of the plaintext in bytes
+	 * \param[out] out	The output buffer for the plaintext.  It is
+	 *	assumed that you already know how long this should be
+	 */
+	void decrypt(uint32_t start_sector, size_t sz_sector,
+	    const uint8_t *data, size_t sz_data, uint8_t *out);
+
+	/** Decrypt data spanning across blocks
+	 *
+	 * This decryption method uses only the cipher type and block modes
+	 * specified in the object.
+	 *
+	 * \param[in] iv	Initial vector.  The size equals the block
+	 *	size of the cipher.  Ignored for ECB
+	 * \param[in] in	Ciphertext
+	 * \param[in] sz_plain	The size of the ciphertext
+	 * \param[out] out	The plaintext.  It is assumed that you already
+	 *	know how long this should be
+	 */
+	void decrypt(const uint8_t *iv, const uint8_t *in, size_t sz_plain,
+	    uint8_t *out)
+	{
+		get_decrypt_fn()(_cipher.get(), iv, in, sz_plain, out);
+	}
+
+private:
+	typedef void (*crypt_fn)(Cipher *, const uint8_t *, const uint8_t *,
+	    size_t, uint8_t *);
+
+	crypt_fn get_decrypt_fn() const;
+	crypt_fn get_encrypt_fn() const;
+
+	// disallow copying
+	Crypter(const Crypter &) {}
+	void operator=(const Crypter &) {}
+
+	boost::scoped_array<uint8_t>		_key;
+	std::tr1::shared_ptr<Cipher>		_cipher;
+	std::tr1::shared_ptr<Hash_function>	_iv_hash;
+	size_t					_sz_key;
+	enum cipher_type			_cipher_type;
+	enum block_mode				_block_mode;
+	enum iv_mode				_iv_mode;
+};
 
 /** Get the number of bytes required to encrypt data
  *

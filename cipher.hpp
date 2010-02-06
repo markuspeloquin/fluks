@@ -86,7 +86,14 @@ struct Cipher_traits {
 
 /** En/Decrypt a block of data */
 class Cipher {
-	// CRYPTER! CRYPTER! CRYPTER!
+protected:
+	/** Set up the properties of the cipher function
+	 * \param type The cipher type
+	 */
+	Cipher(enum cipher_type type) :
+		_traits(Cipher_traits::traits(type))
+	{}
+
 public:
 	/** Create an encryption or decryption object
 	 *
@@ -96,15 +103,9 @@ public:
 	 */
 	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
 
-	/** Set up the properties of the cipher function
-	 * \param type The cipher type
-	 */
-	Cipher(enum cipher_type type) :
-		_traits(Cipher_traits::traits(type))
-	{}
 	virtual ~Cipher() throw () {}
 
-	/** Set the direction of encryption and the key
+	/** Set the the key
 	 *
 	 * \param key		The encryption key
 	 * \param sz_key	The size of the encryption key in bytes

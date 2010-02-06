@@ -81,8 +81,7 @@ struct Hash_function {
 		_traits(Hash_traits::traits(type))
 	{}
 
-	/**
-	 * Create a hash function, in an abstract sense, given a hash spec.
+	/** Create a hash function given a hash spec.
 	 *
 	 * \param name	The hash spec.
 	 * \return	A hash function pointer, <code>nullptr</code> for
@@ -93,8 +92,7 @@ struct Hash_function {
 	    create(const std::string &name)
 	{	return create(Hash_traits::type(name)); }
 
-	/**
-	 * Create a hash function, in an abstract sense, given a hash type.
+	/** Create a hash function given a hash type.
 	 *
 	 * \param type	The hash algorithm.
 	 * \return	A hash function pointer.

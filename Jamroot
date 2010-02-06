@@ -59,10 +59,11 @@ exe fluks
 	;
 exe run_test
 	: run_test.cpp
-	cipher.cpp crypt.cpp errors.cpp hash.cpp hmac.cpp
+	cipher.cpp crypt.cpp detect.cpp errors.cpp hash.cpp hmac.cpp
 	support.cpp
 
 	# external libs
+	boost_regex
 	boost_system
 	ssl
 
