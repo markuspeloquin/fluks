@@ -345,6 +345,9 @@ private:
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
+	// crypt.hpp depends on definitions in luks.hpp
+	class Crypter;
+
 	std::tr1::shared_ptr<Crypter>	_crypter;
 	std::tr1::shared_ptr<std::sys_fstream>
 					_device;
