@@ -44,8 +44,6 @@ while (<$doxy_in>) {
 
 		# only replace the first match
 		delete $map{$name};
-
-		print "`$_' changed to `$res'\n";
 	} else {
 		# not a name=value line or wrong name
 		$res = $_;
