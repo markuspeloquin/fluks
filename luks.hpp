@@ -24,6 +24,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/system/system_error.hpp>
 
+#include "cipher_spec.hpp"
 #include "errors.hpp"
 #include "os.hpp"
 #include "sys_fstream.hpp"
@@ -106,70 +107,6 @@ bool	check_magic(const struct phdr1 *header);
  * \see endian_switch()
  */
 bool	check_version_1(const struct phdr1 *header);
-
-
-/** Ciphers supported by <em>fluks</em> */
-enum cipher_type {
-	CT_UNDEFINED = 0,
-	CT_AES,
-	CT_BLOWFISH,
-	CT_CAMELLIA,
-	CT_CAST5,
-	CT_CAST6,
-	CT_TWOFISH,
-	CT_SERPENT
-};
-
-
-/** Cipher block modes supported by <em>fluks</em> */
-enum block_mode {
-	BM_UNDEFINED = 0,
-	BM_CBC, /**< Cipher-block chaining */
-	BM_CFB, /**< Cipher feedback */
-	BM_CTR, /**< Counter */
-	/** Cipher Text Stealing
-	 *
-	 * Described in RFC 2040, Section 8 */
-	BM_ECB, /**< Electronic codebook */
-	BM_OFB, /**< Output feedback */
-	BM_PCBC /**< Propogating cipher-block chaining */
-};
-
-
-enum iv_mode {
-	IM_UNDEFINED = 0,
-	IM_PLAIN,
-	IM_ESSIV
-};
-
-
-/** Hash types supported by <em>fluks</em>
- *
- * Tiger is optimized for 64-bit architectures, designed by the same folks
- * who brought you the Serpent cipher.  Tiger/{128,160} are just truncated
- * versions of Tiger/192.
- *
- * Along with SHA-{1,256,384,512} and RMD-{128,160}, WHIRLPOOL is included
- * in ISO/IEC's list of recommended hash functions (10118-3), and is
- * also recommended by NESSIE.  WHIRLPOOL-{256,384} are just
- * truncated versions.
- */
-enum hash_type {
-	HT_UNDEFINED = 0,
-	HT_MD5,	/**< (you probably should not use this) */
-	HT_RMD160,	/**< Possibly better knows as RIPEMD-160 */
-	HT_SHA1,
-	HT_SHA224,
-	HT_SHA256,
-	HT_SHA384,
-	HT_SHA512,
-	HT_TIGER128,
-	HT_TIGER160,
-	HT_TIGER192,
-	HT_WHIRLPOOL256,
-	HT_WHIRLPOOL384,
-	HT_WHIRLPOOL512
-};
 
 
 // switch to/from BE
@@ -335,7 +272,8 @@ private:
 			_mach_end = which;
 		}
 	}
-	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key);
+	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key)
+	    throw (Bad_spec);
 
 	int8_t locate_passwd(const std::string &passwd) throw (Disk_error);
 
@@ -345,20 +283,13 @@ private:
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
-	// crypt.hpp depends on definitions in luks.hpp
-	class Crypter;
-
-	std::tr1::shared_ptr<Crypter>	_crypter;
 	std::tr1::shared_ptr<std::sys_fstream>
 					_device;
 	boost::scoped_ptr<struct phdr1>	_hdr;
 	boost::scoped_array<uint8_t>	_master_key;
+	std::auto_ptr<Cipher_spec>	_cipher_spec;
 	uint16_t			_sz_sect;
 	enum hash_type			_hash_type;
-	enum cipher_type		_cipher_type;
-	enum block_mode			_block_mode;
-	enum iv_mode			_iv_mode;
-	enum hash_type			_iv_hash;
 
 	// the index of the entered password (-1=invalid)
 	int8_t				_proved_passwd;

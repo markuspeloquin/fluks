@@ -30,7 +30,7 @@ lib fluks_crypto
 	<variant>debug:<define>DEBUG
 	;
 exe fluks
-	: af.cpp backup.cpp cipher.cpp crypt.cpp
+	: af.cpp backup.cpp cipher.cpp cipher_spec.cpp crypt.cpp
 	detect.cpp dm.cpp errors.cpp fluks.cpp
 	hash.cpp hmac.cpp luks.cpp os.cpp pbkdf2.cpp
 	support.cpp

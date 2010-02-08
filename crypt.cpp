@@ -20,6 +20,7 @@
 #include <boost/regex.hpp>
 
 #include "cipher.hpp"
+#include "cipher_spec.hpp"
 #include "crypt.hpp"
 #include "detect.hpp"
 #include "errors.hpp"
@@ -29,19 +30,9 @@
 namespace fluks {
 namespace {
 
-inline void
-		check_spec(ssize_t, enum cipher_type, enum block_mode,
-		    enum iv_mode, enum hash_type) throw (Bad_spec);
-void		check_spec(ssize_t, enum cipher_type, enum block_mode,
-		    enum iv_mode, enum hash_type,
-		    const std::string &, const std::string &,
-		    const std::string &, const std::string &)
-		    throw (Bad_spec);
 inline std::tr1::shared_ptr<Cipher>
 		make_essiv_cipher(enum cipher_type, Hash_function *,
 		    const uint8_t *key, size_t sz);
-std::string	make_mode(const std::string &, const std::string &,
-		    const std::string &);
 
 inline std::tr1::shared_ptr<Cipher>
 make_essiv_cipher(enum cipher_type type, Hash_function *hash,
@@ -61,242 +52,23 @@ make_essiv_cipher(enum cipher_type type, Hash_function *hash,
 	return cipher;
 }
 
-// reconstruct the mode string (e.g. 'cbc', 'cbc-essiv', 'cbc-essiv:sha256')
-std::string
-make_mode(const std::string &block_mode, const std::string &ivmode,
-    const std::string &ivhash)
-{
-	std::ostringstream out;
-	if (block_mode.size()) {
-		out << block_mode;
-		if (ivmode.size()) {
-			out << '-' << ivmode;
-			if (ivhash.size())
-				out << ':' << ivhash;
-		}
-	}
-	return out.str();
-}
-
-inline void
-check_spec(ssize_t sz_key,
-    enum cipher_type type_cipher, enum block_mode type_block_mode,
-    enum iv_mode type_iv_mode, enum hash_type type_iv_hash) throw (Bad_spec)
-{
-	const Cipher_traits *cipher_traits = Cipher_traits::traits(
-	    type_cipher);
-	const Hash_traits *hash_traits = Hash_traits::traits(type_iv_hash);
-
-	std::string name_cipher = cipher_traits->name;
-	std::string name_block_mode = block_mode_info::name(type_block_mode);
-	std::string name_iv_mode = iv_mode_info::name(type_iv_mode);
-	std::string name_iv_hash = hash_traits->name;
-
-	check_spec(sz_key,
-	    type_cipher, type_block_mode, type_iv_mode, type_iv_hash,
-	    name_cipher, name_block_mode, name_iv_mode, name_iv_hash);
-}
-
-void
-check_spec(ssize_t sz_key,
-    enum cipher_type type_cipher, enum block_mode type_block_mode,
-    enum iv_mode type_iv_mode, enum hash_type type_iv_hash,
-    const std::string &name_cipher, const std::string &name_block_mode,
-    const std::string &name_iv_mode, const std::string &name_iv_hash)
-    throw (Bad_spec)
-{
-	if (type_cipher == CT_UNDEFINED)
-		throw Bad_spec("unrecognized cipher: " + name_cipher);
-	if (type_block_mode == BM_UNDEFINED)
-		throw Bad_spec("unrecognized block mode: " + name_block_mode);
-	if (!name_iv_mode.empty() && type_iv_mode == IM_UNDEFINED)
-		throw Bad_spec("unrecognized IV mode: " + name_iv_mode);
-	if (!name_iv_hash.empty() && type_iv_hash == HT_UNDEFINED)
-		throw Bad_spec("unrecognized IV hash: " + name_iv_hash);
-
-	const Cipher_traits *cipher_traits =
-	    Cipher_traits::traits(type_cipher);
-	const Hash_traits *ivhash_traits = Hash_traits::traits(type_iv_hash);
-
-	// canonize cipher and IV hash; note that ivhash will remain an
-	// empty string if it was empty initially
-	std::string canon_cipher = cipher_traits->name;
-	std::string canon_hash = ivhash_traits ?
-	    ivhash_traits->name : name_iv_hash;
-
-	// is the cipher spec supported by the system?
-	{
-		const std::set<std::string> &sys_ciph = system_ciphers();
-		if (!sys_ciph.count(canon_cipher))
-			throw Bad_spec("cipher not supported by system: " +
-			    name_cipher);
-
-		const std::set<std::string> &sys_hash = system_hashes();
-		if (name_iv_hash.size() && !sys_hash.count(name_iv_hash))
-			throw Bad_spec("IV hash not supported by system: " +
-			    name_iv_hash);
-	}
-
-	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
-	// XXX only *after* dm-crypt attempts to use them.
-
-	const std::vector<uint16_t> &sizes = cipher_traits->key_sizes;
-	if (sz_key == -1)
-		// use the largest possible size
-		sz_key = sizes.back();
-	else if (!std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
-		// sz_key not compatible with the cipher
-		std::ostringstream out;
-		out << "cipher `" << name_cipher
-		    << "' only supports keys of sizes";
-		for (std::vector<uint16_t>::const_iterator i = sizes.begin();
-		    i != sizes.end(); ++i) {
-			if (i != sizes.begin()) out << ',';
-			out << ' ' << *i * 8;
-		}
-		out << " (not " << sz_key << ')';
-		throw Bad_spec(out.str());
-	}
-
-	// are the specs compatible?
-	if (type_block_mode == BM_ECB && type_iv_mode != IM_UNDEFINED)
-		throw Bad_spec("ECB cannot use an IV mode");
-	if (type_block_mode != BM_ECB && type_iv_mode == IM_UNDEFINED)
-		throw Bad_spec(
-		    "block modes other than ECB require an IV mode");
-	if (type_iv_mode == IM_ESSIV && type_iv_hash == HT_UNDEFINED)
-		throw Bad_spec("IV mode `essiv' requires an IV hash");
-	if (type_iv_mode == IM_PLAIN && type_iv_hash != HT_UNDEFINED)
-		throw Bad_spec("IV mode `plain' cannot use an IV hash");
-	if (type_iv_mode == IM_ESSIV) {
-		// check that ESSIV hash size is a possible key size of the
-		// cipher
-		uint16_t size = ivhash_traits->digest_size;
-		if (!std::binary_search(sizes.begin(), sizes.end(), size)) {
-			std::ostringstream out;
-			out << "cipher `" << name_cipher
-			    << "' only supports keys of sizes";
-			for (std::vector<uint16_t>::const_iterator i =
-			    sizes.begin(); i != sizes.end(); ++i) {
-				if (i != sizes.begin())
-					out << ',';
-				out << ' ' << (*i * 8);
-			}
-			out << "; incompatible with hash `" << name_iv_hash
-			    << '\'';
-			throw Bad_spec(out.str());
-		}
-	}
-
-}
-
 } // end anon namespace
 }
 
-void
-fluks::parse_cipher_spec(const std::string &spec, ssize_t sz_key,
-    enum cipher_type *out_cipher_type,
-    enum block_mode *out_block_mode,
-    enum iv_mode *out_iv_mode,
-    enum hash_type *out_iv_hash,
-    std::string *out_canonical_cipher,
-    std::string *out_canonical_mode) throw (Bad_spec)
-{
-	// valid patterns:
-	// [^-]* - [^-*]
-	// [^-]* - [^-*] - [^:]*
-	// [^-]* - [^-*] - [^:]* : .*
-	boost::regex expr(
-	    "([^-]+) - ([^-]+)  (?: - ([^:]+) )?  (?: : (.+) )?",
-	    boost::regex_constants::normal |
-	    boost::regex_constants::mod_x); // ignore space
-
-	boost::smatch matches;
-	if (!boost::regex_match(spec, matches, expr))
-		throw Bad_spec("cannot be parsed");
-
-	std::string name_cipher = matches[1];
-	std::string name_block_mode = matches[2];
-	std::string name_iv_mode = matches[3];
-	std::string name_iv_hash = matches[4];
-
-	enum cipher_type	type_cipher =
-	    Cipher_traits::type(name_cipher);
-	enum block_mode		type_block_mode =
-	    block_mode_info::type(name_block_mode);
-	enum iv_mode		type_iv_mode =
-	    iv_mode_info::type(name_iv_mode);
-	enum hash_type		type_iv_hash =
-	    Hash_traits::type(name_iv_hash);
-
-	check_spec(sz_key,
-	    type_cipher, type_block_mode, type_iv_mode, type_iv_hash,
-	    name_cipher, name_block_mode, name_iv_mode, name_iv_hash);
-
-	const Cipher_traits *cipher_traits =
-	    Cipher_traits::traits(type_cipher);
-	std::string canon_cipher = cipher_traits->name;
-
-	*out_cipher_type = type_cipher;
-	*out_block_mode = type_block_mode;
-	*out_iv_mode = type_iv_mode;
-	*out_iv_hash = type_iv_hash;
-	if (out_canonical_cipher) *out_canonical_cipher = canon_cipher;
-	if (out_canonical_mode) {
-		// recreate a canonical cipher spec; note
-		// that cipher and ivhash were already canonized
-		std::string mode = make_mode(name_block_mode, name_iv_mode,
-		    name_iv_hash);
-		*out_canonical_mode = mode;
-	}
-}
-
-fluks::Crypter::Crypter(const uint8_t *key, ssize_t sz_key,
-    const std::string &cipher_spec) throw (Bad_spec) :
+fluks::Crypter::Crypter(const uint8_t *key, size_t sz_key,
+    const Cipher_spec &_spec) :
 	_key(new uint8_t[sz_key]),
-	_cipher(),
-	_iv_hash(),
-	_sz_key(sz_key),
-	_cipher_type(CT_UNDEFINED),
-	_block_mode(BM_UNDEFINED),
-	_iv_mode(IM_UNDEFINED)
+	_cipher(Cipher::create(_spec.type_cipher())),
+	_spec(_spec)
 {
-	enum hash_type		hash;
-
-	parse_cipher_spec(cipher_spec, sz_key,
-	    &_cipher_type, &_block_mode, &_iv_mode, &hash, 0, 0);
 	std::copy(key, key + sz_key, _key.get());
-
-	_cipher = Cipher::create(_cipher_type);
 	_cipher->init(_key.get(), _sz_key);
-	if (hash != HT_UNDEFINED)
-		_iv_hash = Hash_function::create(hash);
-}
-
-fluks::Crypter::Crypter(const uint8_t *key, ssize_t sz_key,
-    enum cipher_type cipher,
-    enum block_mode block_mode,
-    enum iv_mode iv_mode,
-    enum hash_type iv_hash) throw (Bad_spec) :
-	_key(new uint8_t[sz_key]),
-	_sz_key(sz_key),
-	_cipher_type(cipher),
-	_block_mode(block_mode),
-	_iv_mode(iv_mode)
-{
-	check_spec(sz_key, _cipher_type, _block_mode, _iv_mode, iv_hash);
-	std::copy(key, key + sz_key, _key.get());
-
-	_cipher = Cipher::create(_cipher_type);
-	_cipher->init(_key.get(), _sz_key);
-	if (iv_hash != HT_UNDEFINED)
-		_iv_hash = Hash_function::create(iv_hash);
 }
 
 size_t
 fluks::Crypter::ciphertext_size(size_t sz_data) const
 {
-	switch (_block_mode) {
+	switch (_spec.type_block_mode()) {
 	case BM_CBC:
 	case BM_ECB:
 	case BM_PCBC: {
@@ -327,14 +99,14 @@ fluks::Crypter::encrypt(uint32_t start_sector, size_t sz_sector,
 	size_t		sz_blk = _cipher->traits()->block_size;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
-	switch (_iv_mode) {
+	switch (_spec.type_iv_mode()) {
 	case IM_PLAIN:
 	case IM_UNDEFINED:
 		std::fill(iv, iv + sz_blk, 0);
 		break;
 	case IM_ESSIV:
-		iv_crypt = make_essiv_cipher(_cipher_type, _iv_hash.get(),
-		    _key.get(), _sz_key);
+		iv_crypt = make_essiv_cipher(_spec.type_cipher(),
+		    _iv_hash.get(), _key.get(), _sz_key);
 		pre_essiv32.reset(new uint32_t[sz_blk / 4]);
 		pre_essiv = reinterpret_cast<uint8_t *>(pre_essiv32.get());
 		std::fill(pre_essiv, pre_essiv + sz_blk, 0);
@@ -347,7 +119,7 @@ fluks::Crypter::encrypt(uint32_t start_sector, size_t sz_sector,
 	    "sector size must be a multiple of the cipher's block size");
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
-		switch (_iv_mode) {
+		switch (_spec.type_iv_mode()) {
 		case IM_PLAIN:
 			iv32[0] = htole32(start_sector + s);
 			break;
@@ -387,14 +159,14 @@ fluks::Crypter::decrypt(uint32_t start_sector, size_t sz_sector,
 	size_t		sz_blk = _cipher->traits()->block_size;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
-	switch (_iv_mode) {
+	switch (_spec.type_iv_mode()) {
 	case IM_PLAIN:
 	case IM_UNDEFINED:
 		std::fill(iv, iv + sz_blk, 0);
 		break;
 	case IM_ESSIV:
-		iv_crypt = make_essiv_cipher(_cipher_type, _iv_hash.get(),
-		    _key.get(), _sz_key);
+		iv_crypt = make_essiv_cipher(_spec.type_cipher(),
+		    _iv_hash.get(), _key.get(), _sz_key);
 		pre_essiv32.reset(new uint32_t[sz_blk / 4]);
 		pre_essiv = reinterpret_cast<uint8_t *>(pre_essiv32.get());
 		std::fill(pre_essiv, pre_essiv + sz_blk, 0);
@@ -407,7 +179,7 @@ fluks::Crypter::decrypt(uint32_t start_sector, size_t sz_sector,
 	    "sector size must be a multiple of the cipher's block size");
 	for (uint16_t s = 0; s < num_sect; s++) {
 		// generate a new IV for this sector
-		switch (_iv_mode) {
+		switch (_spec.type_iv_mode()) {
 		case IM_PLAIN:
 			iv32[0] = htole32(start_sector + s);
 			break;
@@ -437,7 +209,7 @@ fluks::Crypter::decrypt(uint32_t start_sector, size_t sz_sector,
 fluks::Crypter::crypt_fn
 fluks::Crypter::get_encrypt_fn() const
 {
-	switch (_block_mode) {
+	switch (_spec.type_block_mode()) {
 	case BM_CBC:	return cbc_encrypt;
 	case BM_CFB:	return cfb_encrypt;
 	case BM_CTR:	return ctr_encrypt;
@@ -453,7 +225,7 @@ fluks::Crypter::get_encrypt_fn() const
 fluks::Crypter::crypt_fn
 fluks::Crypter::get_decrypt_fn() const
 {
-	switch (_block_mode) {
+	switch (_spec.type_block_mode()) {
 	case BM_CBC:	return cbc_decrypt;
 	case BM_CFB:	return cfb_decrypt;
 	case BM_CTR:	return ctr_decrypt;
@@ -823,212 +595,5 @@ fluks::pcbc_decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
 			// first block
 			xor_bufs(iv, buf, left, out);
 		}
-	}
-}
-
-size_t
-fluks::ciphertext_size(enum cipher_type cipher, enum block_mode block_mode,
-    size_t sz_data)
-{
-	switch (block_mode) {
-	case BM_CBC:
-	case BM_ECB:
-	case BM_PCBC: {
-		size_t blocksize =
-		    Cipher_traits::traits(cipher)->block_size;
-		size_t numblocks = (sz_data + blocksize - 1) / blocksize;
-		return numblocks * blocksize;
-	}
-	case BM_CFB:
-	case BM_CTR:
-	case BM_OFB:
-		return sz_data;
-	default:
-		Assert(0, "ciphertext_size() block mode undefined");
-		return 0;
-	}
-}
-
-void
-fluks::encrypt(enum cipher_type type, enum block_mode block_mode,
-    enum iv_mode iv_mode, enum hash_type iv_hash,
-    uint32_t start_sector, size_t sz_sector,
-    const uint8_t *key, size_t sz_key,
-    const uint8_t *data, size_t sz_data, uint8_t *out)
-{
-	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
-	std::tr1::shared_ptr<Cipher> iv_crypt;
-	std::tr1::shared_ptr<Hash_function> iv_hashfn;
-	boost::scoped_array<uint32_t> pre_essiv32;
-	uint32_t	iv32[cipher->traits()->block_size / 4];
-
-	uint8_t		*iv = reinterpret_cast<uint8_t *>(iv32);
-	uint8_t 	*pre_essiv = 0;
-	size_t		sz_blk = cipher->traits()->block_size;
-	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
-
-	cipher->init(key, sz_key);
-
-	switch (iv_mode) {
-	case IM_PLAIN:
-	case IM_UNDEFINED:
-		std::fill(iv, iv + sz_blk, 0);
-		break;
-	case IM_ESSIV:
-		iv_hashfn = Hash_function::create(iv_hash);
-		iv_crypt = make_essiv_cipher(type, iv_hashfn.get(),
-		    key, sz_key);
-		pre_essiv32.reset(new uint32_t[sz_blk / 4]);
-		pre_essiv = reinterpret_cast<uint8_t *>(pre_essiv32.get());
-		std::fill(pre_essiv, pre_essiv + sz_blk, 0);
-		break;
-	}
-
-	void (*encrypt)(Cipher *, const uint8_t *, const uint8_t *, size_t,
-	    uint8_t *);
-	switch (block_mode) {
-	case BM_CBC:
-		encrypt = cbc_encrypt;
-		break;
-	case BM_CFB:
-		encrypt = cfb_encrypt;
-		break;
-	case BM_CTR:
-		encrypt = ctr_encrypt;
-		break;
-	case BM_ECB:
-		encrypt = ecb_encrypt;
-		break;
-	case BM_OFB:
-		encrypt = ofb_encrypt;
-		break;
-	case BM_PCBC:
-		encrypt = pcbc_encrypt;
-		break;
-	default:
-		Assert(0, "encrypt() block mode undefined");
-		return;
-	}
-
-	Assert(sz_sector % sz_blk == 0,
-	    "sector size must be a multiple of the cipher's block size");
-	for (uint16_t s = 0; s < num_sect; s++) {
-		// generate a new IV for this sector
-		switch (iv_mode) {
-		case IM_PLAIN:
-			iv32[0] = htole32(start_sector + s);
-			break;
-		case IM_ESSIV:
-			pre_essiv32.get()[0] = htole32(start_sector + s);
-			iv_crypt->encrypt(pre_essiv, iv);
-			break;
-		case IM_UNDEFINED:
-			// IV never changes
-			break;
-		}
-
-		uint16_t by;
-		if (s == num_sect - 1) {
-			by = sz_data - sz_sector * (num_sect - 1);
-		} else {
-			by = sz_sector;
-		}
-
-		encrypt(cipher.get(), iv, data, by, out);
-
-		data += sz_sector;
-		out += sz_sector;
-	}
-}
-
-void
-fluks::decrypt(enum cipher_type type, enum block_mode block_mode,
-    enum iv_mode iv_mode, enum hash_type iv_hash,
-    uint32_t start_sector, size_t sz_sector,
-    const uint8_t *key, size_t sz_key,
-    const uint8_t *data, size_t sz_data, uint8_t *out)
-{
-	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
-	std::tr1::shared_ptr<Cipher> iv_crypt;
-	std::tr1::shared_ptr<Hash_function> iv_hashfn;
-	boost::scoped_array<uint32_t> pre_essiv32;
-	uint32_t	iv32[cipher->traits()->block_size / 4];
-
-	uint8_t		*iv = reinterpret_cast<uint8_t *>(iv32);
-	uint8_t		*pre_essiv = 0;
-	size_t		sz_blk = cipher->traits()->block_size;
-	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
-
-	cipher->init(key, sz_key);
-
-	switch (iv_mode) {
-	case IM_PLAIN:
-	case IM_UNDEFINED:
-		std::fill(iv, iv + sz_blk, 0);
-		break;
-	case IM_ESSIV:
-		iv_hashfn = Hash_function::create(iv_hash);
-		iv_crypt = make_essiv_cipher(type, iv_hashfn.get(),
-		    key, sz_key);
-		pre_essiv32.reset(new uint32_t[sz_blk / 4]);
-		pre_essiv = reinterpret_cast<uint8_t *>(pre_essiv32.get());
-		std::fill(pre_essiv, pre_essiv + sz_blk, 0);
-		break;
-	}
-
-	void (*decrypt)(Cipher *, const uint8_t *, const uint8_t *, size_t,
-	    uint8_t *);
-	switch (block_mode) {
-	case BM_CBC:
-		decrypt = cbc_decrypt;
-		break;
-	case BM_CFB:
-		decrypt = cfb_decrypt;
-		break;
-	case BM_CTR:
-		decrypt = ctr_decrypt;
-		break;
-	case BM_ECB:
-		decrypt = ecb_decrypt;
-		break;
-	case BM_OFB:
-		decrypt = ofb_decrypt;
-		break;
-	case BM_PCBC:
-		decrypt = pcbc_decrypt;
-		break;
-	default:
-		Assert(0, "decrypt() block mode undefined");
-		return;
-	}
-
-	Assert(sz_sector % sz_blk == 0,
-	    "sector size must be a multiple of the cipher's block size");
-	for (uint16_t s = 0; s < num_sect; s++) {
-		// generate a new IV for this sector
-		switch (iv_mode) {
-		case IM_PLAIN:
-			iv32[0] = htole32(start_sector + s);
-			break;
-		case IM_ESSIV:
-			pre_essiv32.get()[0] = htole32(start_sector + s);
-			iv_crypt->encrypt(pre_essiv, iv);
-			break;
-		case IM_UNDEFINED:
-			// IV does not change
-			break;
-		}
-
-		uint16_t by;
-		if (s == num_sect - 1) {
-			by = sz_data - sz_sector * (num_sect - 1);
-		} else {
-			by = sz_sector;
-		}
-
-		decrypt(cipher.get(), iv, data, by, out);
-
-		data += sz_sector;
-		out += sz_sector;
 	}
 }

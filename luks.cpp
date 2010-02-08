@@ -132,7 +132,6 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
     int32_t sz_key, const std::string &cipher_spec,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
     throw (boost::system::system_error, Bad_spec) :
-	_crypter(), // TODO use this
 	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(0),
@@ -200,7 +199,6 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
     throw (boost::system::system_error, Bad_spec, Disk_error, No_header,
     Unsupported_version) :
-	_crypter(), // TODO use this
 	_device(device),
 	_hdr(new struct phdr1),
 	_sz_sect(sector_size(*device)),
@@ -329,20 +327,15 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    pw_digest, sizeof(pw_digest));
 
 	// encrypt the master key with pw_digest
+	Crypter crypter(pw_digest, sizeof(pw_digest), *_cipher_spec);
 	_key_crypt[avail_idx].reset(new uint8_t[sizeof(split_key)]);
-	encrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
-	    avail->off_km, _sz_sect,
-	    pw_digest, sizeof(pw_digest),
-	    split_key, sizeof(split_key),
-	    _key_crypt[avail_idx].get());
+	crypter.encrypt(avail->off_km, _sz_sect,
+	    split_key, sizeof(split_key), _key_crypt[avail_idx].get());
 
 	// verify that decryption works just as well
 	uint8_t crypt_check[sizeof(split_key)];
-	decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
-	    avail->off_km, _sz_sect,
-	    pw_digest, sizeof(pw_digest),
-	    _key_crypt[avail_idx].get(), sizeof(split_key),
-	    crypt_check);
+	crypter.decrypt(avail->off_km, _sz_sect,
+	    _key_crypt[avail_idx].get(), sizeof(split_key), crypt_check);
 
 	Assert(std::equal(crypt_check, crypt_check + sizeof(crypt_check),
 	    split_key), "ciphertext couldn't be decrypted");
@@ -462,112 +455,25 @@ fluks::Luks_header::save() throw (Disk_error)
 // throwing Bad_spec as necessary
 void
 fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
-    int32_t sz_key)
+    int32_t sz_key) throw (Bad_spec)
 {
 	set_mach_end(true);
 
-	std::string cipher;
-	std::string block_mode;
-	std::string ivmode;
-	std::string ivhash;
+	// parse and check
+	_cipher_spec.reset(new Cipher_spec(sz_key, cipher_spec));
 
-	// first split the cipher spec
-	if (!parse_cipher(cipher_spec, cipher, block_mode, ivmode, ivhash))
-		throw Bad_spec("unrecognized spec format");
-
-	// make the cipher/hash specs malleable
-	_cipher_type = Cipher_traits::type(cipher);
-	_block_mode = block_mode_info::type(block_mode);
-	_iv_mode = iv_mode_info::type(ivmode);
-	_iv_hash = Hash_traits::type(ivhash);
-
-	// are the specs supported by fluks?
-	if (_cipher_type == CT_UNDEFINED)
-		throw Bad_spec("unrecognized cipher: " + cipher);
-	if (_block_mode == BM_UNDEFINED)
-		throw Bad_spec("unrecognized block mode: " + block_mode);
-	if (ivmode.size() &&  _iv_mode == IM_UNDEFINED)
-		throw Bad_spec("unrecognized IV mode: " + ivmode);
-	if (ivhash.size() && _iv_hash == HT_UNDEFINED)
-		throw Bad_spec("unrecognized IV hash: " + ivhash);
-
-	const Cipher_traits *cipher_traits =
-	    Cipher_traits::traits(_cipher_type);
-
-	// canonize cipher and IV hash; note that ivhash will remain an
-	// empty string if it was empty initially
-	const Hash_traits *ivhash_traits = Hash_traits::traits(_iv_hash);
-	cipher = cipher_traits->name;
-	if (ivhash_traits)
-		ivhash = ivhash_traits->name;
-
-	// is the cipher spec supported by the system?
-	{
-		const std::set<std::string> &sys_ciph = system_ciphers();
-		if (!sys_ciph.count(cipher))
-			throw Bad_spec("cipher not supported by system: " +
-			    cipher);
-
-		const std::set<std::string> &sys_hash = system_hashes();
-		if (ivhash.size() && !sys_hash.count(ivhash))
-			throw Bad_spec("IV hash not supported by system: " +
-			    ivhash);
-	}
-
-	// XXX how to check for CBC, etc?  They get added to /proc/crypto, but
-	// XXX only *after* dm-crypt attempts to use them.
-
-	const std::vector<uint16_t> &sizes = cipher_traits->key_sizes;
-	if (sz_key == -1)
+	if (sz_key == -1) {
 		// use the largest possible size
+		const Cipher_traits *traits =
+		    Cipher_traits::traits(_cipher_spec->type_cipher());
+		const std::vector<uint16_t> &sizes = traits->key_sizes;
 		sz_key = sizes.back();
-	else if (!std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
-		// sz_key not compatible with the cipher
-		std::ostringstream out;
-		out << "cipher `" << cipher
-		    << "' only supports keys of sizes";
-		for (std::vector<uint16_t>::const_iterator i = sizes.begin();
-		    i != sizes.end(); ++i) {
-			if (i != sizes.begin()) out << ',';
-			out << ' ' << *i * 8;
-		}
-		out << " (not " << sz_key << ')';
-		throw Bad_spec(out.str());
 	}
 	_hdr->sz_key = sz_key;
 
-	// are the specs compatible?
-	if (_block_mode == BM_ECB && _iv_mode != IM_UNDEFINED)
-		throw Bad_spec("ECB cannot use an IV mode");
-	if (_block_mode != BM_ECB && _iv_mode == IM_UNDEFINED)
-		throw Bad_spec(
-		    "block modes other than ECB require an IV mode");
-	if (_iv_mode == IM_ESSIV && _iv_hash == HT_UNDEFINED)
-		throw Bad_spec("IV mode `essiv' requires an IV hash");
-	if (_iv_mode == IM_PLAIN && _iv_hash != HT_UNDEFINED)
-		throw Bad_spec("IV mode `plain' cannot use an IV hash");
-	if (_iv_mode == IM_ESSIV) {
-		// check that ESSIV hash size is a possible key size of the
-		// cipher
-		uint16_t size = ivhash_traits->digest_size;
-		if (!std::binary_search(sizes.begin(), sizes.end(), size)) {
-			std::ostringstream out;
-			out << "cipher `" << cipher
-			    << "' only supports keys of sizes";
-			for (std::vector<uint16_t>::const_iterator i =
-			    sizes.begin(); i != sizes.end(); ++i) {
-				if (i != sizes.begin())
-					out << ',';
-				out << ' ' << (*i * 8);
-			}
-			out << "; incompatible with hash `" << ivhash << '\'';
-			throw Bad_spec(out.str());
-		}
-	}
-
-	// recreate a canonical cipher spec; note
-	// that cipher and ivhash were already canonized
-	std::string mode = make_mode(block_mode, ivmode, ivhash);
+	// recreate a canonical cipher spec
+	std::string cipher = _cipher_spec->canon_cipher();
+	std::string mode = _cipher_spec->canon_mode();
 
 	// copy specs (back) into header
 	std::copy(cipher.begin(), cipher.end(), _hdr->cipher_name);
@@ -624,11 +530,9 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 		throw Disk_error("failed to read key material");
 
 	// (pw_digest, key_crypt) => split_key
-	decrypt(_cipher_type, _block_mode, _iv_mode, _iv_hash,
-	    key->off_km, _sz_sect,
-	    pw_digest, sizeof(pw_digest),
-	    key_crypt, sizeof(key_crypt),
-	    split_key);
+	Crypter crypter(pw_digest, sizeof(pw_digest), *_cipher_spec);
+	crypter.decrypt(key->off_km, _sz_sect,
+	    key_crypt, sizeof(key_crypt), split_key);
 
 	// split_key => master_key
 	af_merge(split_key, _hdr->sz_key, key->stripes,

@@ -23,7 +23,11 @@
 namespace fluks {
 
 
-/** Not to be caught */
+/** Not to be caught.
+ *
+ * Do not use directly.  To conditionally throw an Assertion object, use the
+ * Assert() function.
+ */
 struct Assertion : std::exception {
 	Assertion(const std::string &msg) : _msg(msg) {}
 	~Assertion() throw () {}
