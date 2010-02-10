@@ -45,22 +45,57 @@
 #	define INLINE static inline
 #endif
 
-/** Convert a byte/be32 array to an le32 array */
+/*
+ * With some testing, I discovered that this is an interesting and extremely
+ * slow way of endian-switching:
+ *	for (size_t i = 0; i < sz; i++)
+ *		o8[i] = i8[i ^ 3];
+ * Another issue is whether the input is aligned, which has a factor 5
+ * difference.
+ */
+
+/** Convert a single 32-bit integer's endian */
+INLINE uint32_t
+betole32(uint32_t x)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	return htole32(x);
+#else
+	return htobe32(x);
+#endif
+}
+
+/** Convert a be32 array to an le32 array */
 INLINE void
 be_to_le32(void *out, const void *in, size_t sz)
 {
-	register uint8_t	*o8 = (uint8_t *)out;
-	register const uint8_t	*i8 = (const uint8_t *)in;
-	for (size_t i = 0; i < sz; i++)
-		o8[i] = i8[i ^ 3];
+	size_t	n = sz / 4;
+	if (((int)out | (int)in) & 3) {
+		/* at least one arg unaligned */
+		const uint8_t	*i8 = (const uint8_t *)in;
+		uint8_t		*o8 = (uint8_t *)out;
+		uint32_t	temp;
+		for (size_t i = 0; i < n; i++) {
+			size_t	off = i * 4;
+			memcpy(&temp, i8 + off, 4);
+			temp = betole32(temp);
+			memcpy(o8 + off, &temp, 4);
+		}
+	} else {
+		/* both args aligned */
+		const uint32_t	*i32 = (const uint32_t *)in;
+		uint32_t	*o32 = (uint32_t *)out;
+		for (size_t i = 0; i < n; i++)
+			o32[i] = betole32(i32[i]);
+	}
 }
 
-/** Convert an le32 array to a byte/be32 array */
+/** Convert an le32 array to a be32 array */
 INLINE void
 le_to_be32(void *out, const void *in, size_t sz)
 {	be_to_le32(out, in, sz); }
 
-/** Convert a byte/be32 array to a host32 array */
+/** Convert a be32 array to a host32 array */
 INLINE void
 be_to_host32(void *out, const void *in, size_t sz)
 {
@@ -71,12 +106,12 @@ be_to_host32(void *out, const void *in, size_t sz)
 #endif
 }
 
-/** Convert a host32 array to a byte/be32 array */
+/** Convert a host32 array to a be32 array */
 INLINE void
 host_to_be32(void *out, const void *in, size_t sz)
 {	be_to_host32(out, in, sz); }
 
-/** Convert a le32 array to a host32 array */
+/** Convert an le32 array to a host32 array */
 INLINE void
 le_to_host32(void *out, const void *in, size_t sz)
 {
@@ -87,27 +122,53 @@ le_to_host32(void *out, const void *in, size_t sz)
 #endif
 }
 
-/** Convert a host32 array to a le32 array */
+/** Convert a host32 array to an le32 array */
 INLINE void
 host_to_le32(void *out, const void *in, size_t sz)
 {	le_to_host32(out, in, sz); }
 
-/** Convert an le64 array to a byte/be64 array */
+/** Convert a single 64-bit integer's endian */
+INLINE uint64_t
+betole64(uint64_t x)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	return htole64(x);
+#else
+	return htobe64(x);
+#endif
+}
+
+/** Convert a be64 array to an le64 array */
 INLINE void
 be_to_le64(void *out, const void *in, size_t sz)
 {
-	register uint8_t	*o8 = (uint8_t *)out;
-	register const uint8_t	*i8 = (const uint8_t *)in;
-	for (size_t i = 0; i < sz; i++)
-		o8[i] = i8[i ^ 7];
+	size_t	n = sz / 8;
+	if (((int)out | (int)in) & 7) {
+		/* at least one arg unaligned */
+		const uint8_t	*i8 = (const uint8_t *)in;
+		uint8_t		*o8 = (uint8_t *)out;
+		uint64_t	temp;
+		for (size_t i = 0; i < n; i++) {
+			size_t	off = i * 8;
+			memcpy(&temp, i8 + off, 8);
+			temp = betole64(temp);
+			memcpy(o8 + off, &temp, 8);
+		}
+	} else {
+		/* both args aligned */
+		const uint64_t	*i64 = (const uint64_t *)in;
+		uint64_t	*o64 = (uint64_t *)out;
+		for (size_t i = 0; i < n; i++)
+			o64[i] = betole64(i64[i]);
+	}
 }
 
-/** Convert a byte/be64 array to an le64 array */
+/** Convert a be64 array to an le64 array */
 INLINE void
 le_to_be64(void *out, const void *in, size_t sz)
 {	be_to_le64(out, in, sz); }
 
-/** Convert a le64 array to a host64 array */
+/** Convert an le64 array to a host64 array */
 INLINE void
 le_to_host64(void *out, const void *in, size_t sz)
 {
@@ -118,7 +179,7 @@ le_to_host64(void *out, const void *in, size_t sz)
 #endif
 }
 
-/** Convert a host64 array to a le64 array */
+/** Convert a host64 array to an le64 array */
 INLINE void
 host_to_le64(void *out, const void *in, size_t sz)
 {	le_to_host64(out, in, sz); }
