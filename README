@@ -25,7 +25,7 @@ BUILDING
 	OpenSSL (openssl.org)
 
     If you were wondering, libuuid is one of the few BSD-licensed libraries
-    in e2fsprogs/util-linux.  Now just run
+    in e2fsprogs/util-linux.  Now build:
 
 	$ bjam release
 
@@ -34,6 +34,7 @@ BUILDING
 
 INSTALLING
 
-    There is no installer.  Just copy the binary to a bin directory.
+    This will install to /usr/local/bin by default.  To change the install
+    paths, run `bjam --help'.
 
-	$ sudo cp release/fluks /usr/local/sbin
+	# bjam [options] release install

@@ -1,3 +1,30 @@
+# Usage:
+#
+#  bjam [OPTIONS] [PROPERTIES] [release|debug] [install]
+#
+#  Build and install fluks.
+#
+# Targets and Related Options:
+#
+#   install                 Install to the configured locations (below).
+#   =======
+#
+#   --prefix=<PREFIX>       Install architecture independent files here.
+#                           [default=/usr/local]
+#
+#   --exec-prefix=<EPREFIX> Install architecture dependent files here.
+#                           [default=<PREFIX>]
+
+# above comment shows up with `bjam --help'
+# other available options:
+
+#   --libdir=<DIR>          Install library files here.
+#                           Default: <EPREFIX>/lib
+#
+#   --includedir=<HDRDIR>   Install header files here.
+#                           Default: <PREFIX>/include
+
+import package ;
 import testing ;
 
 using gcc
@@ -98,4 +125,11 @@ install dist
 
 	: <variant>release:<location>release
 	<variant>debug:<location>debug
+	;
+
+package.install install
+	: # properties
+	: fluks
+	: # libraries
+	: # headers
 	;
