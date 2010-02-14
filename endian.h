@@ -70,7 +70,7 @@ INLINE void
 be_to_le32(void *out, const void *in, size_t sz)
 {
 	size_t	n = sz / 4;
-	if (((int)out | (int)in) & 3) {
+	if (((long)out | (long)in) & 3) {
 		/* at least one arg unaligned */
 		const uint8_t	*i8 = (const uint8_t *)in;
 		uint8_t		*o8 = (uint8_t *)out;
@@ -143,7 +143,7 @@ INLINE void
 be_to_le64(void *out, const void *in, size_t sz)
 {
 	size_t	n = sz / 8;
-	if (((int)out | (int)in) & 7) {
+	if (((long)out | (long)in) & 7) {
 		/* at least one arg unaligned */
 		const uint8_t	*i8 = (const uint8_t *)in;
 		uint8_t		*o8 = (uint8_t *)out;
