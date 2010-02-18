@@ -59,10 +59,13 @@ fluks::Crypter::Crypter(const uint8_t *key, size_t sz_key,
     const Cipher_spec &_spec) :
 	_key(new uint8_t[sz_key]),
 	_cipher(Cipher::create(_spec.type_cipher())),
-	_spec(_spec)
+	_spec(_spec),
+	_sz_key(sz_key)
 {
 	std::copy(key, key + sz_key, _key.get());
 	_cipher->init(_key.get(), _sz_key);
+	if (_spec.type_iv_hash() != HT_UNDEFINED)
+		_iv_hash = Hash_function::create(_spec.type_iv_hash());
 }
 
 size_t

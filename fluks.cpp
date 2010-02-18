@@ -300,7 +300,12 @@ main(int argc, char **argv)
 
 	// finally parse the arguments, storing into var_map
 	po::variables_map var_map;
-	po::store(parser.run(), var_map);
+	try {
+		po::store(parser.run(), var_map);
+	} catch (const po::unknown_option &e) {
+		std::cerr << prog << ": " << e.what() << '\n';
+		return 1;
+	}
 
 	if (argc < 2) {
 		usage(visible_desc);
