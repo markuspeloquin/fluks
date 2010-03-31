@@ -303,7 +303,8 @@ main(int argc, char **argv)
 	try {
 		po::store(parser.run(), var_map);
 	} catch (const po::unknown_option &e) {
-		std::cerr << prog << ": " << e.what() << '\n';
+		std::cerr << prog << ": unknown option `"
+		    << e.get_option_name() << "'\n";
 		return 1;
 	}
 
