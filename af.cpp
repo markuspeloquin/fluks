@@ -170,6 +170,10 @@ fluks::af_split(const uint8_t *in, size_t sz, size_t stripes,
 	Assert(type != HT_UNDEFINED, "undefined hash in af_split()");
 
 	uint8_t d[sz];
+#ifdef DEBUG
+	// for valgrind
+	std::fill(out, out + sz * (stripes - 1), 0);
+#endif
 	if (!RAND_bytes(out, sz * (stripes - 1)))
 		throw Ssl_error();
 

@@ -59,7 +59,7 @@ uint8_t rand_index(uint8_t max)
 	// is 250; if there are 250 possible values, they can be divided
 	// evenly into 25 groups)
 	uint16_t max_accept = 256 / max * max;
-	uint8_t r;
+	uint8_t r = 0; // init for valgrind
 	do {
 		if (!RAND_bytes(&r, 1))
 			throw Ssl_error();
@@ -106,6 +106,10 @@ fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
 		std::swap(order[i], order[r]);
 	}
 
+#ifdef DEBUG
+	// for valgrind
+	std::fill(buf, buf + bytes, 0);
+#endif
 	for (uint8_t i = 0; i < 4; i++) {
 		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf), bytes))
 			throw Ssl_error();

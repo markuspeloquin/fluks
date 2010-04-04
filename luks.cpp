@@ -150,6 +150,10 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 
 	// initialize LUKS header
 
+#ifdef DEBUG
+	// for valgrind
+	std::fill(_master_key.get(), _master_key.get() + _hdr->sz_key, 0);
+#endif
 	if (!RAND_bytes(_master_key.get(), _hdr->sz_key))
 		throw Ssl_error();
 
@@ -163,6 +167,10 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 		_hdr->hash_spec[hash.size()] = '\0';
 	}
 
+#ifdef DEBUG
+	// for valgrind
+	std::fill(_hdr->mk_salt, _hdr->mk_salt + SZ_SALT, 0);
+#endif
 	if (!RAND_bytes(_hdr->mk_salt, SZ_SALT))
 		throw Ssl_error();
 	_hdr->mk_iterations = mk_iterations;
@@ -183,6 +191,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		_hdr->keys[i].active = KEY_DISABLED;
+		_hdr->keys[i].iterations = 0;
 		_hdr->keys[i].stripes = stripes;
 		_hdr->keys[i].off_km = off_base;
 
@@ -303,6 +312,10 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 
 	uint8_t split_key[_hdr->sz_key * avail->stripes];
 
+#ifdef DEBUG
+	// for valgrind
+	std::fill(avail->salt, avail->salt + SZ_SALT, 0);
+#endif
 	if (!RAND_bytes(avail->salt, SZ_SALT))
 		throw Ssl_error();
 	af_split(_master_key.get(), _hdr->sz_key, avail->stripes,
