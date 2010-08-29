@@ -41,6 +41,7 @@ lib boost_system ;
 lib crypto ;
 lib devmapper ;
 lib ssl ;
+lib udev ;
 lib uuid ;
 lib fluks_crypto
 	: serpent.cpp
@@ -69,6 +70,7 @@ exe fluks
 	crypto
 	devmapper
 	ssl
+	udev
 	uuid
 
 	# internal lib
