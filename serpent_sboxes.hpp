@@ -386,33 +386,29 @@ sbox_6_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y0 = t9 ^ td;
 }
 
-// S7:    [1 d f 0 e 8 2 b 7 4 c a 9 3 5 6] in 20 gates (vs 18)
+// S7:    [1 d f 0 e 8 2 b 7 4 c a 9 3 5 6] in 17 gates (vs 18)
 inline void
 sbox_7(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td, te, tf;
-	t0 = x0 ^ x1;
-	t1 = x2 ^ t0;
-	t2 = x0 & x2;
-	t3 = x0 & x3;
-	t4 = t1 | t2;
-	y3 = t3 ^ t4;
-	t5 = x0 ^ x2;
-	t6 = x3 ^ t1;
-	t7 = t0 & t5;
-	t8 = t3 | t6;
-	y1 = t7 ^ t8;
-	t9 = x0 ^ t6;
-	ta = t0 & t1;
-	tb = t8 & t9;
-	y2 = ta | tb;
-	tc = x1 ^ x3;
-	td = x3 | y3;
-	te = ~td;
-	tf = t7 | te;
-	y0 = tc ^ tf;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	t0 = x1 ^ x2;
+	t1 = x2 & t0;
+	t2 = x3 ^ t1;
+	t3 = x0 ^ t2;
+	t4 = x0 & t3;
+	y3 = t0 ^ t4;
+	t5 = x1 ^ t3;
+	t6 = t4 & y3;
+	y1 = t5 ^ t6;
+	t7 = y3 & t5;
+	t8 = x3 & t2;
+	y2 = t7 ^ t8;
+	t9 = x1 ^ t7;
+	ta = t2 | t9;
+	tb = ~t3;
+	tc = t0 | tb;
+	y0 = ta ^ tc;
 }
 
 // Sinv7: [3 0 6 d 9 e f 8 5 c b 7 a 1 4 2] in 18 gates (vs 18)
