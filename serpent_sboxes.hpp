@@ -17,7 +17,7 @@
 
 #include <tr1/cstdint>
 
-// Compared to the 'reference' implementation, there are a total of ten
+// Compared to the 'reference' implementation, there are a total of eleven
 // fewer gates!  Win!
 
 // S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 18 gates (vs 19 in optimized
@@ -331,27 +331,26 @@ sbox_5_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = tc ^ td;
 }
 
-// S6:    [7 2 c 5 8 4 6 b e 9 1 f d 3 a 0] in 15 gates (vs 19)
+// S6:    [7 2 c 5 8 4 6 b e 9 1 f d 3 a 0] in 14 gates (vs 19)
 inline void
 sbox_6(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x0 & x3;
 	t1 = x2 ^ t0;
 	t2 = ~t1;
 	y1 = x1 ^ t2;
-	t3 = x0 ^ x1;
-	t4 = x3 ^ t3;
-	t5 = y1 & t4;
-	t6 = x0 ^ t5;
-	t7 = t2 | t6;
-	y0 = t4 ^ t7;
-	t8 = x1 & t2;
-	t9 = t6 ^ t8;
-	y2 = y0 ^ t9;
-	ta = t4 & t9;
-	y3 = t1 ^ ta;
+	t3 = x0 ^ x3;
+	t4 = x1 ^ t3;
+	t5 = y1 | t3;
+	t6 = x3 ^ t5;
+	t7 = t2 & t6;
+	y2 = t4 ^ t7;
+	t8 = t2 ^ t6;
+	y0 = y2 ^ t8;
+	t9 = t4 & t8;
+	y3 = t1 ^ t9;
 }
 
 // Sinv6: [f a 1 d 5 3 6 0 4 9 e 7 2 c 8 b] in 18 gates (vs 19)
