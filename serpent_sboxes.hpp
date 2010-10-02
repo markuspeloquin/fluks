@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, Markus Peloquin <markus@cs.wisc.edu>
+/* Copyright (c) 2009-2010, Markus Peloquin <markus@cs.wisc.edu>
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,35 +17,29 @@
 
 #include <tr1/cstdint>
 
-// Compared to the 'reference' implementation, there are a total of eleven
-// fewer gates!  Win!
+// Compared to the 'reference' implementation, there are a total of 25
+// fewer gates!  (244 vs 269)  Win!
 
-// S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 18 gates (vs 19 in optimized
-// reference code)
+// S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 14 gates (vs 19)
 inline void
 sbox_0(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
-	t0 = x1 ^ x2;
-	t1 = x0 | x3;
-	y3 = t0 ^ t1;
-	t2 = x0 ^ x1;
-	t3 = x1 | x2;
-	t4 = t2 & t3;
-	t5 = x2 | y3;
-	t6 = x3 & t5;
-	y2 = t4 ^ t6;
-	t7 = x0 ^ x3;
-	t8 = t3 ^ t7;
-	t9 = t4 & y2;
-	ta = t8 ^ t9;
-	y0 = ~ta;
-	tb = x0 ^ t0;
-	tc = y0 ^ tb;
-	td = x1 | t7;
-	y1 = tc ^ td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	t0 = x0 | x3;
+	t1 = x1 ^ t0;
+	y3 = x2 ^ t1;
+	t2 = x0 ^ x3;
+	t3 = x2 ^ t2;
+	t4 = x1 & t2;
+	t5 = x0 ^ t4;
+	t6 = t3 & t5;
+	y2 = t1 ^ t6;
+	t7 = t3 ^ t5;
+	t8 = y3 & t7;
+	t9 = t3 ^ t8;
+	y1 = ~t9;
+	y0 = t7 ^ y1;
 }
 
 // Sinv0: [d 3 b 0 a 6 5 c 1 e 4 7 f 9 8 2] in 17 gates (vs 18)
@@ -152,58 +146,51 @@ sbox_2(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y2 = tb ^ tc;
 }
 
-// Sinv2: [c 9 f 4 b e 1 2 0 3 6 d 5 8 a 7] in 18 gates (vs 18)
+// Sinv2: [c 9 f 4 b e 1 2 0 3 6 d 5 8 a 7] in 14 gates (vs 18)
 inline void
 sbox_2_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x0 ^ x3;
 	t1 = x2 ^ x3;
 	t2 = x1 | t1;
 	y0 = t0 ^ t2;
-	t3 = x0 ^ x1;
-	t4 = x2 ^ t3;
-	t5 = x2 & t0;
-	t6 = t4 | t5;
-	y1 = t2 & t6;
-	t7 = x0 ^ t2;
-	t8 = t3 ^ t5;
-	t9 = y1 & t8;
-	ta = t7 ^ t9;
-	y2 = ~ta;
-	tb = x0 ^ y0;
-	tc = y1 ^ tb;
-	td = y0 | y2;
-	y3 = tc ^ td;
+	t3 = x1 ^ t1;
+	t4 = x2 & t3;
+	t5 = t2 ^ t4;
+	t6 = t0 & t5;
+	y1 = t3 ^ t6;
+	t7 = x0 ^ y1;
+	t8 = ~t5;
+	y2 = t7 ^ t8;
+	t9 = y0 & y2;
+	y3 = t8 ^ t9;
 }
 
-// S3:    [0 f b 8 c 9 6 3 d 1 2 4 a 7 5 e] in 18 gates (vs 18)
+// S3:    [0 f b 8 c 9 6 3 d 1 2 4 a 7 5 e] in 17 gates (vs 18)
 inline void
 sbox_3(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
-	t0 = x0 ^ x1;
-	t1 = x2 ^ x3;
-	t2 = x1 & t1;
-	t3 = x3 & t1;
-	t4 = t0 | t3;
-	y0 = t2 ^ t4;
-	t5 = x0 ^ x2;
-	t6 = x1 & t5;
-	t7 = t1 ^ t6;
-	t8 = x0 | t2;
-	y2 = t7 ^ t8;
-	t9 = x1 ^ t5;
-	ta = x0 | t3;
-	tb = t7 & ta;
-	y3 = t9 ^ tb;
-	tc = x1 ^ ta;
-	td = y3 | tc;
-	y1 = t7 ^ td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	t0 = x0 ^ x2;
+	t1 = x3 ^ t0;
+	t2 = x0 | t1;
+	t3 = x2 ^ t2;
+	t4 = x1 & t3;
+	y2 = t1 ^ t4;
+	t5 = x0 & x3;
+	t6 = t0 & t3;
+	t7 = x1 | t5;
+	y1 = t6 ^ t7;
+	t8 = x0 ^ x1;
+	t9 = t1 ^ t6;
+	ta = t4 | t8;
+	y3 = t9 ^ ta;
+	tb = x3 | ta;
+	tc = t2 & tb;
+	y0 = x1 ^ tc;
 }
 
 // Sinv3: [0 9 a 7 b e 6 d 3 5 c 2 4 8 f 1] in 17 gates (vs 17)
@@ -304,31 +291,28 @@ sbox_5(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y3 = ta ^ tc;
 }
 
-// Sinv5: [8 f 2 9 4 1 d e b 6 5 3 7 c a 0] in 18 gates (vs 17)
+// Sinv5: [8 f 2 9 4 1 d e b 6 5 3 7 c a 0] in 16 gates (vs 17)
 inline void
 sbox_5_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
-	t0 = x0 ^ x3;
-	t1 = x0 & x1;
-	t2 = x1 & x2;
-	t3 = t0 | t1;
-	y0 = t2 ^ t3;
-	t4 = x0 ^ x2;
-	t5 = x0 & x3;
-	t6 = x1 & t3;
-	t7 = t4 | t5;
-	y2 = t6 ^ t7;
-	t8 = x1 ^ x2;
-	t9 = ~t8;
-	ta = t1 | t9;
-	y3 = t5 ^ ta;
-	tb = x0 ^ x1;
-	tc = t3 ^ y3;
-	td = t9 | tb;
-	y1 = tc ^ td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
+	t0 = x0 & x3;
+	t1 = x2 ^ t0;
+	t2 = x1 & t1;
+	t3 = x3 ^ t2;
+	y0 = x0 ^ t3;
+	t4 = x0 & y0;
+	t5 = ~x1;
+	t6 = t4 | t5;
+	y3 = t1 ^ t6;
+	t7 = x0 & y3;
+	t8 = x1 ^ t7;
+	y1 = t3 ^ t8;
+	t9 = x1 ^ x3;
+	ta = t1 ^ t9;
+	tb = y0 | y1;
+	y2 = ta ^ tb;
 }
 
 // S6:    [7 2 c 5 8 4 6 b e 9 1 f d 3 a 0] in 14 gates (vs 19)
@@ -353,31 +337,27 @@ sbox_6(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y3 = t1 ^ t9;
 }
 
-// Sinv6: [f a 1 d 5 3 6 0 4 9 e 7 2 c 8 b] in 18 gates (vs 19)
+// Sinv6: [f a 1 d 5 3 6 0 4 9 e 7 2 c 8 b] in 15 gates (vs 19)
 inline void
 sbox_6_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
-	t0 = x1 ^ x3;
-	t1 = ~x2;
-	t2 = x0 | t1;
-	y1 = t0 ^ t2;
-	t3 = x0 ^ x1;
-	t4 = x2 ^ t3;
-	t5 = x1 & t4;
-	t6 = t1 ^ t5;
-	t7 = t0 | t6;
-	y2 = t4 ^ t7;
-	t8 = x0 ^ t7;
-	t9 = t0 ^ t5;
-	ta = t3 | t9;
-	y3 = t8 ^ ta;
-	tb = x2 ^ y1;
-	tc = y2 & tb;
-	td = t8 | tc;
-	y0 = t9 ^ td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
+	t0 = ~x2;
+	t1 = x0 | t0;
+	t2 = x3 ^ t1;
+	y1 = x1 ^ t2;
+	t3 = x0 ^ x2;
+	t4 = t2 ^ t3;
+	t5 = t3 & t4;
+	t6 = x0 ^ t5;
+	t7 = x1 & t6;
+	y0 = t4 ^ t7;
+	t8 = t6 ^ y0;
+	y3 = x1 ^ t8;
+	t9 = y0 & y3;
+	ta = t2 ^ t9;
+	y2 = ~ta;
 }
 
 // S7:    [1 d f 0 e 8 2 b 7 4 c a 9 3 5 6] in 17 gates (vs 18)
