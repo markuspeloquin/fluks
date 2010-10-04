@@ -17,8 +17,8 @@
 
 #include <tr1/cstdint>
 
-// Compared to the 'reference' implementation, there are a total of 25
-// fewer gates!  (244 vs 269)  Win!
+// Compared to the 'reference' implementation, there are a total of 29
+// fewer gates!  (240 vs 269)  Win!
 
 // S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 14 gates (vs 19)
 inline void
@@ -42,31 +42,26 @@ sbox_0(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y0 = t7 ^ y1;
 }
 
-// Sinv0: [d 3 b 0 a 6 5 c 1 e 4 7 f 9 8 2] in 17 gates (vs 18)
+// Sinv0: [d 3 b 0 a 6 5 c 1 e 4 7 f 9 8 2] in 14 gates (vs 18)
 inline void
 sbox_0_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
-	t0 = x2 ^ x3;
-	t1 = x0 | x1;
-	t2 = t0 ^ t1;
-	y2 = ~t2;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	t0 = x0 | x1;
+	t1 = x2 ^ t0;
+	t2 = ~t1;
+	y2 = x3 ^ t2;
 	t3 = x0 ^ x1;
-	t4 = x2 ^ t3;
-	t5 = x0 & t0;
-	t6 = x2 | t2;
-	t7 = t4 & t6;
-	y1 = t5 ^ t7;
-	t8 = x1 ^ t2;
-	t9 = x3 ^ y2;
-	ta = t0 ^ t7;
-	tb = t8 | t9;
-	y3 = ta ^ tb;
-	tc = t8 ^ y3;
-	td = x3 & t3;
-	y0 = tc ^ td;
+	t4 = y2 ^ t3;
+	t5 = x3 | t3;
+	t6 = x0 ^ t5;
+	t7 = t2 & t6;
+	y0 = t4 ^ t7;
+	t8 = t1 ^ y0;
+	y3 = t6 ^ t8;
+	t9 = y0 | y3;
+	y1 = t2 ^ t9;
 }
 
 // S1:    [f c 2 7 9 0 5 a 1 b e 8 6 d 3 4] in 17 gates (vs 18)
@@ -385,31 +380,29 @@ sbox_7(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y0 = ta ^ tc;
 }
 
-// Sinv7: [3 0 6 d 9 e f 8 5 c b 7 a 1 4 2] in 18 gates (vs 18)
+// Sinv7: [3 0 6 d 9 e f 8 5 c b 7 a 1 4 2] in 17 gates (vs 18)
 inline void
 sbox_7_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
 	t0 = x0 & x1;
 	t1 = x0 | x1;
 	t2 = x3 & t1;
 	t3 = x2 | t0;
 	y3 = t2 ^ t3;
-	t4 = x1 ^ x3;
-	t5 = x0 | x3;
-	t6 = x2 & t5;
-	t7 = t0 | t4;
-	y2 = t6 ^ t7;
-	t8 = x0 ^ t4;
-	t9 = x1 ^ t2;
-	ta = t3 | t9;
-	tb = t8 ^ ta;
-	y1 = ~tb;
-	tc = x2 ^ t9;
-	td = x3 | y1;
-	y0 = tc ^ td;
+	t4 = x1 ^ t2;
+	t5 = x3 ^ y3;
+	t6 = ~t5;
+	t7 = t4 | t6;
+	y1 = x0 ^ t7;
+	t8 = x3 | y1;
+	t9 = x2 ^ t8;
+	y0 = t4 ^ t9;
+	ta = x1 ^ t7;
+	tb = t9 ^ ta;
+	tc = x0 | y3;
+	y2 = tb ^ tc;
 }
 
 #endif
