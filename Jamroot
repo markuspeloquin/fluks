@@ -34,15 +34,19 @@ using gcc
 	<cxxflags>"-std=c++98"
 	<cflags>"-std=c99 -pedantic"
 	;
+
 lib boost_filesystem-mt ;
 lib boost_program_options-mt ;
 lib boost_regex ;
 lib boost_system ;
 lib crypto ;
 lib devmapper ;
+lib dl ; # for crypto
 lib ssl ;
-lib udev ;
+lib udev ; # for devmapper
 lib uuid ;
+lib z ; # for crypto
+
 lib fluks_crypto
 	: serpent.cpp
 	cast6.c tiger.c twofish.c whirlpool.c
@@ -69,9 +73,11 @@ exe fluks
 	boost_system
 	crypto
 	devmapper
+	dl
 	ssl
 	udev
 	uuid
+	z
 
 	# internal lib
 	fluks_crypto
