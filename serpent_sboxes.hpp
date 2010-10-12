@@ -17,8 +17,8 @@
 
 #include <tr1/cstdint>
 
-// Compared to the 'reference' implementation, there are a total of 29
-// fewer gates!  (240 vs 269)  Win!
+// Compared to the 'reference' implementation, there are 17% fewer gates!
+// (242 vs 284)  Win!
 
 // S0:    [3 8 f 1 a 6 5 b e d 4 2 7 0 9 c] in 14 gates (vs 19)
 inline void
@@ -64,81 +64,69 @@ sbox_0_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = t2 ^ t9;
 }
 
-// S1:    [f c 2 7 9 0 5 a 1 b e 8 6 d 3 4] in 17 gates (vs 18)
+// S1:    [f c 2 7 9 0 5 a 1 b e 8 6 d 3 4] in 14 gates (vs 18)
 inline void
 sbox_1(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc,
-	    td;
-	t0 = x2 ^ x3;
-	t1 = ~x1;
-	t2 = x0 | t1;
-	y2 = t0 ^ t2;
-	t3 = x0 ^ x1;
-	t4 = x2 ^ t3;
-	t5 = x3 & t0;
-	t6 = x1 | y2;
-	t7 = t4 | t5;
-	y0 = t6 ^ t7;
-	t8 = x0 ^ x3;
-	t9 = y2 ^ t3;
-	ta = x1 | t8;
-	tb = y0 | t9;
-	y3 = ta ^ tb;
-	tc = x2 ^ tb;
-	td = x3 & t8;
-	y1 = tc ^ td;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	t0 = ~x1;
+	t1 = x0 | t0;
+	t2 = x2 ^ t1;
+	y2 = x3 ^ t2;
+	t3 = x0 ^ t0;
+	t4 = y2 ^ t3;
+	t5 = x3 | t3;
+	t6 = x1 ^ t5;
+	t7 = t2 & t6;
+	y3 = t4 ^ t7;
+	t8 = t2 ^ t6;
+	y1 = y3 ^ t8;
+	t9 = t4 & t8;
+	y0 = t2 ^ t9;
 }
 
-// Sinv1: [5 8 2 e f 6 c 3 b 4 7 9 1 d a 0] in 17 gates (vs 18)
+// Sinv1: [5 8 2 e f 6 c 3 b 4 7 9 1 d a 0] in 15 gates (vs 18)
 inline void
 sbox_1_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
-	t0 = x0 ^ x1;
-	t1 = x2 ^ t0;
-	t2 = x1 | x3;
-	y3 = t1 ^ t2;
-	t3 = x0 ^ x3;
-	t4 = x2 | t3;
-	t5 = x1 ^ t4;
-	t6 = t1 & t5;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	t0 = x1 & x3;
+	t1 = x0 ^ t0;
+	t2 = x3 ^ t1;
+	y3 = x2 ^ t2;
+	t3 = x1 ^ t1;
+	t4 = x2 & t3;
+	t5 = t1 ^ t4;
+	t6 = y3 | t5;
 	y1 = t3 ^ t6;
-	t7 = t2 ^ t5;
-	t8 = t1 & y1;
-	t9 = t7 ^ t8;
-	y0 = ~t9;
-	ta = x0 ^ t4;
-	tb = t8 ^ ta;
-	tc = y1 | y0;
-	y2 = tb ^ tc;
+	t7 = ~y1;
+	t8 = y3 | t7;
+	y0 = t5 ^ t8;
+	t9 = t7 | y0;
+	y2 = t2 ^ t9;
 }
 
-// S2:    [8 6 7 9 3 c a f d 1 e 4 0 b 5 2] in 17 gates (vs 16)
+// S2:    [8 6 7 9 3 c a f d 1 e 4 0 b 5 2] in 13 gates (vs 16)
 inline void
 sbox_2(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
-	t0 = x0 ^ x1;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8;
+	t0 = x0 & x2;
 	t1 = x3 ^ t0;
-	t2 = x0 | x2;
-	y0 = t1 ^ t2;
-	t3 = x0 ^ x2;
-	t4 = x2 ^ y0;
-	t5 = x1 & t4;
-	t6 = t3 ^ t5;
-	y3 = ~t6;
-	t7 = x1 ^ t4;
-	t8 = t2 & t7;
-	t9 = t0 | t6;
-	y1 = t8 ^ t9;
-	ta = x0 ^ t4;
-	tb = x2 ^ y1;
-	tc = t7 & ta;
-	y2 = tb ^ tc;
+	t2 = x1 ^ t1;
+	y0 = x2 ^ t2;
+	t3 = t1 & t2;
+	t4 = x0 ^ t3;
+	t5 = y0 ^ t4;
+	y3 = ~t5;
+	t6 = t1 & t4;
+	t7 = x2 ^ t6;
+	t8 = t5 | t7;
+	y1 = t1 ^ t8;
+	y2 = t7 ^ y1;
 }
 
 // Sinv2: [c 9 f 4 b e 1 2 0 3 6 d 5 8 a 7] in 14 gates (vs 18)
@@ -188,29 +176,28 @@ sbox_3(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y0 = x1 ^ tc;
 }
 
-// Sinv3: [0 9 a 7 b e 6 d 3 5 c 2 4 8 f 1] in 17 gates (vs 17)
+// Sinv3: [0 9 a 7 b e 6 d 3 5 c 2 4 8 f 1] in 16 gates (vs 17)
 inline void
 sbox_3_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
 	t0 = x1 ^ x2;
 	t1 = x1 & t0;
 	t2 = x0 ^ t1;
 	t3 = x3 | t2;
 	y0 = t0 ^ t3;
-	t4 = x1 ^ x3;
-	t5 = t2 ^ y0;
-	t6 = t3 & t5;
-	y2 = t4 ^ t6;
-	t7 = x3 ^ t3;
-	t8 = x2 | t2;
-	t9 = t5 & t8;
-	y3 = t7 | t9;
-	ta = x1 ^ y2;
-	tb = t8 ^ t9;
-	tc = y0 | ta;
-	y1 = tb ^ tc;
+	t4 = x2 ^ x3;
+	t5 = t2 ^ t4;
+	t6 = t0 | t3;
+	y2 = t5 ^ t6;
+	t7 = x0 & t2;
+	t8 = y0 | t5;
+	y1 = t7 ^ t8;
+	t9 = x1 ^ t8;
+	ta = x3 & y0;
+	tb = t2 | t9;
+	y3 = ta ^ tb;
 }
 
 // S4:    [1 f 8 3 c 0 b 6 2 5 4 a 9 e 7 d] in 15 gates (vs 17)
@@ -236,54 +223,52 @@ sbox_4(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	y1 = t9 ^ ta;
 }
 
-// Sinv4: [5 0 8 3 a 9 7 e 2 c b 6 4 f d 1] in 17 gates (vs 17)
+// Sinv4: [5 0 8 3 a 9 7 e 2 c b 6 4 f d 1] in 16 gates (vs 17)
 inline void
 sbox_4_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
-	t0 = x2 ^ x3;
-	t1 = x2 | x3;
-	t2 = x1 ^ t1;
-	t3 = x0 & t2;
-	y1 = t0 ^ t3;
-	t4 = x0 ^ x3;
-	t5 = t1 ^ t3;
-	t6 = t4 & t5;
-	y3 = t2 ^ t6;
-	t7 = x2 ^ y3;
-	t8 = ~x0;
-	t9 = t7 | t8;
-	y0 = t2 ^ t9;
-	ta = x2 & t5;
-	tb = t8 ^ ta;
-	tc = x3 | t7;
-	y2 = tb ^ tc;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
+	t0 = x2 | x3;
+	t1 = x1 ^ t0;
+	t2 = x0 & t1;
+	t3 = x2 ^ t2;
+	y1 = x3 ^ t3;
+	t4 = x1 | x3;
+	t5 = x0 & t4;
+	t6 = t1 ^ t5;
+	y3 = x3 ^ t6;
+	t7 = ~x0;
+	t8 = y1 | t7;
+	y0 = t6 ^ t8;
+	t9 = x2 ^ t4;
+	ta = t3 | t7;
+	tb = t9 & ta;
+	y2 = t8 ^ tb;
+
 }
 
-// S5:    [f 5 2 b 4 a 9 c 0 3 e 8 d 6 7 1] in 17 gates (vs 17)
+// S5:    [f 5 2 b 4 a 9 c 0 3 e 8 d 6 7 1] in 15 gates (vs 17)
 inline void
 sbox_5(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
 	t0 = x0 ^ x1;
-	t1 = x0 ^ x2;
-	t2 = x0 ^ x3;
-	t3 = t0 | t2;
-	t4 = t1 ^ t3;
-	y0 = ~t4;
-	t5 = x1 ^ t2;
-	t6 = x3 | y0;
-	y1 = t5 ^ t6;
-	t7 = x3 ^ t6;
-	t8 = x1 | t4;
-	t9 = t5 | t7;
-	y2 = t8 ^ t9;
-	ta = x0 ^ t4;
-	tb = x3 ^ y2;
-	tc = t5 | tb;
-	y3 = ta ^ tc;
+	t1 = x1 & t0;
+	t2 = x2 ^ t1;
+	t3 = ~x3;
+	t4 = t0 | t3;
+	y0 = t2 ^ t4;
+	t5 = t3 & y0;
+	y1 = t0 ^ t5;
+	t6 = x0 ^ t2;
+	t7 = t0 ^ t3;
+	t8 = y0 & t6;
+	y2 = t7 ^ t8;
+	t9 = x1 ^ t2;
+	ta = t7 & y2;
+	y3 = t9 ^ ta;
 }
 
 // Sinv5: [8 f 2 9 4 1 d e b 6 5 3 7 c a 0] in 16 gates (vs 17)
