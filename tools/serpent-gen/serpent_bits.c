@@ -231,30 +231,40 @@ void s_hat_inv(uint8_t which, const uint32_t in[4], uint32_t out[4])
 
 void trans(const uint32_t in[4], uint32_t out[4])
 {
-	out[0] = ROL(in[0], 13);
-	out[2] = ROL(in[2], 3);
-	out[1] = in[1] ^ out[0] ^ out[2];
-	out[3] = in[3] ^ out[2] ^ (out[0] << 3);
-	out[1] = ROL(out[1], 1);
-	out[3] = ROL(out[3], 7);
-	out[0] ^= out[1] ^ out[3];
-	out[2] ^= out[3] ^ (out[1] << 7);
-	out[0] = ROL(out[0], 5);
-	out[2] = ROL(out[2], 22);
+	register uint32_t t0, t1, t2, t3;
+	t0 = ROL(in[0], 13);
+	t2 = ROL(in[2], 3);
+	t1 = in[1] ^ t0 ^ t2;
+	t3 = in[3] ^ t2 ^ (t0 << 3);
+	t1 = ROL(t1, 1);
+	t3 = ROL(t3, 7);
+	t0 ^= t1 ^ t3;
+	t2 ^= t3 ^ (t1 << 7);
+	t0 = ROL(t0, 5);
+	t2 = ROL(t2, 22);
+	out[0] = t0;
+	out[1] = t1;
+	out[2] = t2;
+	out[3] = t3;
 }
 
 void trans_inv(const uint32_t in[4], uint32_t out[4])
 {
-	out[2] = ROR(in[2], 22);
-	out[0] = ROR(in[0], 5);
-	out[2] ^= in[3] ^ (in[1] << 7);
-	out[0] ^= in[1] ^ in[3];
-	out[3] = ROR(in[3], 7);
-	out[1] = ROR(in[1], 1);
-	out[3] ^= out[2] ^ (out[0] << 3);
-	out[1] ^= out[0] ^ out[2];
-	out[2] = ROR(out[2], 3);
-	out[0] = ROR(out[0], 13);
+	register uint32_t t0, t1, t2, t3;
+	t2 = ROR(in[2], 22);
+	t0 = ROR(in[0], 5);
+	t2 ^= in[3] ^ (in[1] << 7);
+	t0 ^= in[1] ^ in[3];
+	t3 = ROR(in[3], 7);
+	t1 = ROR(in[1], 1);
+	t3 ^= t2 ^ (t0 << 3);
+	t1 ^= t0 ^ t2;
+	t2 = ROR(t2, 3);
+	t0 = ROR(t0, 13);
+	out[0] = t0;
+	out[1] = t1;
+	out[2] = t2;
+	out[3] = t3;
 }
 
 void dump32(const uint32_t *b, size_t count)

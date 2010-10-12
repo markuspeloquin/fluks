@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "serpent_bits.h"
+#include "thread_list.h"
 
 #define MAX_OPS 25
 #define MAX_VALS (MAX_OPS + 1)
@@ -34,6 +35,8 @@ struct op_chain {
 	/* the number of operations that will remain unchanged as they
 	 * produced a final y_i value */
 	uint8_t		hold;
+	/* successive 'hold' values */
+	uint8_t		hold_vals[4];
 	/* the number of operations that currently are used; whenever a final
 	 * y_i value is found, hold==sz */
 	uint8_t		sz;
@@ -48,13 +51,16 @@ op_chain_init(struct op_chain *seq)
 {
 	uint8_t	i;
 
+	/* 'zero' out */
 	for (i = 0; i < MAX_OPS; i++) {
 		seq->ops[i].type = OP_BEGIN;
 		seq->ops[i].i = 0;
 		seq->ops[i].j = 1;
 	}
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++) {
 		seq->indices[i] = MAX_VALS;
+		seq->hold_vals[i] = 0;
+	}
 
 	seq->hold = 0;
 	seq->sz = 1;
@@ -69,27 +75,45 @@ op_chain_init(struct op_chain *seq)
 		seq->dirty[i] = i >= 4;
 }
 
-/* advance if possible; if cannot, return false, leave i,j=0 and type=XOR */
 static bool
-op_advance(struct op_chain *seq, uint8_t which_op)
+op_ordered(const struct op *a, const struct op *b)
 {
-	struct op	*op = seq->ops + which_op;
+	/* 0: smallest, 1: largest */
+	uint8_t a0 = a->i;
+	uint8_t a1 = OP_ARGS[a->type] == 1 ? a0 : a->j;
+	uint8_t b0 = b->i;
+	uint8_t b1 = OP_ARGS[b->type] == 1 ? b0 : b->j;
+
+	/* if b has a value after both of a's values, b comes after */
+	if (b1 > a1) return true;
+
+	/* from here on out, no other comparison matters except to provide
+	 * some ordering */
+	if (b0 > a0 || b->type > a->type) return true;
+	return false;
+}
+
+/* advance if possible; if cannot, return false, leave i=0, j=1, type=XOR */
+static bool
+op_advance(struct op_chain *seq, uint8_t which_instr)
+{
+	struct op	*op = seq->ops + which_instr;
 	bool		push_type = false;
 
 	/* advance indices */
 	if (OP_ARGS[op->type] == 1) {
 		/* advance i */
-		if (++op->i == which_op + 4) {
+		if (++op->i == which_instr + 4) {
 			/* i cannot advance; reset the only used index */
 			op->i = 0;
 			push_type = true;
 		}
 	} else {
 		/* advance j */
-		if (++op->j == which_op + 4) {
-			/* j cannot advance; advance i */
+		if (++op->j == which_instr + 4) {
+			/* j cannot advance; advance i, set j=i+1 */
 			op->j = ++op->i + 1;
-			if (op->j == which_op + 4) {
+			if (op->j == which_instr + 4) {
 				/* i cannot advance; reset the used indices */
 				op->i = 0;
 				op->j = 1;
@@ -99,7 +123,7 @@ op_advance(struct op_chain *seq, uint8_t which_op)
 	}
 
 	/* this op was changed */
-	seq->dirty[which_op + 4] = true;
+	seq->dirty[which_instr + 4] = true;
 
 	if (push_type) {
 		/* advance the operator */
@@ -120,8 +144,18 @@ op_chain_advance(struct op_chain *seq)
 
 	while (i > seq->hold) {
 		/* advance last op */
-		if (op_advance(seq, i - 1))
-			break;
+		bool advanced;
+		while ((advanced = op_advance(seq, i - 1))) {
+			/* if this is the first operation after seq->hold,
+			 * or if operation N-1 < operation N, good; these
+			 * checks ensure that operations cannot just be
+			 * switched around to yield more pointless
+			 * possibilities */
+			if (seq->hold + 1 == i ||
+			    op_ordered(seq->ops + i - 2, seq->ops + i - 1))
+				break;
+		}
+		if (advanced) break;
 
 		i--;
 	}
@@ -139,29 +173,30 @@ run_chain(struct op_chain *seq)
 		if (!seq->dirty[i+4]) continue;
 		seq->dirty[i+4] = false;
 
-		register const struct op *op = seq->ops + i;
+		const struct op *op = seq->ops + i;
 
 		/* for each input value */
 		for (uint8_t j = 0; j < 16; j++) {
-			register uint8_t	r;
+			uint8_t	*vals = seq->vals[j];
+			uint8_t	r;
 
 			switch (op->type) {
 			case OP_XOR:
-				r = seq->vals[j][op->i] ^ seq->vals[j][op->j];
+				r = vals[op->i] ^ vals[op->j];
 				break;
 			case OP_AND:
-				r = seq->vals[j][op->i] & seq->vals[j][op->j];
+				r = vals[op->i] & vals[op->j];
 				break;
 			case OP_OR:
-				r = seq->vals[j][op->i] | seq->vals[j][op->j];
+				r = vals[op->i] | vals[op->j];
 				break;
 			case OP_NOT:
-				r = ~seq->vals[j][op->i];
+				r = ~vals[op->i];
 				break;
 			default:
 				assert(0);
 			}
-			seq->vals[j][i+4] = r;
+			vals[i+4] = r;
 		}
 	}
 }
@@ -228,20 +263,62 @@ print_chain(FILE *out, const struct op_chain *seq)
 }
 
 void
-brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
+print_function(FILE *out, uint8_t sbox, bool inverse,
+    const struct op_chain *seq)
 {
-	/* all outputs */
-	uint8_t		y[16][4];
+	fprintf(out,
+"inline void\n"
+"sbox_%hhu%s(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,\n"
+"    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)\n"
+"{\n",
+	    sbox, inverse ? "_inv" : "");
 
-	struct op_chain	seq;
-	uint8_t		i;
-	uint8_t		found;
-	uint8_t		last_len;
+	print_chain(out, seq);
 
-	op_chain_init(&seq);
+	fprintf(out,
+"}\n"
+	    );
+}
+
+struct brute_thread_args {
+	struct thread_list	*thread_list;
+
+	pthread_mutex_t		*best_lock;
+	unsigned		*best;
+	struct op_chain		*best_seq;
+	unsigned		*best_generation;
+
+	struct op_chain		seq;
+	unsigned		found;
+	unsigned		last_len;
+	unsigned		sboxnum;
+	bool			inverse;
+};
+void *
+brute_thread(void *voidarg)
+{
+	struct brute_thread_args *args = (struct brute_thread_args *)voidarg;
+
+	pthread_mutex_t		*best_lock = args->best_lock;
+	unsigned		*best = args->best;
+	struct op_chain		*best_seq = args->best_seq;
+	unsigned		*best_generation = args->best_generation;
+
+	struct op_chain		seq = args->seq;
+	unsigned		found = args->found;
+	unsigned		last_len = args->last_len;
+	unsigned		sboxnum = args->sboxnum;
+	bool			inverse = args->inverse;
+
+	unsigned		threadnum =
+	    thread_list_num_of(args->thread_list, pthread_self());
+	unsigned		old_generation;
+
+	/* each thread computes to make it easier to do lookups */
+	unsigned		y[16][4];
 
 	/* precompute results of sbox cumputations using slow method */
-	for (i = 0; i < 16; i++) {
+	for (uint8_t i = 0; i < 16; i++) {
 		uint32_t	x0[4];
 		uint32_t	y0[4];
 
@@ -259,13 +336,35 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 		y[i][3] = y0[3] & 0xff;
 	}
 
-	last_len = 1;
-	found = 0;
-
+	old_generation = 0;
 	for (;;) {
 		if (seq.sz != last_len) {
 			last_len = seq.sz;
-			printf("sz %hhu\n", last_len);
+			/* force a generation check */
+			old_generation = 0;
+			printf("%u: sz %hhu\n", threadnum, last_len);
+		}
+
+		/* the value of 'found' is the y value you're looking for
+		 * (e.g. found==1, you have y0 and are looking for y1);
+		 * if another thread found something better than this thread
+		 * can, stop */
+		unsigned cur_generation = *best_generation;
+		if (old_generation != cur_generation) {
+			for (unsigned i = 0; i < found; i++)
+				if (best[i] < seq.hold_vals[i]) {
+					printf("%u: old value beaten\n",
+					    threadnum);
+					return 0;
+				}
+			if (best[found] < last_len) {
+				printf("%u: cannot attain best\n", threadnum);
+				return 0;
+			} else if (found == 3 && best[3] == last_len) {
+				printf("%u: cannot beat best\n", threadnum);
+				return 0;
+			}
+			old_generation = cur_generation;
 		}
 
 		/* for this guess, compute the values of each temporary
@@ -274,9 +373,9 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 
 		/* for each column in y[], find a column in vals[] that
 		 * matches */
-		for (i = 0; i < 4; i++) {
-			uint8_t	j;
-			bool	match;
+		for (unsigned i = 0; i < 4; i++) {
+			unsigned	j;
+			bool		match;
 
 			/* already found */
 			if (seq.indices[i] < MAX_VALS) continue;
@@ -288,45 +387,127 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 
 			/* check each number in the column with y */
 			match = true;
-			for (uint8_t k = 0; k < 16; k++) {
+			for (unsigned k = 0; k < 16; k++)
 				if (y[k][i] != seq.vals[k][j]) {
 					match = false;
 					break;
 				}
-			}
 			if (match) {
+				/* create child args */
+				struct brute_thread_args	child_args;
+
+				if (found < 3)
+					child_args.seq = seq;
 				seq.indices[i] = j;
 				seq.hold = seq.sz;
-				found++;
-				printf("partial match for %hhu\n", i);
+				seq.hold_vals[found] = seq.sz;
+				printf("%u: partial match for %hhu\n",
+				    threadnum, i);
 				print_chain(stdout, &seq);
-				break;
+
+				/* update best array */
+				pthread_mutex_lock(best_lock);
+				/* first check if a better solution existed
+				 * because of a race */
+				for (unsigned i = 0; i < found; i++)
+					if (best[i] < seq.hold_vals[i]) {
+						printf("%u: old value beaten "
+						    "(race)\n", threadnum);
+						pthread_mutex_unlock(
+						    best_lock);
+						return 0;
+					}
+				if (best[found] < last_len) {
+					printf("%u: not best (race)\n",
+					    threadnum);
+					pthread_mutex_unlock(best_lock);
+					return 0;
+				} else if (best[found] > last_len)
+					*best_seq = seq;
+				best[found] = last_len;
+				/* this is sloppy and so may not work on
+				 * certain architectures like PowerPC */
+				++*best_generation;
+				pthread_mutex_unlock(best_lock);
+
+				found++;
+
+				if (found == 4) {
+					FILE *tmp = fopen("tmp.hpp", "w");
+					print_function(tmp, (uint8_t)sboxnum,
+					    inverse, &seq);
+					fclose(tmp);
+					return 0;
+				} else {
+					/* create child thread */
+					child_args.thread_list =
+					    args->thread_list;
+					child_args.best_lock = best_lock;
+					child_args.best = best;
+					child_args.best_seq = best_seq;
+					child_args.best_generation =
+					    best_generation;
+					child_args.found = found - 1;
+					child_args.last_len = last_len;
+					child_args.sboxnum = sboxnum;
+					child_args.inverse = inverse;
+
+					for (int k = 0; k < MAX_VALS; k++)
+						child_args.seq.dirty[k] = true;
+					op_chain_advance(&child_args.seq);
+
+					thread_list_add(args->thread_list,
+					    brute_thread,
+					    &child_args, sizeof(child_args));
+				}
 			}
 		}
 
-		if (found == 4) break;
 		op_chain_advance(&seq);
 	}
 
-	memcpy(out_seq, &seq, sizeof(seq));
+	return 0;
 }
 
 void
-print_function(FILE *out, uint8_t sbox, bool inverse,
-    const struct op_chain *seq)
+brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 {
-	fprintf(out,
-"inline void\n"
-"sbox_%hhu%s(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,\n"
-"    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)\n"
-"{\n",
-	    sbox, inverse ? "_inv" : "");
+	/*
+	struct thread_list	*thread_list;
 
-	print_chain(out, seq);
+	pthread_mutex_t		*best_lock;
+	unsigned		*best;
+	struct op_chain		*best_seq;
 
-	fprintf(out,
-"}\n"
-	    );
+	struct op_chain		seq;
+	unsigned		found;
+	unsigned		last_len;
+	unsigned		sboxnum;
+	bool			inverse;
+	*/
+	struct brute_thread_args	args;
+	struct thread_list		thread_list;
+	pthread_mutex_t			best_lock;
+
+	unsigned	best[4] = { MAX_OPS, MAX_OPS, MAX_OPS, MAX_OPS };
+	unsigned	best_generation = 1;
+
+	args.thread_list = &thread_list;
+	args.best_lock = &best_lock;
+	args.best = best;
+	args.best_seq = out_seq;
+	args.best_generation = &best_generation;
+	op_chain_init(&args.seq);
+	args.found = 0;
+	args.last_len = 1;
+	args.sboxnum = sboxnum;
+	args.inverse = inverse;
+
+	thread_list_init(&thread_list);
+	pthread_mutex_init(&best_lock, 0);
+
+	thread_list_add(&thread_list, brute_thread, &args, sizeof(args));
+	thread_list_join_destroy(&thread_list);
 }
 
 int
