@@ -1,0 +1,7 @@
+.sw[op]
+.*.sw[op]
+/bin
+/debug
+/release
+/Doxyfile
+/html
