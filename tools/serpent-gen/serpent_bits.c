@@ -166,8 +166,8 @@ perm(const uint32_t in[4], uint32_t out[4])
 {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < 128; i++) {
-		uint8_t j = i / 32 + (i % 32) * 4;
-		if (in[i/32] & (1 << i%32))
+		uint8_t j = i / 32 + i % 32 * 4;
+		if (in[i/32] & 1 << i%32)
 			out[j/32] |= 1 << j%32;
 	}
 }
@@ -177,8 +177,8 @@ perm_inv(const uint32_t in[4], uint32_t out[4])
 {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < 128; i++) {
-		uint8_t j = i / 4 + (i % 4) * 32;
-		if (in[i/32] & (1 << i%32))
+		uint8_t j = i / 4 + i % 4 * 32;
+		if (in[i/32] & 1 << i%32)
 			out[j/32] |= 1 << j%32;
 	}
 }
@@ -192,7 +192,7 @@ void _t_hat(const int8_t matrix[TRANS_ROWS][TRANS_COLS],
 		for (uint8_t j = 0; j < TRANS_COLS; j++) {
 			if (matrix[i][j] == -1) continue;
 			uint8_t k = matrix[i][j];
-			if (in[k/32] & (1 << k%32))
+			if (in[k/32] & 1 << k%32)
 				/* logical XOR */
 				b = b != 1;
 		}
@@ -214,7 +214,7 @@ void _s_hat(const uint8_t perm[16], const uint32_t in[4], uint32_t out[4])
 {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < 32; i++) {
-		uint8_t x = (in[i/8] >> (i%8 * 4)) & 0xf;
+		uint8_t x = in[i/8] >> i%8 * 4 & 0xf;
 		out[i/8] |= perm[x] << i%8 * 4;
 	}
 }
@@ -235,11 +235,11 @@ void trans(const uint32_t in[4], uint32_t out[4])
 	t0 = ROL(in[0], 13);
 	t2 = ROL(in[2], 3);
 	t1 = in[1] ^ t0 ^ t2;
-	t3 = in[3] ^ t2 ^ (t0 << 3);
+	t3 = in[3] ^ t2 ^ t0<<3;
 	t1 = ROL(t1, 1);
 	t3 = ROL(t3, 7);
 	t0 ^= t1 ^ t3;
-	t2 ^= t3 ^ (t1 << 7);
+	t2 ^= t3 ^ t1<<7;
 	t0 = ROL(t0, 5);
 	t2 = ROL(t2, 22);
 	out[0] = t0;
@@ -253,11 +253,11 @@ void trans_inv(const uint32_t in[4], uint32_t out[4])
 	register uint32_t t0, t1, t2, t3;
 	t2 = ROR(in[2], 22);
 	t0 = ROR(in[0], 5);
-	t2 ^= in[3] ^ (in[1] << 7);
+	t2 ^= in[3] ^ in[1]<<7;
 	t0 ^= in[1] ^ in[3];
 	t3 = ROR(in[3], 7);
 	t1 = ROR(in[1], 1);
-	t3 ^= t2 ^ (t0 << 3);
+	t3 ^= t2 ^ t0<<3;
 	t1 ^= t0 ^ t2;
 	t2 = ROR(t2, 3);
 	t0 = ROR(t0, 13);
@@ -269,9 +269,8 @@ void trans_inv(const uint32_t in[4], uint32_t out[4])
 
 void dump32(const uint32_t *b, size_t count)
 {
-	for (size_t i = 0; i < count; i++) {
+	for (size_t i = 0; i < count; i++)
 		printf("%08x ", b[i]);
-	}
 	printf("\n");
 }
 
