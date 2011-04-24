@@ -485,6 +485,8 @@ main(int argc, char **argv)
 		header.reset(new Luks_header(device, sz_key, cipher, hash,
 		    iter, stripes));
 
+		header->check_supported(&std::cerr);
+
 		// get a passphrase
 		std::string pass;
 		if (use_passfile)

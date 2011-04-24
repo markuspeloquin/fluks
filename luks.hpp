@@ -16,6 +16,7 @@
 #define FLUKS_LUKS_HPP
 
 #include <cstddef>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <tr1/cstdint>
@@ -220,6 +221,18 @@ public:
 	 */
 	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
 	    throw (No_private_key, Slots_full);
+
+	/** Check whether the cipher and hash specs are supported in LUKS.
+	 *
+	 * \param out	A pointer to a stream to print warnings to, or else
+	 *	NULL to print nothing.
+	 * \param max_version	(optional) If non-zero, any parameters beyond
+	 *	this value will see a warning. In any case, parameters not in
+	 *	any LUKS spec will see a warning.
+	 * \return	<code>true</code> iff the cipher and hash specs are
+	 *	supported.
+	 */
+	bool check_supported(std::ostream *out=0, uint16_t max_version=0);
 
 	/** Format the values in the header, except for the salts and digest.
 	 *

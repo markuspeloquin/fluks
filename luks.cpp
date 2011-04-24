@@ -357,6 +357,51 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	_dirty = true;
 }
 
+bool
+fluks::Luks_header::check_supported(std::ostream *out, uint16_t max_version)
+{
+	uint16_t	vers;
+	bool		good = true;
+
+	vers = Cipher_traits::traits(_cipher_spec->type_cipher())->
+	    luks_version;
+	if (!vers || (max_version && vers > max_version)) {
+		if (!out) return false;
+		good = false;
+		*out << "WARNING: using cipher not in LUKS spec.\n";
+	}
+	vers = block_mode_info::version(_cipher_spec->type_block_mode());
+	if (!vers || (max_version && vers > max_version)) {
+		if (!out) return false;
+		good = false;
+		*out << "WARNING: using block mode not in LUKS spec.\n";
+	}
+	vers = iv_mode_info::version(_cipher_spec->type_iv_mode());
+	if (!vers || (max_version && vers > max_version)) {
+		if (!out) return false;
+		good = false;
+		*out << "WARNING: using IV mode not in LUKS spec.\n";
+	}
+	vers = Hash_traits::traits(_cipher_spec->type_iv_hash())->
+	    luks_version;
+	if (!vers || (max_version && vers > max_version)) {
+		if (!out) return false;
+		good = false;
+		*out << "WARNING: using IV hash not in LUKS spec.\n";
+	}
+	vers = Hash_traits::traits(_hash_type)->luks_version;
+	if (!vers || (max_version && vers > max_version)) {
+		if (!out) return false;
+		good = false;
+		*out << "WARNING: using hash not in LUKS spec.\n";
+	}
+	if (!good)
+		*out << "WARNING: these specs will not work with other LUKS "
+		    "implementations.\n";
+
+	return good;
+}
+
 std::string
 fluks::Luks_header::info() const
 {
