@@ -12,7 +12,9 @@ enum cipher_type {
 	CT_UNDEFINED = 0,
 	CT_AES,
 	CT_BLOWFISH,
+#ifndef OPENSSL_NO_CAMELLIA
 	CT_CAMELLIA,
+#endif
 	CT_CAST5,
 	CT_CAST6,
 	CT_TWOFISH,

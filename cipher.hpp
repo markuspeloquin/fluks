@@ -24,8 +24,12 @@
 
 #include <openssl/aes.h>
 #include <openssl/blowfish.h>
-#include <openssl/camellia.h>
 #include <openssl/cast.h>
+
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_CAMELLIA
+#	include <openssl/camellia.h>
+#endif
 
 #include "cast6.h"
 #include "errors.hpp"
@@ -237,7 +241,8 @@ private:
 	bool			_init;
 };
 
-/** The Camellia cipher.  Publish in 2000.  CRYPTREC, NESSIE certification.
+#ifndef OPENSSL_NO_CAMELLIA
+/** The Camellia cipher.  Published in 2000.  CRYPTREC, NESSIE certification.
  * OpenSSL implementation. */
 class Cipher_camellia : public Cipher {
 public:
@@ -267,6 +272,7 @@ private:
 	CAMELLIA_KEY		_ctx;
 	bool			_init;
 };
+#endif
 
 /** The CAST-128 cipher.  Published in 1996 and in RFC 2144.  OpenSSL
  * implementation. */

@@ -303,8 +303,12 @@ main(int argc, char **argv)
 	try {
 		po::store(parser.run(), var_map);
 	} catch (const po::unknown_option &e) {
+#if BOOST_VERSION >= 104200
 		std::cerr << prog << ": unknown option `"
 		    << e.get_option_name() << "'\n";
+#else
+		std::cerr << prog << ": " << e.what() << '\n';
+#endif
 		return 1;
 	}
 

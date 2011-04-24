@@ -42,6 +42,8 @@ lib boost_system ;
 lib crypto ;
 lib devmapper ;
 lib dl ; # for crypto
+#lib selinux ;
+#lib sepol ;
 lib ssl ;
 lib udev ; # for devmapper
 lib uuid ;
@@ -49,7 +51,7 @@ lib z ; # for crypto
 
 lib fluks_crypto
 	: serpent.cpp
-	cast6.c tiger.c twofish.c whirlpool.c
+	cast6.o tiger.c twofish.c whirlpool.c
 
 	boost_system
 
@@ -74,6 +76,8 @@ exe fluks
 	crypto
 	devmapper
 	dl
+	#selinux
+	#sepol
 	ssl
 	udev
 	uuid
@@ -111,7 +115,9 @@ exe run_test
 	<variant>debug:<define>DEBUG
 	;
 
+obj cast6.o : cast6.c : <define>_BSD_SOURCE ;
 obj test/cast6_t.o : cast6.c : <define>CAST6_TEST <define>_BSD_SOURCE ;
+obj test/cast6.o : test/cast6.cpp ;
 
 unit-test test/cast6
 	: test/cast6.cpp test/cast6_t.o boost_regex

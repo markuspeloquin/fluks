@@ -23,6 +23,15 @@ BUILDING
 	    e2fsprogs-libs (e2fsprogs.sf.net)
 	    util-linux (freshmeat.net/projects/util-linux)
 	OpenSSL (openssl.org)
+	Linux headers (/usr/include/linux)
+
+    In Ubuntu (ugh), it's at least:
+	- libboost-dev libboost-filesystem-dev libboost-program-options-dev
+	  libboost-regex-dev libboost-system-dev libdevmapper-dev libssl-dev
+	  libudev-dev uuid-dev'
+	- Also uncomment the selinux and sepol lines in Jamroot.  There has
+	  *got* to be a better way to handle static linking dependencies in
+	  Unix.
 
     If you were wondering, libuuid is one of the few BSD-licensed libraries
     in e2fsprogs/util-linux.  Now build:
@@ -30,7 +39,7 @@ BUILDING
 	$ bjam release
 
     This will put a (mostly) statically-linked binary in the `release'
-    directory.
+    directory (or it should with reasonable Boost versions).
 
 INSTALLING
 
