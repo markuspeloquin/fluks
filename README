@@ -37,6 +37,7 @@ BUILDING
     in e2fsprogs/util-linux.  Now build:
 
 	$ bjam release
+	# if it complains about cast6.o, do `bjam fluks release' instead
 
     This will put a (mostly) statically-linked binary in the `release'
     directory (or it should with reasonable Boost versions).
