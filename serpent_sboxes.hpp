@@ -245,7 +245,6 @@ sbox_4_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 	ta = t3 | t7;
 	tb = t9 & ta;
 	y2 = t8 ^ tb;
-
 }
 
 // S5:    [f 5 2 b 4 a 9 c 0 3 e 8 d 6 7 1] in 15 gates (vs 17)

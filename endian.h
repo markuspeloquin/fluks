@@ -69,22 +69,21 @@ betole32(uint32_t x)
 INLINE void
 be_to_le32(void *out, const void *in, size_t sz)
 {
-	size_t	n = sz / 4;
 	if (((long)out | (long)in) & 3) {
 		/* at least one arg unaligned */
 		const uint8_t	*i8 = (const uint8_t *)in;
 		uint8_t		*o8 = (uint8_t *)out;
 		uint32_t	temp;
-		for (size_t i = 0; i < n; i++) {
-			size_t	off = i * 4;
-			memcpy(&temp, i8 + off, 4);
+		for (size_t i = 0; i < sz; i += 4) {
+			memcpy(&temp, i8 + i, 4);
 			temp = betole32(temp);
-			memcpy(o8 + off, &temp, 4);
+			memcpy(o8 + i, &temp, 4);
 		}
 	} else {
 		/* both args aligned */
 		const uint32_t	*i32 = (const uint32_t *)in;
 		uint32_t	*o32 = (uint32_t *)out;
+		size_t		n = sz / 4;
 		for (size_t i = 0; i < n; i++)
 			o32[i] = betole32(i32[i]);
 	}
@@ -142,22 +141,21 @@ betole64(uint64_t x)
 INLINE void
 be_to_le64(void *out, const void *in, size_t sz)
 {
-	size_t	n = sz / 8;
 	if (((long)out | (long)in) & 7) {
 		/* at least one arg unaligned */
 		const uint8_t	*i8 = (const uint8_t *)in;
 		uint8_t		*o8 = (uint8_t *)out;
 		uint64_t	temp;
-		for (size_t i = 0; i < n; i++) {
-			size_t	off = i * 8;
-			memcpy(&temp, i8 + off, 8);
+		for (size_t i = 0; i < sz; i += 8) {
+			memcpy(&temp, i8 + i, 8);
 			temp = betole64(temp);
-			memcpy(o8 + off, &temp, 8);
+			memcpy(o8 + i, &temp, 8);
 		}
 	} else {
 		/* both args aligned */
 		const uint64_t	*i64 = (const uint64_t *)in;
 		uint64_t	*o64 = (uint64_t *)out;
+		size_t		n = sz / 8;
 		for (size_t i = 0; i < n; i++)
 			o64[i] = betole64(i64[i]);
 	}
