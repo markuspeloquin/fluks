@@ -1,16 +1,16 @@
 /* Copyright (c) 2009, Markus Peloquin <markus@cs.wisc.edu>
- * 
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ *
+ * THE SOFTWARE IS PROVIDED 'AS IS' AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #ifndef FLUKS_LUKS_HPP
 #define FLUKS_LUKS_HPP
@@ -121,9 +121,9 @@ public:
 	/** Create a new header
 	 *
 	 * \param device	The device to read/write
-	 * \param sz_key	The byte length of the master key, or -1
-	 *	for the largest possible for the cipher.
-	 * \param cipher_spec	Cipher to encrypt with.  Format is
+	 * \param sz_key	The byte length of the master key, or -1 for
+	 *	the largest possible for the cipher.
+	 * \param cipher_spec	Cipher to encrypt with. Format is
 	 *	CIPHER [ - CHAINMODE [ - IV_OPTS [ : IV_MODE ]]], where
 	 *	brackets indicate optional parts and without spaces.
 	 * \param hash_spec	Hash to use for the master key hash and the
@@ -133,8 +133,8 @@ public:
 	 * \param stripes	Dramatically increases the length and entropy
 	 *	of the master key before the digest is computed.
 	 * \throw Bad_spec	One of the cipher/hash specs is invalid.
-	 * \throw boost::system::system_error	Error encountered
-	 *	determining the sector size.
+	 * \throw boost::system::system_error	Error encountered determining
+	 *	the sector size.
 	 */
 	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	    int32_t sz_key, const std::string &cipher_spec,
@@ -168,9 +168,8 @@ public:
 
 	/** Get the master key
 	 *
-	 * \return	A pair containing the master key and its size.  If
-	 *	the master key hasn't been decrypted yet, the key will be
-	 *	nullptr.
+	 * \return	A pair containing the master key and its size. If the
+	 *	master key hasn't been decrypted yet, the key will be nullptr.
 	 */
 	std::pair<const uint8_t *, size_t> master_key() const
 	{
@@ -213,10 +212,10 @@ public:
 	 *
 	 * \param passwd	The password to encrypt the key with.
 	 * \param check_time	The time (in microseconds) to spend on the
-	 *	PBKDF2 (password-based key derivation function).  It will of
+	 *	PBKDF2 (password-based key derivation function). It will of
 	 *	course depend on CPU load and throttling.
-	 * \throw No_private_key	The private key hasn't been
-	 *	decrypted yet.
+	 * \throw No_private_key	The private key hasn't been decrypted
+	 *	yet.
 	 * \throw Slots_full	All slots are enabled already.
 	 */
 	void add_passwd(const std::string &passwd, uint32_t check_time=500000)

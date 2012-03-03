@@ -1,10 +1,10 @@
 fluks, 'free LUKS', is my unencumbered and nicer (than cryptsetup)
 implementation of the LUKS (Linux Unified Key Setup) standard for disk
-cryptography.  Basically, a header is written to disk that includes the
-private key in encrypted form, which is used to read/write from the disk.
-The private key can be encrypted by multiple passphrases, allowing for
-(1) easy to remember passphrases and (2) the ability to add, revoke, or
-change the allowed passphrases.
+cryptography. Basically, a header is written to disk that includes the private
+key in encrypted form, which is used to read/write from the disk. The private
+key can be encrypted by multiple passphrases, allowing for (1) easy to
+remember passphrases and (2) the ability to add, revoke, or change the allowed
+passphrases.
 
 A better place to find build/usage information:
 http://wiki.github.com/markuspeloquin/fluks
@@ -29,12 +29,12 @@ BUILDING
 	- libboost-dev libboost-filesystem-dev libboost-program-options-dev
 	  libboost-regex-dev libboost-system-dev libdevmapper-dev libssl-dev
 	  libudev-dev uuid-dev'
-	- Also uncomment the selinux and sepol lines in Jamroot.  There has
+	- Also uncomment the selinux and sepol lines in Jamroot. There has
 	  *got* to be a better way to handle static linking dependencies in
 	  Unix.
 
     If you were wondering, libuuid is one of the few BSD-licensed libraries
-    in e2fsprogs/util-linux.  Now build:
+    in e2fsprogs/util-linux. Now build:
 
 	$ bjam release
 	# if it complains about cast6.o, do `bjam fluks release' instead
@@ -44,7 +44,7 @@ BUILDING
 
 INSTALLING
 
-    This will install to /usr/local/bin by default.  To change the install
+    This will install to /usr/local/bin by default. To change the install
     paths, run `bjam --help'.
 
 	# bjam [options] release install

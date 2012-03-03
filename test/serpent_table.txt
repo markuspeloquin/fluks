@@ -1,4 +1,4 @@
-/* 
+/*
 
 For each key size, make a key of all 0s and try out some
 'magic' plaintexts, coming from stdin, that have been

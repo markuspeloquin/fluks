@@ -1,16 +1,16 @@
 /* Copyright (c) 2009, Markus Peloquin <markus@cs.wisc.edu>
- * 
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ *
+ * THE SOFTWARE IS PROVIDED 'AS IS' AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #ifndef SYS_FSTREAM_HPP
 #define SYS_FSTREAM_HPP
@@ -56,7 +56,7 @@ public:
 	basic_sys_ifstream() :
 		__istream_type(),
 		_buf()
-	{	
+	{
 		this->init(&_buf);
 	}
 
@@ -93,7 +93,7 @@ public:
 	{	return const_cast<__filebuf_type *>(&_buf); }
 
 	bool is_open() const
-	{	return rdbuf()->is_open(); } 
+	{	return rdbuf()->is_open(); }
 
 	void open(const char *path, ios_base::openmode mode = ios_base::in)
 	{
@@ -151,7 +151,7 @@ public:
 	basic_sys_ofstream() :
 		__ostream_type(),
 		_buf()
-	{	
+	{
 		this->init(&_buf);
 	}
 
@@ -245,7 +245,7 @@ public:
 	basic_sys_fstream() :
 		__iostream_type(),
 		_buf()
-	{	
+	{
 		this->init(&_buf);
 	}
 

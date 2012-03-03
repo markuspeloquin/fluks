@@ -1,16 +1,16 @@
 /* Copyright (c) 2009, Markus Peloquin <markus@cs.wisc.edu>
- * 
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ *
+ * THE SOFTWARE IS PROVIDED 'AS IS' AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #ifndef FLUKS_WHIRLPOOL_H
 #define FLUKS_WHIRLPOOL_H
@@ -26,7 +26,7 @@
 	const size_t WHIRLPOOL384_SZ_DIGEST = 48;
 	const size_t WHIRLPOOL_SZ_DIGEST = 64;
 	const size_t WHIRLPOOL_SZ_BLOCK = 64;
-#else 
+#else
 /* C */
 #	include <stddef.h>
 #	include <stdint.h>
@@ -69,7 +69,7 @@ void	whirlpool_update(struct whirlpool_ctx *ctx,
 /** Mark the end of the hashed data and return the digest.
  * \param[in] ctx	The context.
  * \param[out] buf	The destination buffer of the digest.
- * \param[in] sz_buf	The size of the output buffer.  Should be one of
+ * \param[in] sz_buf	The size of the output buffer. Should be one of
  *	{WHIRLPOOL256_SZ_DIGEST, WHIRLPOOL384_SZ_DIGEST, WHIRLPOOL_SZ_DIGEST}.
  */
 void	whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf);

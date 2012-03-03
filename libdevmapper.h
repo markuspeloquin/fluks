@@ -1,8 +1,8 @@
 #ifndef LIB_DEVICE_MAPPER_H
 #define LIB_DEVICE_MAPPER_H
 
-/* The only functions I need from <libdevmapper.h>.  It cannot be directly
- * included by C++ source.  Thanks, guys. */
+/* The only functions I need from <libdevmapper.h>. It cannot be directly
+ * included by C++ source. Thanks, guys. */
 
 #include <features.h>
 #ifdef __cplusplus
@@ -38,7 +38,7 @@ enum {
 	DM_DEVICE_MKNODES,
 
 	DM_DEVICE_LIST_VERSIONS,
-	
+
 	DM_DEVICE_TARGET_MSG,
 
 	DM_DEVICE_SET_GEOMETRY

@@ -44,13 +44,13 @@ enum iv_mode {
 /** Hash types supported by <em>fluks</em>
  *
  * Tiger is optimized for 64-bit architectures, designed by the same folks
- * who brought you the Serpent cipher.  Tiger/{128,160} are just truncated
+ * who brought you the Serpent cipher. Tiger/{128,160} are just truncated
  * versions of Tiger/192.
  *
  * Along with SHA-{1,256,384,512} and RMD-{128,160}, WHIRLPOOL is included
  * in ISO/IEC's list of recommended hash functions (10118-3), and is
- * also recommended by NESSIE.  WHIRLPOOL-{256,384} are just
- * truncated versions.
+ * also recommended by NESSIE. WHIRLPOOL-{256,384} are just truncated
+ * versions.
  */
 enum hash_type {
 	HT_UNDEFINED = 0,

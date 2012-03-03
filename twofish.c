@@ -1,7 +1,7 @@
-/* The following code was written by Drew Csillag.  It was modified so
- * as to not memcpy functions and subsequently modify them.  That's too
- * much voodoo for my tastes.  Also, macros are used less, malloc()/free()
- * removed from key schedule, and the code was generally cleaned up.  */
+/* The following code was written by Drew Csillag. It was modified so as to
+ * not memcpy functions and subsequently modify them. That's too much voodoo
+ * for my tastes. Also, macros are used less, malloc()/free() removed from the
+ * key schedule, and the code was generally cleaned up. */
 
 #include <string.h>
 
@@ -24,8 +24,8 @@ const uint16_t RS_MOD = 0x14D;
 #define b3(x)           ((x) >> 24)
 
 /* multiply two polynomials represented as uint32_t's, actually called with
- * uint8_t'S, but since I'm not really going to too much work to optimize
- * key setup (since raw encryption speed is what I'm after), big deal. */
+ * uint8_t'S, but since I'm not really going to too much work to optimize key
+ * setup (since raw encryption speed is what I'm after), big deal. */
 static inline uint32_t
 poly_mult(uint32_t a, uint32_t b)
 {
@@ -176,7 +176,7 @@ tf_g(uint32_t x, uint32_t S[4][0x100])
 }
 
 /* F() (4.1) */
-#define tf_F(r0,r1, f0,f1, round, K, S)	    			do \
+#define tf_F(r0,r1, f0,f1, round, K, S)				do \
 {								\
 	register uint32_t t0, t1;				\
 	t0 = tf_g(r0, S);					\
@@ -193,7 +193,7 @@ tf_g(uint32_t x, uint32_t S[4][0x100])
 }								while(0)
 
 /* rotate result of F() for decryption */
-#define rot_dec(f0,f1, r2,r3)	    				do \
+#define rot_dec(f0,f1, r2,r3)					do \
 {								\
 	r2 = ROL(r2, 1) ^ f0;					\
 	r3 = ROR(r3 ^ f1, 1);					\

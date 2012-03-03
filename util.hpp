@@ -1,16 +1,16 @@
 /* Copyright (c) 2009, Markus Peloquin <markus@cs.wisc.edu>
- * 
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ *
+ * THE SOFTWARE IS PROVIDED 'AS IS' AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #ifndef FLUKS_UTIL_HPP
 #define FLUKS_UTIL_HPP
@@ -25,7 +25,7 @@ namespace fluks {
  * \param[in] a	The first operand.
  * \param[in] b The second operand.
  * \param[in] sz	The size of the buffers in bytes.
- * \param[out] c	The output buffer.  It can safely be the same as
+ * \param[out] c	The output buffer. It can safely be the same as
  *	<code>a</code> or <code>b</code>.
  */
 inline void	xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz,
@@ -36,7 +36,7 @@ inline void	xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz,
  * \param[in] a		The buffer
  * \param[in] sz	The size of the input/output buffers
  * \param[in] b		The byte to XOR with the first buffer
- * \param[out] c	The output buffer.  It can safely be the same as
+ * \param[out] c	The output buffer. It can safely be the same as
  *	<code>a</code>.
  */
 inline void	xor_buf_byte(const uint8_t *a, size_t sz, uint8_t b,

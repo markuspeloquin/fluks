@@ -1,16 +1,16 @@
 /* Copyright (c) 2009, Markus Peloquin <markus@cs.wisc.edu>
- * 
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ *
+ * THE SOFTWARE IS PROVIDED 'AS IS' AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #ifndef FLUKS_CIPHER_HPP
 #define FLUKS_CIPHER_HPP
@@ -102,7 +102,7 @@ public:
 	/** Create an encryption or decryption object
 	 *
 	 * \param type	The cipher to use
-	 * \return	An object to en/decrypt with.  It's meant to be used
+	 * \return	An object to en/decrypt with. It's meant to be used
 	 *	with the *_encrypt() and *_decrypt() functions.
 	 */
 	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
@@ -141,7 +141,7 @@ public:
 	    throw (Crypt_error) = 0;
 
 	/** Get information on the current cipher
-	 * 
+	 *
 	 * \return	The block size in bytes.
 	 */
 	const Cipher_traits *traits() const
@@ -151,8 +151,8 @@ private:
 	const Cipher_traits *_traits;
 };
 
-/** The Rijndael cipher.  Published in 1998.  AES winner, with CRYPTREC,
- * NESSIE, NSA certifications.  OpenSSL implementation. */
+/** The Rijndael cipher. Published in 1998. AES winner, with CRYPTREC, NESSIE,
+ * NSA certifications. OpenSSL implementation. */
 class Cipher_aes : public Cipher {
 public:
 	Cipher_aes() : Cipher(CT_AES), _init(false) {}
@@ -205,7 +205,7 @@ private:
 	bool			_init;
 };
 
-/** The Blowfish cipher.  Published in 1993.  OpenSSL implementation. */
+/** The Blowfish cipher. Published in 1993. OpenSSL implementation. */
 class Cipher_blowfish : public Cipher {
 public:
 	Cipher_blowfish() : Cipher(CT_BLOWFISH), _init(false) {}
@@ -242,7 +242,7 @@ private:
 };
 
 #ifndef OPENSSL_NO_CAMELLIA
-/** The Camellia cipher.  Published in 2000.  CRYPTREC, NESSIE certification.
+/** The Camellia cipher. Published in 2000. CRYPTREC, NESSIE certification.
  * OpenSSL implementation. */
 class Cipher_camellia : public Cipher {
 public:
@@ -274,7 +274,7 @@ private:
 };
 #endif
 
-/** The CAST-128 cipher.  Published in 1996 and in RFC 2144.  OpenSSL
+/** The CAST-128 cipher. Published in 1996 and in RFC 2144. OpenSSL
  * implementation. */
 class Cipher_cast5 : public Cipher {
 public:
@@ -311,8 +311,8 @@ private:
 	bool			_init;
 };
 
-/** The CAST-256 cipher.  Published in 1998 and in RFC 2612.  Submitted to
- * AES but not among the finalists.  Independent implementation. */
+/** The CAST-256 cipher. Published in 1998 and in RFC 2612. Submitted to AES
+ * but not among the finalists. Independent implementation. */
 class Cipher_cast6 : public Cipher {
 public:
 	Cipher_cast6() : Cipher(CT_CAST6), _init(false) {}
@@ -342,9 +342,9 @@ private:
 	bool			_init;
 };
 
-/** The Serpent cipher.  Published in 1998.  Ranked second in the
- * AES competition.  Arguably more secure, but slower, than Rijndael.
- * Independent implementation. */
+/** The Serpent cipher. Published in 1998. Ranked second in the AES
+ * competition. Arguably more secure, but slower, than Rijndael. Independent
+ * implementation. */
 class Cipher_serpent : public Cipher {
 public:
 	Cipher_serpent() : Cipher(CT_SERPENT), _init(false) {}
@@ -374,8 +374,8 @@ private:
 	bool			_init;
 };
 
-/** The Twofish cipher.  Published in 1998.  Ranked third in the
- * AES competition.  Reference implementation. */
+/** The Twofish cipher. Published in 1998. Ranked third in the AES
+ * competition. Reference implementation. */
 class Cipher_twofish : public Cipher {
 public:
 	Cipher_twofish() : Cipher(CT_TWOFISH), _init(false) {}

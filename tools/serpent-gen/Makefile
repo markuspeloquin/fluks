@@ -1,6 +1,6 @@
 CFLAGS = -Wall -pipe -std=c99 -pedantic -pthread
 CFLAGS += -O3
-#CFLAGS += -O0 -g 
+#CFLAGS += -O0 -g
 LDFLAGS = -pthread
 
 all: brute
