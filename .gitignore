@@ -1,7 +1,16 @@
 .sw[op]
 .*.sw[op]
+/Doxyfile
+/html
+
+# bjam
 /bin
 /debug
 /release
-/Doxyfile
-/html
+
+# cmake
+/CMakeCache.txt
+/CMakeFiles
+/Makefile
+/cmake_install.cmake
+/fluks

@@ -14,11 +14,8 @@ if (@ARGV < 2 || @ARGV % 2) {
 	exit 1;
 }
 
-# convert args to a map
-my %map;
-for (my $i = 0; $i < @ARGV; $i += 2) {
-	$map{$ARGV[$i]} = $ARGV[$i + 1];
-}
+# convert args to a map PROPERTY => VALUE
+my %map = @ARGV;
 
 my $path_in = 'Doxyfile';
 my $path_out = '.Doxyfile.tmp';
@@ -37,7 +34,7 @@ while (<$doxy_in>) {
 	my ($pfx, $name) = /^(([A-Za-z_][A-Za-z0-9_]*) \s* =)/x;
 	my $res;
 
-	if (defined $pfx and exists $map{$name}) {
+	if (defined($pfx) && exists($map{$name})) {
 		chomp $pfx;
 		$res = "$pfx $map{$name}\n";
 		print "$0: Setting $name = $map{$name}\n";
@@ -55,7 +52,7 @@ while (<$doxy_in>) {
 close $doxy_in;
 close $doxy_out;
 
-if (keys %map) {
+if (%map) {
 	print STDERR "$0: properties not found: ",
 	    join(', ', sort keys %map), "\n";
 	unlink $path_out;
