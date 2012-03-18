@@ -16,12 +16,13 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <boost/timer.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include <openssl/rand.h>
-
-#include <uuid/uuid.h>
 
 #include "af.hpp"
 #include "cipher.hpp"
@@ -200,9 +201,9 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 
 	_hdr->off_payload = off_base;
 
-	uuid_t uuid; // actually a buffer
-	uuid_generate(uuid);
-	uuid_unparse(uuid, _hdr->uuid);
+	boost::uuids::uuid uuid = boost::uuids::random_generator()();
+	std::string uuid_str = boost::lexical_cast<std::string>(uuid);
+	std::copy(uuid_str.begin(), uuid_str.end(), _hdr->uuid);
 }
 
 fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)

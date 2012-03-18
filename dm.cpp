@@ -16,15 +16,15 @@
 #include <cstdio>
 #include <iomanip>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 #include <boost/scoped_array.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include "dm.hpp"
 #include "libdevmapper.h"
 
 namespace fluks {
 namespace {
-
-const size_t UUID_STR_LEN = 36;
 
 std::string log_output;
 
@@ -98,7 +98,7 @@ public:
 			throw Dm_error(log_output);
 	}
 
-	void set_uuid(const uuid_t uuid) throw (Dm_error);
+	void set_uuid(const boost::uuids::uuid &uuid) throw (Dm_error);
 
 	void run() throw (Dm_error)
 	{
@@ -153,13 +153,12 @@ Device_mapper::add_crypt_target(
 }
 
 void
-Device_mapper::set_uuid(const uuid_t uuid) throw (Dm_error)
+Device_mapper::set_uuid(const boost::uuids::uuid &uuid) throw (Dm_error)
 {
-	char uuid_hex[UUID_STR_LEN + 1];
-	uuid_unparse(uuid, uuid_hex);
+	std::string uuid_hex = boost::lexical_cast<std::string>(uuid);
 
 	log_output = "";
-	if (!dm_task_set_uuid(_task, uuid_hex))
+	if (!dm_task_set_uuid(_task, uuid_hex.c_str()))
 		throw Dm_error(log_output);
 }
 
@@ -179,7 +178,7 @@ fluks::dm_open(const std::string &name,
     uint64_t start_sector, uint64_t num_sectors,
     const std::string &cipher_spec,
     const uint8_t *key, size_t sz_key,
-    const uuid_t uuid,
+    const boost::uuids::uuid &uuid,
     const std::string &device_path)
     throw (Dm_error)
 {

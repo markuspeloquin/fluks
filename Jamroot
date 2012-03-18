@@ -46,7 +46,6 @@ lib dl ; # for crypto
 #lib sepol ;
 lib ssl ;
 lib udev ; # for devmapper
-lib uuid ;
 lib z ; # for crypto
 
 lib fluks_crypto
@@ -80,7 +79,6 @@ exe fluks
 	#sepol
 	ssl
 	udev
-	uuid
 	z
 
 	# internal lib

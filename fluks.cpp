@@ -15,10 +15,13 @@
 #include <ctime>
 #include <iostream>
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include <openssl/rand.h>
 
@@ -556,8 +559,9 @@ main(int argc, char **argv)
 
 		if (!pretend) {
 			std::string uuid_str = header->uuid();
-			uuid_t uuid;
-			if (uuid_parse(uuid_str.c_str(), uuid) != 0)
+			boost::uuids::uuid uuid =
+			    boost::lexical_cast<boost::uuids::uuid>(uuid_str);
+			if (uuid.is_nil())
 				throw Bad_uuid(uuid_str);
 
 			dm_open(name,

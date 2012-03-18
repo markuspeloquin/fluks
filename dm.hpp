@@ -19,7 +19,7 @@
 #include <string>
 #include <tr1/cstdint>
 
-#include <uuid/uuid.h>
+#include <boost/uuid/uuid.hpp>
 
 #include "errors.hpp"
 
@@ -49,7 +49,7 @@ void	dm_open(const std::string &name,
 	    uint64_t start_sector, uint64_t num_sectors,
 	    const std::string &cipher_spec,
 	    const uint8_t *key, size_t sz_key,
-	    const uuid_t uuid,
+	    const boost::uuids::uuid &uuid,
 	    const std::string &device_path)
 	    throw (Dm_error);
 }

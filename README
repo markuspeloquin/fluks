@@ -16,35 +16,29 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
+        CMake
 	libdevmapper from Device-mapper (sources.redhat.com/dm)
 	boost (boost.org), at least version 1.35.0
-	Boost.Build
-	libuuid (multiple sources):
-	    e2fsprogs-libs (e2fsprogs.sf.net)
-	    util-linux (freshmeat.net/projects/util-linux)
 	OpenSSL (openssl.org)
 	Linux headers (/usr/include/linux)
 
     In Ubuntu (ugh), it's at least:
 	- libboost-dev libboost-filesystem-dev libboost-program-options-dev
 	  libboost-regex-dev libboost-system-dev libdevmapper-dev libssl-dev
-	  libudev-dev uuid-dev'
+	  libudev-dev'
 	- Also uncomment the selinux and sepol lines in Jamroot. There has
 	  *got* to be a better way to handle static linking dependencies in
 	  Unix.
 
-    If you were wondering, libuuid is one of the few BSD-licensed libraries
-    in e2fsprogs/util-linux. Now build:
+    If you would like a dynamically-linked binary, edit the 'static_linking'
+    variable in CMakeLists.txt. By default, an entirely statically-linked
+    binary is produced to ensure you can't break it by updating boost or
+    something.
 
-	$ bjam release
-	# if it complains about cast6.o, do `bjam fluks release' instead
-
-    This will put a (mostly) statically-linked binary in the `release'
-    directory (or it should with reasonable Boost versions).
+    Now build:
+	$ cmake .
+	$ make
 
 INSTALLING
 
-    This will install to /usr/local/bin by default. To change the install
-    paths, run `bjam --help'.
-
-	# bjam [options] release install
+	# make install

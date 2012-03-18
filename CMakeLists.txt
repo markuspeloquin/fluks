@@ -33,12 +33,6 @@ if(OPENSSL_libssl-NOTFOUND OR OPENSSL_libcrypto-NOTFOUND OR
 endif()
 message(STATUS "OpenSSL found")
 
-find_library(UTIL_LINUX_libuuid uuid DOC "Util-linux libuuid")
-if(UTIL_LINUX_libuuid-NOTFOUND)
-	message(FATAL_ERROR "Util-Linux libuuid not found")
-endif()
-message(STATUS "Util-Linux libuuid found")
-
 find_library(DEVICE_MAPPER_libdevmapper devmapper DOC "Device Mapper (libdevmapper)")
 if(DEVICE_MAPPER_libdevmapper-NOTFOUND)
 	message(FATAL_ERROR "Device Mapper libdevmapper not found")
@@ -82,10 +76,10 @@ include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 add_definitions(-D_BSD_SOURCE)
 set(CMAKE_C_FLAGS         "${CFLAGS} -Wall -pthread -std=c99 -pedantic")
 set(CMAKE_C_FLAGS_DEBUG   "-O0 -g -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG -s")
 set(CMAKE_CXX_FLAGS         "${CXXFLAGS} -Wall -pthread -std=c++98")
 set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -s")
 
 add_executable(fluks
 	af.cpp
@@ -117,7 +111,6 @@ target_link_libraries(fluks
 	${Boost_LIBRARIES}
 	# need ssl before crypto
 	${OPENSSL_libssl} ${OPENSSL_libcrypto}
-	${UTIL_LINUX_libuuid}
 	${DEVICE_MAPPER_libdevmapper}
 
 	# static linking only; they're all blank for dynamic linking
