@@ -27,29 +27,44 @@ endif()
 find_library(OPENSSL_libssl ssl DOC "OpenSSL libssl")
 find_library(OPENSSL_libcrypto crypto DOC "OpenSSL libcrypto")
 find_path(OPENSSL_INCLUDE_DIR openssl/ssl.h DOC "OpenSSL headers")
-if(OPENSSL_libssl-NOTFOUND OR OPENSSL_libcrypto-NOTFOUND OR
-    OPENSSL_INCLUDE_DIR-NOTFOUND)
+if(${OPENSSL_libssl} STREQUAL "OPENSSL_libssl-NOTFOUND" OR
+    ${OPENSSL_libcrypto} STREQUAL "OPENSSL_libcrypto-NOTFOUND" OR
+    ${OPENSSL_INCLUDE_DIR} STREQUAL "OPENSSL_INCLUDE_DIR-NOTFOUND")
 	message(FATAL_ERROR "OpenSSL not found")
 endif()
 message(STATUS "OpenSSL found")
 
 find_library(DEVICE_MAPPER_libdevmapper devmapper DOC "Device Mapper (libdevmapper)")
-if(DEVICE_MAPPER_libdevmapper-NOTFOUND)
+if(${DEVICE_MAPPER_libdevmapper} STREQUAL "DEVICE_MAPPER_libdevmapper-NOTFOUND")
 	message(FATAL_ERROR "Device Mapper libdevmapper not found")
 endif()
 message(STATUS "Device Mapper libdevmapper found")
 
+# Ubuntu needs these I think?
+find_library(SE_libselinux selinux DOC "SE libselinux")
+find_library(SE_libsepol sepol DOC "SE libsepol")
+if (${SE_libselinux} STREQUAL "SE_libselinux-NOTFOUND")
+	set(SE_libselinux "")
+else()
+	message(STATUS "libselinux found")
+endif()
+if (${SE_libsepol} STREQUAL "SE_libsepol-NOTFOUND")
+	set(SE_libsepol "")
+else()
+	message(STATUS "libsepol found")
+endif()
+
 if(static_linking)
 	# required by libdevmapper.a
 	find_library(UDEV_libudev udev DOC "libudev")
-	if(UDEV_libudev-NOTFOUND)
+	if(${UDEV_libudev} STREQUAL "UDEV_libudev-NOTFOUND")
 		message(FATAL_ERROR "libudev not found")
 	endif()
 	message(STATUS "libudev found")
 
 	# required by libcrypto.a
 	find_library(ZLIB_libz z DOC "zlib")
-	if(ZLIB_libz-NOTFOUND)
+	if(${ZLIB_libz} STREQUAL "ZLIB_libz-NOTFOUND")
 		message(FATAL_ERROR "zlib not found")
 	endif()
 	message(STATUS "zlib found")
@@ -112,6 +127,10 @@ target_link_libraries(fluks
 	# need ssl before crypto
 	${OPENSSL_libssl} ${OPENSSL_libcrypto}
 	${DEVICE_MAPPER_libdevmapper}
+
+	# i'm not sure about the order here
+	${SE_libselinux}
+	${SE_libsepol}
 
 	# static linking only; they're all blank for dynamic linking
 	${UDEV_libudev}
