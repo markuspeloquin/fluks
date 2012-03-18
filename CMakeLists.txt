@@ -34,8 +34,10 @@ if(${OPENSSL_libssl} STREQUAL "OPENSSL_libssl-NOTFOUND" OR
 endif()
 message(STATUS "OpenSSL found")
 
-find_library(DEVICE_MAPPER_libdevmapper devmapper DOC "Device Mapper (libdevmapper)")
-if(${DEVICE_MAPPER_libdevmapper} STREQUAL "DEVICE_MAPPER_libdevmapper-NOTFOUND")
+find_library(DEVICE_MAPPER_libdevmapper devmapper
+    DOC "Device Mapper (libdevmapper)")
+if(${DEVICE_MAPPER_libdevmapper} STREQUAL
+    "DEVICE_MAPPER_libdevmapper-NOTFOUND")
 	message(FATAL_ERROR "Device Mapper libdevmapper not found")
 endif()
 message(STATUS "Device Mapper libdevmapper found")
