@@ -201,6 +201,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 
 	_hdr->off_payload = off_base;
 
+	// generates a warning with >=gcc-4.6 and <boost-1.49
 	boost::uuids::uuid uuid = boost::uuids::random_generator()();
 	std::string uuid_str = boost::lexical_cast<std::string>(uuid);
 	std::copy(uuid_str.begin(), uuid_str.end(), _hdr->uuid);
