@@ -9,9 +9,4 @@
 /release
 
 # cmake
-/CMakeCache.txt
-/CMakeFiles
-/Makefile
-/cmake_install.cmake
-/fluks
-/install_manifest.txt
+/build/

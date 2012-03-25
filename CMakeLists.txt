@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
+enable_testing()
+
 
 # START OF USER CONFIG
 
@@ -123,6 +125,7 @@ add_executable(fluks
 	whirlpool.c
 	serpent.cpp
 	)
+
 target_link_libraries(fluks
 	# must be at start
 	${static_link_header}
@@ -146,6 +149,28 @@ target_link_libraries(fluks
 	# must be at the end
 	${static_link_footer}
 	)
+
 install(TARGETS fluks
 	RUNTIME DESTINATION bin
-)
+	)
+
+add_custom_command(OUTPUT cast6_t.o COMMAND ${CMAKE_C_COMPILER} ${CMAKE_SOURCE_DIR}/cast6.c -c -o cast6_t.o -DCAST6_TEST -D_BSD_SOURCE -std=c99 -Wall -pedantic)
+add_executable(test-cast6 test/cast6.cpp cast6_t.o)
+target_link_libraries(test-cast6 boost_regex)
+add_test(test-cast6 ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test-cast6)
+
+add_executable(test-serpent test/serpent.cpp serpent.cpp)
+target_link_libraries(test-serpent boost_regex)
+add_test(test-serpent ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test-serpent)
+
+add_executable(test-twofish test/twofish.cpp twofish.c)
+target_link_libraries(test-twofish boost_regex)
+add_test(test-twofish ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test-twofish)
+
+add_executable(test-tiger test/tiger.cpp tiger.c)
+add_test(test-tiger ${CMAKE_CURRENT_BINARY_DIR}/test-tiger)
+target_link_libraries(test-tiger boost_system)
+
+add_executable(test-whirlpool test/whirlpool.cpp whirlpool.c)
+add_test(test-whirlpool ${CMAKE_CURRENT_BINARY_DIR}/test-whirlpool)
+target_link_libraries(test-whirlpool boost_system)

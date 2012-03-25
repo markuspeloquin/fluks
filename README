@@ -33,9 +33,8 @@ BUILDING
     something.
 
     Now build:
-	$ cmake .
-	$ make
+	$ ./build.sh -j4  (or whatever arguments you like to send to make)
 
 INSTALLING
 
-	# make install
+	$ ./build.sh install
