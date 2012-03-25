@@ -33,9 +33,9 @@ uint8_t cast6_iv_idx;
 
 void add_intermediate_values(uint8_t i,
     const uint8_t rotk[4], const uint32_t mask[4],
-    uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+    uint32_t b0, uint32_t b1, uint32_t b2, uint32_t b3)
 {
-	uint32_t block[] = { a, b, c, d };
+	uint32_t block[] = { b0, b1, b2, b3 };
 	host_to_be32(cast6_iv_out[i], block, CAST6_BLOCK);
 	memcpy(cast6_iv_rotk[i], rotk, 4);
 	memcpy(cast6_iv_mask[i], mask, 16);
@@ -46,7 +46,7 @@ void add_intermediate_values(uint8_t i,
 	add_intermediate_values(cast6_iv_idx++, kr, km,		\
 	    b0, b1, b2, b3);					\
 }								while(0)
-#else
+#else /* !defined(CAST6_TEST) */
 #define INIT_IV() do {} while(0)
 #define ADD_IV(kr, km) do {} while(0)
 #endif

@@ -154,6 +154,7 @@ install(TARGETS fluks
 	RUNTIME DESTINATION bin
 	)
 
+# recompile cast6.c with -DCAST6_TEST
 add_custom_command(OUTPUT cast6_t.o COMMAND ${CMAKE_C_COMPILER} ${CMAKE_SOURCE_DIR}/cast6.c -c -o cast6_t.o -DCAST6_TEST -D_BSD_SOURCE -std=c99 -Wall -pedantic)
 add_executable(test-cast6 test/cast6.cpp cast6_t.o)
 target_link_libraries(test-cast6 boost_regex)
