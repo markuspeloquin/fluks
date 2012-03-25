@@ -7,7 +7,9 @@ if [[ $1 = --help ]]; then
 	echo "       $0 distclean"
 	exit 0
 elif [[ $1 == distclean ]]; then
-	rm -rf build
+	cmd="rm -rf Doxyfile build html"
+	echo $cmd
+	`$cmd`
 	exit 0
 fi
 
