@@ -37,4 +37,4 @@ BUILDING
 
 INSTALLING
 
-	$ ./build.sh install
+	# ./build.sh install
