@@ -13,6 +13,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include <map>
+#include <boost/foreach.hpp>
 
 #include "support.hpp"
 
@@ -57,9 +58,8 @@ private:
 	template <class Map, typename Vec>
 	void types(Map &map, Vec &types)
 	{
-		for (typename Map::iterator i = map.begin();
-		    i != map.end(); ++i)
-			types.push_back(i->first);
+		BOOST_FOREACH(typename Map::value_type &pair, map)
+			types.push_back(pair.first);
 	}
 
 public:

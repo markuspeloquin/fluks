@@ -12,8 +12,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <cassert>
-
 #include "crypto_ops.h"
 #include "endian.h"
 #include "serpent.h"

@@ -15,6 +15,7 @@
 #include <ctime>
 #include <iostream>
 #include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -52,9 +53,8 @@ list_modes()
 "[!] (not in any LUKS spec).\n\n";
 
 	std::cout << "ciphers (with supported key sizes):\n";
-	for (std::vector<enum cipher_type>::const_iterator i = ciphers.begin();
-	    i != ciphers.end(); ++i) {
-		const Cipher_traits *traits = Cipher_traits::traits(*i);
+	BOOST_FOREACH (enum cipher_type cipher, ciphers) {
+		const Cipher_traits *traits = Cipher_traits::traits(cipher);
 
 		uint16_t version = traits->luks_version;
 		std::cout << "\t[";
@@ -63,21 +63,18 @@ list_modes()
 		std::cout << "] ";
 
 		std::cout << traits->name << " (";
-		for (std::vector<uint16_t>::const_iterator j =
-		    traits->key_sizes.begin(); j != traits->key_sizes.end();
-		    ++j) {
-			if (j != traits->key_sizes.begin())
-				std::cout << ' ';
-			std::cout << *j * 8;
+		bool first = true;
+		BOOST_FOREACH (uint16_t size, traits->key_sizes) {
+			if (!first) std::cout << ' ';
+			first = false;
+			std::cout << size * 8;
 		}
 		std::cout << ")\n";
 	}
 
 	std::cout << "\nhashes (with digest size):\n";
-	for (std::vector<enum hash_type>::iterator i = hashes.begin();
-	    i != hashes.end(); ++i) {
-
-		const Hash_traits *traits = Hash_traits::traits(*i);
+	BOOST_FOREACH (enum hash_type hash, hashes) {
+		const Hash_traits *traits = Hash_traits::traits(hash);
 		std::cout << "\t[";
 		if (!traits->luks_version)
 			std::cout << '!';
@@ -90,29 +87,25 @@ list_modes()
 	}
 
 	std::cout << "\nblock modes:\n";
-	for (std::vector<enum block_mode>::iterator i = block_modes.begin();
-	    i != block_modes.end(); ++i) {
-
-		uint16_t version = block_mode_info::version(*i);
+	BOOST_FOREACH (enum block_mode block_mode, block_modes) {
+		uint16_t version = block_mode_info::version(block_mode);
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
 		else		std::cout << version;
 		std::cout << "] ";
 
-		std::cout << block_mode_info::name(*i) << '\n';
+		std::cout << block_mode_info::name(block_mode) << '\n';
 	}
 
 	std::cout << "\nIV generation modes:\n";
-	for (std::vector<enum iv_mode>::iterator i = iv_modes.begin();
-	    i != iv_modes.end(); ++i) {
-
-		uint16_t version = iv_mode_info::version(*i);
+	BOOST_FOREACH (enum iv_mode iv_mode, iv_modes) {
+		uint16_t version = iv_mode_info::version(iv_mode);
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
 		else		std::cout << version;
 		std::cout << "] ";
 
-		std::cout << iv_mode_info::name(*i) << '\n';
+		std::cout << iv_mode_info::name(iv_mode) << '\n';
 	}
 }
 

@@ -14,6 +14,7 @@
 
 #include <set>
 #include <sstream>
+#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 
 #include "cipher.hpp"
@@ -73,10 +74,11 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 		std::ostringstream out;
 		out << "cipher `" << _nm_cipher
 		    << "' only supports keys of sizes";
-		for (std::vector<uint16_t>::const_iterator i = sizes.begin();
-		    i != sizes.end(); ++i) {
-			if (i != sizes.begin()) out << ',';
-			out << ' ' << *i * 8;
+		bool first = true;
+		BOOST_FOREACH(uint16_t size, sizes) {
+			if (!first) out << ',';
+			first = false;
+			out << ' ' << size * 8;
 		}
 		out << " (not " << sz_key << ')';
 		throw Bad_spec(out.str());
@@ -100,11 +102,11 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 			std::ostringstream out;
 			out << "cipher `" << _nm_cipher
 			    << "' only supports keys of sizes";
-			for (std::vector<uint16_t>::const_iterator i =
-			    sizes.begin(); i != sizes.end(); ++i) {
-				if (i != sizes.begin())
-					out << ',';
-				out << ' ' << (*i * 8);
+			bool first = true;
+			BOOST_FOREACH(uint16_t size, sizes) {
+				if (!first) out << ',';
+				first = false;
+				out << ' ' << size * 8;
 			}
 			out << "; incompatible with hash `" << _nm_iv_hash
 			    << '\'';
