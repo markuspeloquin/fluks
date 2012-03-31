@@ -32,6 +32,7 @@
 #include "dm.hpp"
 #include "hash.hpp"
 #include "support.hpp"
+#include "version.hpp"
 
 char *prog;
 
@@ -237,6 +238,7 @@ main(int argc, char **argv)
 	    ("pass", "add a passphrase to a LUKS partition")
 	    ("revoke", "revoke a passphrase of a LUKS partition")
 	    ("uuid", "print the UUID of a LUKS partition")
+	    ("version,v", "print the version of FLUKS")
 	    ("wipe", "securely erase the LUKS header (will prompt for "
 		"confirmation)")
 	    ;
@@ -315,6 +317,11 @@ main(int argc, char **argv)
 
 	if (!var_map["help"].empty()) {
 		usage(visible_desc);
+		return 0;
+	}
+	if (!var_map["version"].empty()) {
+		Version version;
+		std::cout << version.str() << '\n';
 		return 0;
 	}
 
