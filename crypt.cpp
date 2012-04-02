@@ -331,6 +331,13 @@ fluks::Crypter_cbc_cts::encrypt(Cipher *cipher, const uint8_t *iv,
 	uint32_t	blocks = sz / cipher->traits()->block_size;
 	size_t		sz_blk = cipher->traits()->block_size;
 
+	if (sz < sz_blk) {
+		std::ostringstream out;
+		out << "CBC-CTS requires at least one block of data ("
+		    << sz_blk << " bytes for this cipher)";
+		throw Crypt_error(out.str());
+	}
+
 	// encrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {
 		// first block:
@@ -369,6 +376,13 @@ fluks::Crypter_cbc_cts::decrypt(Cipher *cipher, const uint8_t *iv,
 	uint8_t		buf[cipher->traits()->block_size];
 	uint32_t	blocks = sz / cipher->traits()->block_size;
 	size_t		sz_blk = cipher->traits()->block_size;
+
+	if (sz < sz_blk) {
+		std::ostringstream out;
+		out << "CBC-CTS requires at least one block of data ("
+		    << sz_blk << " bytes for this cipher)";
+		throw Crypt_error(out.str());
+	}
 
 	// decrypt whole blocks
 	for (uint32_t i = 0; i < blocks; i++) {

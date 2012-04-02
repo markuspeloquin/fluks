@@ -193,8 +193,8 @@ int main(int argc, char **argv)
 	char *base = basename(prog);
 	bool all_good = true;
 
-	// these tests take a minute to complete each
-	/*
+	// these two tests take a minute to complete each
+#if 0
 	if (verbose)
 		std::cerr << '(' << base << ": Monte Carlo decrypt "
 		    "[takes about a minute])\n";
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 		std::cerr << '(' << base  << ": Monte Carlo encrypt "
 		    "[takes about a minute])\n";
 	all_good &= run_script("serpent_mc_enc.txt", monte_carlo);
-	*/
+#endif
 
 	if (verbose)
 		std::cerr << '(' << base  << ": variable key, known text)\n";

@@ -172,8 +172,8 @@ public:
 	 * \param[in] in	Plaintext
 	 * \param[in] sz_plain	The size of the plaintext
 	 * \param[out] out	The ciphertext. Its size should be at least
-	 *	\f$ \lceil \mathrm{sz}_\mathrm{plain}/C_mathrm{BS} \rceil \f$,
-	 *	where \f$ C_\mathrm{BS} \f$ is the block size of the cipher.
+	 *	\f$ \lceil \mathtt{sz\_plain}/C_\mathit{BS} \rceil \f$, where
+	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
 	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
@@ -366,8 +366,8 @@ public:
 	 * \param[in] in	Plaintext
 	 * \param[in] sz_plain	The size of the plaintext
 	 * \param[out] out	The ciphertext. Its size should be at least
-	 *	\f$ \lceil \mathrm{sz}_\mathrm{plain}/C_mathrm{BS} \rceil \f$,
-	 *	where \f$ C_\mathrm{BS} \f$ is the block size of the cipher.
+	 *	\f$ \lceil \mathtt{sz\_plain}/C_\mathit{BS} \rceil \f$, where
+	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
 	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
@@ -464,8 +464,8 @@ public:
 	 * \param[in] in	Plaintext
 	 * \param[in] sz_plain	The size of the plaintext
 	 * \param[out] out	The ciphertext. Its size should be at least
-	 *	\f$ \lceil \mathrm{sz}_\mathrm{plain}/C_mathrm{BS} \rceil \f$,
-	 *	where \f$ C_\mathrm{BS} \f$ is the block size of the cipher.
+	 *	\f$ \lceil \mathtt{sz\_plain}/C_\mathit{BS} \rceil \f$, where
+	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
 	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
