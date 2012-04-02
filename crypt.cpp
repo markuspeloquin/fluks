@@ -326,6 +326,7 @@ void
 fluks::Crypter_cbc_cts::encrypt(Cipher *cipher, const uint8_t *iv,
     const uint8_t *in, size_t sz, uint8_t *out) throw (Crypt_error)
 {
+	Assert(0, "not implemented yet");
 	uint8_t		buf[cipher->traits()->block_size];
 	uint32_t	blocks = sz / cipher->traits()->block_size;
 	size_t		sz_blk = cipher->traits()->block_size;
@@ -364,6 +365,7 @@ void
 fluks::Crypter_cbc_cts::decrypt(Cipher *cipher, const uint8_t *iv,
     const uint8_t *in, size_t sz, uint8_t *out) throw (Crypt_error)
 {
+	Assert(0, "not implemented yet");
 	uint8_t		buf[cipher->traits()->block_size];
 	uint32_t	blocks = sz / cipher->traits()->block_size;
 	size_t		sz_blk = cipher->traits()->block_size;
