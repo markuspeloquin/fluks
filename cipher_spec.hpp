@@ -39,6 +39,7 @@ enum cipher_type {
 enum block_mode {
 	BM_UNDEFINED = 0,
 	BM_CBC, /**< Cipher-block chaining */
+	BM_CBC_CTS, /**< Cipher-block chaining with ciphertext stealing */
 	BM_CFB, /**< Cipher feedback */
 	BM_CTR, /**< Counter */
 	/** Cipher Text Stealing

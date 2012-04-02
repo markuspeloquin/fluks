@@ -342,14 +342,15 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    pw_digest, sizeof(pw_digest));
 
 	// encrypt the master key with pw_digest
-	Crypter crypter(pw_digest, sizeof(pw_digest), *_cipher_spec);
+	std::tr1::shared_ptr<Crypter> crypter = Crypter::create(pw_digest,
+	    sizeof(pw_digest), *_cipher_spec);
 	_key_crypt[avail_idx].reset(new uint8_t[sizeof(split_key)]);
-	crypter.encrypt(avail->off_km, _sz_sect,
+	crypter->encrypt(avail->off_km, _sz_sect,
 	    split_key, sizeof(split_key), _key_crypt[avail_idx].get());
 
 	// verify that decryption works just as well
 	uint8_t crypt_check[sizeof(split_key)];
-	crypter.decrypt(avail->off_km, _sz_sect,
+	crypter->decrypt(avail->off_km, _sz_sect,
 	    _key_crypt[avail_idx].get(), sizeof(split_key), crypt_check);
 
 	Assert(std::equal(crypt_check, crypt_check + sizeof(crypt_check),
@@ -590,9 +591,12 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 		throw Disk_error("failed to read key material");
 
 	// (pw_digest, key_crypt) => split_key
-	Crypter crypter(pw_digest, sizeof(pw_digest), *_cipher_spec);
-	crypter.decrypt(key->off_km, _sz_sect,
-	    key_crypt, sizeof(key_crypt), split_key);
+	{
+		std::tr1::shared_ptr<Crypter> crypter = Crypter::create(
+		    pw_digest, sizeof(pw_digest), *_cipher_spec);
+		crypter->decrypt(key->off_km, _sz_sect,
+		    key_crypt, sizeof(key_crypt), split_key);
+	}
 
 	// split_key => master_key
 	af_merge(split_key, _hdr->sz_key, key->stripes,

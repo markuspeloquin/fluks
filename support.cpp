@@ -108,6 +108,7 @@ Lookup Lookup::_instance;
 Lookup::Lookup()
 {
 	block_mode_stat_map[BM_CBC] = (block_mode_stat){ "cbc", 1 };
+	block_mode_stat_map[BM_CBC_CTS] = (block_mode_stat){ "cts", 1 };
 	block_mode_stat_map[BM_CFB] = (block_mode_stat){ "cfb", 0 };
 	block_mode_stat_map[BM_CTR] = (block_mode_stat){ "ctr", 0 };
 	block_mode_stat_map[BM_ECB] = (block_mode_stat){ "ecb", 1 };
@@ -115,6 +116,8 @@ Lookup::Lookup()
 	block_mode_stat_map[BM_PCBC] = (block_mode_stat){ "pcbc", 0 };
 
 	block_mode_name_map["cbc"] = BM_CBC;
+	block_mode_name_map["cbc-cts"] = BM_CBC_CTS;
+	block_mode_name_map["cts"] = BM_CBC_CTS;
 	block_mode_name_map["cfb"] = BM_CFB;
 	block_mode_name_map["ctr"] = BM_CTR;
 	block_mode_name_map["ecb"] = BM_ECB;
