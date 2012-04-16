@@ -20,7 +20,7 @@
 #ifdef __cplusplus
 // C++
 #	include <cstddef>
-#	include <tr1/cstdint>
+#	include <cstdint>
 
 	const size_t WHIRLPOOL256_SZ_DIGEST = 32;
 	const size_t WHIRLPOOL384_SZ_DIGEST = 48;

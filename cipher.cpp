@@ -118,28 +118,28 @@ fluks::Cipher_traits::types()
 	return Lookup::types();
 }
 
-std::tr1::shared_ptr<fluks::Cipher>
+std::shared_ptr<fluks::Cipher>
 fluks::Cipher::create(enum cipher_type type)
 {
 	switch (type) {
 	case CT_AES:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_aes);
+		return std::shared_ptr<Cipher>(new Cipher_aes);
 	case CT_BLOWFISH:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_blowfish);
+		return std::shared_ptr<Cipher>(new Cipher_blowfish);
 #ifndef OPENSSL_NO_CAMELLIA
 	case CT_CAMELLIA:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_camellia);
+		return std::shared_ptr<Cipher>(new Cipher_camellia);
 #endif
 	case CT_CAST5:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_cast5);
+		return std::shared_ptr<Cipher>(new Cipher_cast5);
 	case CT_CAST6:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_cast6);
+		return std::shared_ptr<Cipher>(new Cipher_cast6);
 	case CT_SERPENT:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_serpent);
+		return std::shared_ptr<Cipher>(new Cipher_serpent);
 	case CT_TWOFISH:
-		return std::tr1::shared_ptr<Cipher>(new Cipher_twofish);
+		return std::shared_ptr<Cipher>(new Cipher_twofish);
 	default:
 		Assert(0, "Cipher::create() bad cipher type");
-		return std::tr1::shared_ptr<Cipher>();
+		return std::shared_ptr<Cipher>();
 	}
 }

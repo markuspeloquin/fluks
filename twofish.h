@@ -19,7 +19,7 @@
 
 #ifdef __cplusplus
 #	include <cstddef>
-#	include <tr1/cstdint>
+#	include <cstdint>
 
 	const size_t TWOFISH_KEYMIN = 16;
 	const size_t TWOFISH_KEYMAX = 32;

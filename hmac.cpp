@@ -15,27 +15,27 @@
 #include "hmac.hpp"
 #include "util.hpp"
 
-std::tr1::shared_ptr<fluks::Hmac_function>
+std::shared_ptr<fluks::Hmac_function>
 fluks::Hmac_function::create(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_md5);
+		return std::shared_ptr<Hmac_function>(new Hmac_md5);
 	case HT_RMD160:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_rmd160);
+		return std::shared_ptr<Hmac_function>(new Hmac_rmd160);
 	case HT_SHA1:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha1);
+		return std::shared_ptr<Hmac_function>(new Hmac_sha1);
 	case HT_SHA224:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha224);
+		return std::shared_ptr<Hmac_function>(new Hmac_sha224);
 	case HT_SHA256:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha256);
+		return std::shared_ptr<Hmac_function>(new Hmac_sha256);
 	case HT_SHA384:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha384);
+		return std::shared_ptr<Hmac_function>(new Hmac_sha384);
 	case HT_SHA512:
-		return std::tr1::shared_ptr<Hmac_function>(new Hmac_sha512);
+		return std::shared_ptr<Hmac_function>(new Hmac_sha512);
 	default:
-		return std::tr1::shared_ptr<Hmac_function>(
-		    new Hmac_impl(Hash_function::create(type)));
+		return std::shared_ptr<Hmac_function>(new Hmac_impl(
+		    Hash_function::create(type)));
 	}
 }
 

@@ -1,7 +1,7 @@
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
-#include <tr1/memory>
 #include <boost/regex.hpp>
 
 #include "cipher.hpp"
@@ -91,7 +91,7 @@ Cipher_test::Cipher_test(enum cipher_type type, const uint8_t *key,
 void
 Cipher_test::run()
 {
-	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(_type);
+	std::shared_ptr<Cipher> cipher = Cipher::create(_type);
 	uint8_t buf[cipher->traits()->block_size];
 	cipher->init(_key.get(), _sz_key);
 	if (_dir == DIR_ENCRYPT)
@@ -129,8 +129,7 @@ Hash_test::Hash_test(enum hash_type type, const uint8_t *data, size_t sz) :
 void
 Hash_test::run()
 {
-	std::tr1::shared_ptr<Hash_function> hash =
-	    Hash_function::create(_type);
+	std::shared_ptr<Hash_function> hash = Hash_function::create(_type);
 	uint8_t buf[hash->traits()->digest_size];
 	hash->init();
 	hash->add(_data.get(), _sz);
@@ -171,8 +170,7 @@ Hmac_test::Hmac_test(enum hash_type type, const uint8_t *key, size_t sz_key,
 void
 Hmac_test::run()
 {
-	std::tr1::shared_ptr<Hmac_function> hmac =
-	    Hmac_function::create(_type);
+	std::shared_ptr<Hmac_function> hmac = Hmac_function::create(_type);
 	uint8_t buf[hmac->traits()->digest_size];
 	hmac->init(_key.get(), _sz_key);
 	hmac->add(_data.get(), _sz_data);

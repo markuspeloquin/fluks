@@ -16,9 +16,9 @@
 #define FLUKS_HMAC_HPP
 
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <string>
-#include <tr1/cstdint>
-#include <tr1/memory>
 #include <boost/scoped_array.hpp>
 
 #include <openssl/hmac.h>
@@ -52,8 +52,7 @@ public:
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
-	static std::tr1::shared_ptr<Hmac_function>
-	    create(const std::string &name)
+	static std::shared_ptr<Hmac_function> create(const std::string &name)
 	{	return create(Hash_traits::type(name)); }
 
 	/**
@@ -62,8 +61,7 @@ public:
 	 * \param type	The hash algorithm.
 	 * \return	An HMAC function pointer.
 	 */
-	static std::tr1::shared_ptr<Hmac_function>
-	    create(enum hash_type type);
+	static std::shared_ptr<Hmac_function> create(enum hash_type type);
 
 	virtual ~Hmac_function() throw () {}
 
@@ -113,7 +111,7 @@ public:
 	 *
 	 * \param hashfn	A hash object.
 	 */
-	Hmac_impl(std::tr1::shared_ptr<Hash_function> hashfn) :
+	Hmac_impl(std::shared_ptr<Hash_function> hashfn) :
 		Hmac_function(hashfn->traits()),
 		_hashfn(hashfn),
 		_key(new uint8_t[hashfn->traits()->block_size])
@@ -130,8 +128,8 @@ private:
 	Hmac_impl(const Hmac_impl &h) : Hmac_function(0) {}
 	void operator=(const Hmac_impl &h) {}
 
-	std::tr1::shared_ptr<Hash_function> _hashfn;
-	boost::scoped_array<uint8_t> _key;
+	std::shared_ptr<Hash_function>	_hashfn;
+	boost::scoped_array<uint8_t>	_key;
 };
 
 

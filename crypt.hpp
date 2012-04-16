@@ -16,8 +16,8 @@
 #define FLUKS_CRYPT_HPP
 
 #include <cstddef>
-#include <tr1/cstdint>
-#include <tr1/memory>
+#include <cstdint>
+#include <memory>
 #include <boost/shared_array.hpp>
 
 #include "luks.hpp"
@@ -44,7 +44,7 @@ protected:
 	}
 
 public:
-	static std::tr1::shared_ptr<Crypter> create(const uint8_t *key,
+	static std::shared_ptr<Crypter> create(const uint8_t *key,
 	    size_t sz_key, const Cipher_spec &spec);
 
 	/** Get the number of bytes required to encrypt data
@@ -135,11 +135,11 @@ protected:
 
 private:
 
-	boost::shared_array<uint8_t>		_key;
-	std::tr1::shared_ptr<Cipher>		_cipher;
-	std::tr1::shared_ptr<Hash_function>	_iv_hash;
-	Cipher_spec				_spec;
-	size_t					_sz_key;
+	boost::shared_array<uint8_t>	_key;
+	std::shared_ptr<Cipher>		_cipher;
+	std::shared_ptr<Hash_function>	_iv_hash;
+	Cipher_spec			_spec;
+	size_t				_sz_key;
 };
 
 class Crypter_cbc : public Crypter {

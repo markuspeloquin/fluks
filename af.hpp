@@ -15,7 +15,7 @@
 #ifndef FLUKS_AF_HPP
 #define FLUKS_AF_HPP
 
-#include <tr1/cstdint>
+#include <cstdint>
 
 #include "luks.hpp"
 

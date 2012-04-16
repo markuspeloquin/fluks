@@ -15,7 +15,7 @@
 #ifndef SERPENT_SBOXES_HPP
 #define SERPENT_SBOXES_HPP
 
-#include <tr1/cstdint>
+#include <cstdint>
 
 // Compared to the 'reference' implementation, there are 17% fewer gates!
 // (242 vs 284)  Win!

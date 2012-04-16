@@ -3,11 +3,11 @@
 
 #include <cstdlib>
 #include <cstddef>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <tr1/cstdint>
 
 namespace test {
 

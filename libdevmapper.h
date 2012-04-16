@@ -6,7 +6,7 @@
 
 #include <features.h>
 #ifdef __cplusplus
-#	include <tr1/cstdint>
+#	include <cstdint>
 #else
 #	include <stdint.h>
 #endif

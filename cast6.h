@@ -19,7 +19,7 @@
 
 #ifdef __cplusplus
 #	include <cstddef>
-#	include <tr1/cstdint>
+#	include <cstdint>
 
 	/** Size of a CAST-256 block (bytes) */
 	const size_t CAST6_BLOCK = 16;

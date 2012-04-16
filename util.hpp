@@ -16,7 +16,7 @@
 #define FLUKS_UTIL_HPP
 
 #include <cstddef>
-#include <tr1/cstdint>
+#include <cstdint>
 
 namespace fluks {
 

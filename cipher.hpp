@@ -17,10 +17,10 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <tr1/cstdint>
-#include <tr1/memory>
 
 #include <openssl/aes.h>
 #include <openssl/blowfish.h>
@@ -105,7 +105,7 @@ public:
 	 * \return	An object to en/decrypt with. It's meant to be used
 	 *	with the *_encrypt() and *_decrypt() functions.
 	 */
-	static std::tr1::shared_ptr<Cipher> create(enum cipher_type type);
+	static std::shared_ptr<Cipher> create(enum cipher_type type);
 
 	virtual ~Cipher() throw () {}
 

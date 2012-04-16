@@ -98,7 +98,7 @@ add_definitions(-D_BSD_SOURCE)
 set(CMAKE_C_FLAGS         "${CFLAGS} -Wall -pthread -std=c99 -pedantic")
 set(CMAKE_C_FLAGS_DEBUG   "-O0 -g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG -s")
-set(CMAKE_CXX_FLAGS         "${CXXFLAGS} -Wall -pthread -std=c++98")
+set(CMAKE_CXX_FLAGS         "${CXXFLAGS} -Wall -pthread -std=c++0x")
 set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -s")
 

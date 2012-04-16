@@ -12,8 +12,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <algorithm>
 #include <map>
-#include <boost/foreach.hpp>
 
 #include "support.hpp"
 
@@ -58,8 +58,10 @@ private:
 	template <class Map, typename Vec>
 	void types(Map &map, Vec &types)
 	{
-		BOOST_FOREACH(typename Map::value_type &pair, map)
+		std::for_each(map.begin(), map.end(),
+		    [&types](typename Map::value_type &pair) {
 			types.push_back(pair.first);
+		});
 	}
 
 public:

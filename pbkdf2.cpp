@@ -111,8 +111,7 @@ fluks::pbkdf2(enum hash_type type,
 	// 4.
 	// Concatenate all T_i. The first dkLen bytes is the derived key.
 	// Iterate over all but the partial block.
-	std::tr1::shared_ptr<Hmac_function> hmacfn =
-	    Hmac_function::create(type);
+	std::shared_ptr<Hmac_function> hmacfn = Hmac_function::create(type);
 	for (uint32_t i = 0; i < blocks; i++)
 		pbkdf2_f(hmacfn.get(), in, sz_in, salt, sz_salt, iterations,
 		    i, derived_key + i * sz_hash);

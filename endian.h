@@ -18,12 +18,10 @@
 #include <endian.h>
 
 #ifdef __cplusplus
-#	include <cassert>
 #	include <cstddef>
+#	include <cstdint>
 #	include <cstring>
-#	include <tr1/cstdint>
 #else
-#	include <assert.h>
 #	include <stddef.h>
 #	include <stdint.h>
 #	include <string.h>

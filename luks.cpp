@@ -104,8 +104,7 @@ void dump(const std::string &pfx, const uint8_t *buf, size_t sz)
 
 void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
 {
-	std::tr1::shared_ptr<Hash_function> hash =
-	    Hash_function::create(HT_SHA1);
+	std::shared_ptr<Hash_function> hash = Hash_function::create(HT_SHA1);
 	hash->init();
 	hash->add(buf, sz);
 	uint8_t out[hash->traits()->digest_size];
@@ -129,7 +128,7 @@ fluks::check_version_1(const struct phdr1 *header)
 	return header->version == 1;
 }
 
-fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
+fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device,
     int32_t sz_key, const std::string &cipher_spec,
     const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
     throw (boost::system::system_error, Bad_spec) :
@@ -207,7 +206,7 @@ fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
 	std::copy(uuid_str.begin(), uuid_str.end(), _hdr->uuid);
 }
 
-fluks::Luks_header::Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
+fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device)
     throw (boost::system::system_error, Bad_spec, Disk_error, No_header,
     Unsupported_version) :
 	_device(device),
@@ -342,7 +341,7 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	    pw_digest, sizeof(pw_digest));
 
 	// encrypt the master key with pw_digest
-	std::tr1::shared_ptr<Crypter> crypter = Crypter::create(pw_digest,
+	std::shared_ptr<Crypter> crypter = Crypter::create(pw_digest,
 	    sizeof(pw_digest), *_cipher_spec);
 	_key_crypt[avail_idx].reset(new uint8_t[sizeof(split_key)]);
 	crypter->encrypt(avail->off_km, _sz_sect,
@@ -592,8 +591,8 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 
 	// (pw_digest, key_crypt) => split_key
 	{
-		std::tr1::shared_ptr<Crypter> crypter = Crypter::create(
-		    pw_digest, sizeof(pw_digest), *_cipher_spec);
+		std::shared_ptr<Crypter> crypter = Crypter::create(pw_digest,
+		    sizeof(pw_digest), *_cipher_spec);
 		crypter->decrypt(key->off_km, _sz_sect,
 		    key_crypt, sizeof(key_crypt), split_key);
 	}

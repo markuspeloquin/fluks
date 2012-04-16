@@ -76,8 +76,7 @@ compute_last_d(const uint8_t *s, size_t sz, unsigned stripes,
 void
 hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 {
-	std::tr1::shared_ptr<Hash_function> hashfn(
-	    Hash_function::create(type));
+	std::shared_ptr<Hash_function> hashfn(Hash_function::create(type));
 
 	uint32_t	iv;
 	// the wording in LUKS is bad; it should read 'Digest Size'
@@ -120,8 +119,7 @@ hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 void
 hash2(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 {
-	std::tr1::shared_ptr<Hash_function> hashfn(
-	    Hash_function::create(type));
+	std::shared_ptr<Hash_function> hashfn(Hash_function::create(type));
 
 	uint32_t	iv;
 	// the wording in LUKS is bad; it should read 'Digest Size'

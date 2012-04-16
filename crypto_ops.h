@@ -18,7 +18,7 @@
 #include <features.h>
 
 #ifdef __cplusplus
-#	include <tr1/cstdint>
+#	include <cstdint>
 #	define INLINE inline
 #else
 #	include <stdint.h>

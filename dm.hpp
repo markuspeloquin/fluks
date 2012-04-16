@@ -16,8 +16,8 @@
 #define FLUKS_DM_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
-#include <tr1/cstdint>
 
 #include <boost/uuid/uuid.hpp>
 

@@ -14,7 +14,6 @@
 
 #include <set>
 #include <sstream>
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 
 #include "cipher.hpp"
@@ -75,11 +74,12 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 		out << "cipher `" << _nm_cipher
 		    << "' only supports keys of sizes";
 		bool first = true;
-		BOOST_FOREACH(uint16_t size, sizes) {
+		std::for_each(sizes.begin(), sizes.end(),
+		    [&first, &out](uint16_t size) {
 			if (!first) out << ',';
 			first = false;
 			out << ' ' << size * 8;
-		}
+		});
 		out << " (not " << sz_key << ')';
 		throw Bad_spec(out.str());
 	}
@@ -103,11 +103,12 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 			out << "cipher `" << _nm_cipher
 			    << "' only supports keys of sizes";
 			bool first = true;
-			BOOST_FOREACH(uint16_t size, sizes) {
+			std::for_each(sizes.begin(), sizes.end(),
+			    [&first, &out](uint16_t size) {
 				if (!first) out << ',';
 				first = false;
 				out << ' ' << size * 8;
-			}
+			});
 			out << "; incompatible with hash `" << _nm_iv_hash
 			    << '\'';
 			throw Bad_spec(out.str());

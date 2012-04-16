@@ -12,10 +12,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <algorithm>
 #include <ctime>
 #include <iostream>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -54,7 +54,8 @@ list_modes()
 "[!] (not in any LUKS spec).\n\n";
 
 	std::cout << "ciphers (with supported key sizes):\n";
-	BOOST_FOREACH (enum cipher_type cipher, ciphers) {
+	std::for_each(ciphers.begin(), ciphers.end(),
+	    [](enum cipher_type cipher) {
 		const Cipher_traits *traits = Cipher_traits::traits(cipher);
 
 		uint16_t version = traits->luks_version;
@@ -65,16 +66,17 @@ list_modes()
 
 		std::cout << traits->name << " (";
 		bool first = true;
-		BOOST_FOREACH (uint16_t size, traits->key_sizes) {
+		std::for_each(traits->key_sizes.begin(),
+		    traits->key_sizes.end(), [&first](uint16_t size) {
 			if (!first) std::cout << ' ';
 			first = false;
 			std::cout << size * 8;
-		}
+		});
 		std::cout << ")\n";
-	}
+	});
 
 	std::cout << "\nhashes (with digest size):\n";
-	BOOST_FOREACH (enum hash_type hash, hashes) {
+	std::for_each(hashes.begin(), hashes.end(), [](enum hash_type hash) {
 		const Hash_traits *traits = Hash_traits::traits(hash);
 		std::cout << "\t[";
 		if (!traits->luks_version)
@@ -85,10 +87,11 @@ list_modes()
 
 		std::cout << traits->name << " ("
 		    << traits->digest_size * 8 << ")\n";
-	}
+	});
 
 	std::cout << "\nblock modes:\n";
-	BOOST_FOREACH (enum block_mode block_mode, block_modes) {
+	std::for_each(block_modes.begin(), block_modes.end(),
+	    [](enum block_mode block_mode) {
 		uint16_t version = block_mode_info::version(block_mode);
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
@@ -96,10 +99,11 @@ list_modes()
 		std::cout << "] ";
 
 		std::cout << block_mode_info::name(block_mode) << '\n';
-	}
+	});
 
 	std::cout << "\nIV generation modes:\n";
-	BOOST_FOREACH (enum iv_mode iv_mode, iv_modes) {
+	std::for_each(iv_modes.begin(), iv_modes.end(),
+	    [](enum iv_mode iv_mode) {
 		uint16_t version = iv_mode_info::version(iv_mode);
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
@@ -107,7 +111,7 @@ list_modes()
 		std::cout << "] ";
 
 		std::cout << iv_mode_info::name(iv_mode) << '\n';
-	}
+	});
 }
 
 /** Prompt for a passphrase
@@ -394,7 +398,7 @@ main(int argc, char **argv)
 
 	// read device path and open device if needed
 	std::string device_path;
-	std::tr1::shared_ptr<std::sys_fstream> device;
+	std::shared_ptr<std::sys_fstream> device;
 	if (need_device) {
 		if (var_map["device"].empty()) {
 			std::cout << "must provide a device\n";
@@ -430,7 +434,7 @@ main(int argc, char **argv)
 	}
 
 	// open the header as needed
-	std::tr1::shared_ptr<Luks_header> header;
+	std::shared_ptr<Luks_header> header;
 	bool need_header = false;
 	switch (command) {
 	case NO_CMD:

@@ -16,11 +16,11 @@
 #define FLUKS_LUKS_HPP
 
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
-#include <tr1/cstdint>
-#include <tr1/memory>
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/system/system_error.hpp>
@@ -136,7 +136,7 @@ public:
 	 * \throw boost::system::system_error	Error encountered determining
 	 *	the sector size.
 	 */
-	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device,
+	Luks_header(std::shared_ptr<std::sys_fstream> device,
 	    int32_t sz_key, const std::string &cipher_spec,
 	    const std::string &hash_spec, uint32_t mk_iterations=NUM_MK_ITER,
 	    uint32_t stripes=NUM_STRIPES)
@@ -146,7 +146,7 @@ public:
 	 *
 	 * \param device	The device to read/write
 	 */
-	Luks_header(std::tr1::shared_ptr<std::sys_fstream> device)
+	Luks_header(std::shared_ptr<std::sys_fstream> device)
 	    throw (boost::system::system_error, Bad_spec, Disk_error,
 	    No_header, Unsupported_version);
 
@@ -295,7 +295,7 @@ private:
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
-	std::tr1::shared_ptr<std::sys_fstream>
+	std::shared_ptr<std::sys_fstream>
 					_device;
 	boost::scoped_ptr<struct phdr1>	_hdr;
 	boost::scoped_array<uint8_t>	_master_key;

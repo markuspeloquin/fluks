@@ -16,8 +16,10 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
-        CMake
-	libdevmapper from Device-mapper (sources.redhat.com/dm)
+	gcc-4.5 (it's stable in Gentoo now, so I will now depend on it for
+	    some C++11 features)
+	CMake
+	libdevmapper from Device-mapper (sourceware.org/dm)
 	boost (boost.org), at least version 1.35.0
 	OpenSSL (openssl.org)
 	Linux headers (/usr/include/linux)

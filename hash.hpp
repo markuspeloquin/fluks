@@ -16,11 +16,11 @@
 #define FLUKS_HASH_HPP
 
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <streambuf>
 #include <string>
-#include <tr1/cstdint>
-#include <tr1/memory>
 #include <boost/scoped_array.hpp>
 
 #include <openssl/md5.h>
@@ -88,8 +88,7 @@ struct Hash_function {
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
-	static std::tr1::shared_ptr<Hash_function>
-	    create(const std::string &name)
+	static std::shared_ptr<Hash_function> create(const std::string &name)
 	{	return create(Hash_traits::type(name)); }
 
 	/** Create a hash function given a hash type.
@@ -97,8 +96,7 @@ struct Hash_function {
 	 * \param type	The hash algorithm.
 	 * \return	A hash function pointer.
 	 */
-	static std::tr1::shared_ptr<Hash_function>
-	    create(enum hash_type type);
+	static std::shared_ptr<Hash_function> create(enum hash_type type);
 
 	virtual ~Hash_function() throw () {}
 

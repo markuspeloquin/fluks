@@ -107,37 +107,36 @@ Lookup Lookup::inst;
 } // end anon namespace
 }
 
-std::tr1::shared_ptr<fluks::Hash_function>
+std::shared_ptr<fluks::Hash_function>
 fluks::Hash_function::create(enum hash_type type)
 {
 	switch (type) {
 	case HT_MD5:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_md5);
+		return std::shared_ptr<Hash_function>(new Hash_md5);
 	case HT_RMD160:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_rmd160);
+		return std::shared_ptr<Hash_function>(new Hash_rmd160);
 	case HT_SHA1:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_sha1);
+		return std::shared_ptr<Hash_function>(new Hash_sha1);
 	case HT_SHA224:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_sha224);
+		return std::shared_ptr<Hash_function>(new Hash_sha224);
 	case HT_SHA256:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_sha256);
+		return std::shared_ptr<Hash_function>(new Hash_sha256);
 	case HT_SHA384:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_sha384);
+		return std::shared_ptr<Hash_function>(new Hash_sha384);
 	case HT_SHA512:
-		return std::tr1::shared_ptr<Hash_function>(new Hash_sha512);
+		return std::shared_ptr<Hash_function>(new Hash_sha512);
 	case HT_TIGER128:
 	case HT_TIGER160:
 	case HT_TIGER192:
-		return std::tr1::shared_ptr<Hash_function>(
-		    new Hash_tiger(type));
+		return std::shared_ptr<Hash_function>(new Hash_tiger(type));
 	case HT_WHIRLPOOL256:
 	case HT_WHIRLPOOL384:
 	case HT_WHIRLPOOL512:
-		return std::tr1::shared_ptr<Hash_function>(
+		return std::shared_ptr<Hash_function>(
 		    new Hash_whirlpool(type));
 	default:
 		Assert(0, "Hash_function::create() bad hash type");
-		return std::tr1::shared_ptr<Hash_function>();
+		return std::shared_ptr<Hash_function>();
 	}
 }
 

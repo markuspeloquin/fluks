@@ -9,7 +9,6 @@ Header include order:
    - headers directly in /usr/include (e.g. fcntl.h, unistd.h)
  - C++ group
    - Standard C++ headers
-   - TR1 headers (e.g. tr1/memory)
    - Boost headers
  - Library groups
    - external libraries (e.g. OpenSSL), grouped by library

@@ -13,10 +13,10 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include <algorithm>
-#include <functional>
+#include <cstdint>
+#include <memory>
 #include <set>
 #include <sstream>
-#include <tr1/cstdint>
 #include <boost/regex.hpp>
 
 #include "cipher.hpp"
@@ -30,15 +30,15 @@
 namespace fluks {
 namespace {
 
-inline std::tr1::shared_ptr<Cipher>
+inline std::shared_ptr<Cipher>
 		make_essiv_cipher(enum cipher_type, Hash_function *,
 		    const uint8_t *key, size_t sz);
 
-inline std::tr1::shared_ptr<Cipher>
+inline std::shared_ptr<Cipher>
 make_essiv_cipher(enum cipher_type type, Hash_function *hash,
     const uint8_t *key, size_t sz)
 {
-	std::tr1::shared_ptr<Cipher> cipher = Cipher::create(type);
+	std::shared_ptr<Cipher> cipher = Cipher::create(type);
 	size_t sz_hash = hash->traits()->digest_size;
 	uint8_t key_hash[sz_hash];
 
@@ -91,35 +91,35 @@ fluks::Crypter::operator=(const Crypter &rhs_)
 	return *this;
 }
 
-std::tr1::shared_ptr<fluks::Crypter>
+std::shared_ptr<fluks::Crypter>
 fluks::Crypter::create(const uint8_t *key, size_t sz_key,
     const Cipher_spec &spec)
 {
 	switch (spec.type_block_mode()) {
 	case BM_CBC:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_cbc(
+		return std::shared_ptr<Crypter>(new Crypter_cbc(
 		    key, sz_key, spec));
 	case BM_CBC_CTS:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_cbc_cts(
+		return std::shared_ptr<Crypter>(new Crypter_cbc_cts(
 		    key, sz_key, spec));
 	case BM_CFB:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_cfb(
+		return std::shared_ptr<Crypter>(new Crypter_cfb(
 		    key, sz_key, spec));
 	case BM_CTR:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_ctr(
+		return std::shared_ptr<Crypter>(new Crypter_ctr(
 		    key, sz_key, spec));
 	case BM_ECB:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_ecb(
+		return std::shared_ptr<Crypter>(new Crypter_ecb(
 		    key, sz_key, spec));
 	case BM_OFB:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_ofb(
+		return std::shared_ptr<Crypter>(new Crypter_ofb(
 		    key, sz_key, spec));
 	case BM_PCBC:
-		return std::tr1::shared_ptr<Crypter>(new Crypter_pcbc(
+		return std::shared_ptr<Crypter>(new Crypter_pcbc(
 		    key, sz_key, spec));
 	default:
 		Assert(0, "Crypter::create() bad block mode");
-		return std::tr1::shared_ptr<Crypter>();
+		return std::shared_ptr<Crypter>();
 	}
 }
 
@@ -135,7 +135,7 @@ void
 fluks::Crypter::encrypt(uint32_t start_sector, size_t sz_sector,
     const uint8_t *data, size_t sz_data, uint8_t *out) throw (Crypt_error)
 {
-	std::tr1::shared_ptr<Cipher> iv_crypt;
+	std::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint32_t> pre_essiv32;
 	uint32_t	iv32[_cipher->traits()->block_size / 4];
 
@@ -193,7 +193,7 @@ void
 fluks::Crypter::decrypt(uint32_t start_sector, size_t sz_sector,
     const uint8_t *data, size_t sz_data, uint8_t *out) throw (Crypt_error)
 {
-	std::tr1::shared_ptr<Cipher> iv_crypt;
+	std::shared_ptr<Cipher> iv_crypt;
 	boost::scoped_array<uint32_t> pre_essiv32;
 	uint32_t	iv32[_cipher->traits()->block_size / 4];
 

@@ -1,9 +1,9 @@
 #ifndef FLUKS_VERSION_HPP
 #define FLUKS_VERSION_HPP
 
+#include <algorithm>
 #include <sstream>
 #include <vector>
-#include <boost/foreach.hpp>
 
 namespace fluks {
 
@@ -74,11 +74,12 @@ private:
 	{
 		std::ostringstream out;
 		bool first = true;
-		BOOST_FOREACH (unsigned num, _version) {
+		std::for_each(_version.begin(), _version.end(),
+		    [&first, &out](unsigned num) {
 			if (!first) out << '.';
 			first = false;
 			out << num;
-		}
+		});
 		_str = out.str();
 	}
 

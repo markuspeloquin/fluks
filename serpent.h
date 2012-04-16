@@ -19,7 +19,7 @@
 
 #ifdef __cplusplus
 #	include <cstddef>
-#	include <tr1/cstdint>
+#	include <cstdint>
 
 	const size_t SERPENT_BLOCK = 16;
 	const size_t SERPENT_KEYMIN = 16;
