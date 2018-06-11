@@ -8,7 +8,6 @@ doxygen -g || exit $?
     GENERATE_LATEX		NO \
     MACRO_EXPANSION		YES \
     EXPAND_ONLY_PREDEF		YES \
-    PREDEFINED			__BEGIN_DECLS= \
     #
 doxyset_status=$?
 if [[ $doxyset_status != 0 ]]; then

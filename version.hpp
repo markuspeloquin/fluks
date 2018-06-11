@@ -74,12 +74,11 @@ private:
 	{
 		std::ostringstream out;
 		bool first = true;
-		std::for_each(_version.begin(), _version.end(),
-		    [&first, &out](unsigned num) {
+		for (unsigned num : _version) {
 			if (!first) out << '.';
 			first = false;
 			out << num;
-		});
+		}
 		_str = out.str();
 	}
 

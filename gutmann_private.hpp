@@ -12,7 +12,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <boost/scoped_array.hpp>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <openssl/rand.h>
 
@@ -67,19 +68,34 @@ uint8_t rand_index(uint8_t max)
 	return r % max;
 }
 
-template <class Fstream>
-void write_pattern(Fstream &file, off_t pos,
-    const char *buf, size_t bytes)
-    throw (Disk_error)
-{
-	if (!file.seekp(pos, std::ios_base::beg))
-		throw Disk_error("Gutmann erase: seek failed");
+inline int
+gut_write_all(int fd, const void *buf, size_t count) noexcept {
+	const uint8_t *pos = static_cast<const uint8_t *>(buf);
+	while (count) {
+		ssize_t by = ::write(fd, pos, count);
+		if (by < 0)
+			return -1;
+		count -= by;
+		pos += by;
+	}
+	return 0;
+}
 
-	if (!file.write(buf, bytes))
-		throw Disk_error("Gutmann erase: write failed");
+void
+write_pattern(int fd, off_t pos, const char *buf, size_t bytes)
+    noexcept(false) {
+	if (::lseek(fd, pos, SEEK_SET) == static_cast<off_t>(-1)) {
+		// "Gutmann erase: seek failed"
+		throw_errno(errno);
+	}
 
-	file.flush();
-	file.sync();
+	if (gut_write_all(fd, buf, bytes) == -1) {
+		// "Gutmann erase: write failed"
+		throw_errno(errno);
+	}
+
+	if (fsync(fd) == -1)
+		throw_errno(errno);
 }
 
 } // end anon namespace
@@ -87,11 +103,8 @@ void write_pattern(Fstream &file, off_t pos,
 
 // TODO write rant about why the Gutmann erase method is stupid
 
-template <class Fstream>
-Fstream &
-fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
-    throw (Disk_error)
-{
+void
+fluks::gutmann_erase(int fd, off_t pos, size_t bytes) noexcept(false) {
 	char buf[bytes];
 	uint8_t order[NUM_PATTERNS];
 
@@ -113,7 +126,7 @@ fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
 	for (uint8_t i = 0; i < 4; i++) {
 		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf), bytes))
 			throw Ssl_error();
-		write_pattern(file, pos, buf, bytes);
+		write_pattern(fd, pos, buf, bytes);
 	}
 	for (uint8_t i = 0; i < NUM_PATTERNS; i++) {
 		size_t j = 0;
@@ -128,13 +141,11 @@ fluks::gutmann_erase(Fstream &file, off_t pos, size_t bytes)
 			std::copy(PATTERNS[order[i]],
 			    PATTERNS[order[i]] + left, buf + j);
 		}
-		write_pattern(file, pos, buf, bytes);
+		write_pattern(fd, pos, buf, bytes);
 	}
 	for (uint8_t i = 0; i < 4; i++) {
 		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf), bytes))
 			throw Ssl_error();
-		write_pattern(file, pos, buf, bytes);
+		write_pattern(fd, pos, buf, bytes);
 	}
-
-	return file;
 }

@@ -46,7 +46,9 @@ struct serpent_ctx {
 	uint32_t	subkeys[33][4];
 };
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Initialize a Serpent context.
  *
@@ -79,6 +81,8 @@ void	serpent_decrypt(const struct serpent_ctx *ctx,
 	    const uint8_t ciphertext[SERPENT_BLOCK],
 	    uint8_t plaintext[SERPENT_BLOCK]);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

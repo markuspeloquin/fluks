@@ -17,7 +17,6 @@
 #include <iomanip>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
-#include <boost/scoped_array.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
 #include "dm.hpp"
@@ -34,7 +33,7 @@ dm_logger(int level, const char *file, int line, const char *f, ...)
 	if (level > 3) return;
 
 	const int SZ = 100;
-	boost::scoped_array<char> buf(new char[SZ]);
+	std::unique_ptr<char> buf(new char[SZ]);
 	int sz = SZ;
 	va_list ap;
 
@@ -77,7 +76,7 @@ void dm_setup_log()
 
 class Device_mapper {
 public:
-	Device_mapper(int type) throw (Dm_error)
+	Device_mapper(int type) noexcept(false)
 	{
 		dm_setup_log();
 
@@ -91,16 +90,16 @@ public:
 		dm_task_destroy(_task);
 	}
 
-	void set_name(const std::string &name) throw (Dm_error)
+	void set_name(const std::string &name) noexcept(false)
 	{
 		log_output = "";
 		if (!dm_task_set_name(_task, name.c_str()))
 			throw Dm_error(log_output);
 	}
 
-	void set_uuid(const boost::uuids::uuid &uuid) throw (Dm_error);
+	void set_uuid(const boost::uuids::uuid &uuid) noexcept(false);
 
-	void run() throw (Dm_error)
+	void run() noexcept(false)
 	{
 		log_output = "";
 		if (!dm_task_run(_task))
@@ -111,7 +110,7 @@ public:
 	    uint64_t start_sector, uint64_t num_sectors,
 	    const std::string &cipher_spec,
 	    const uint8_t *key, size_t sz_key,
-	    const std::string &device_path) throw (Dm_error);
+	    const std::string &device_path) noexcept(false);
 
 private:
 	struct dm_task *_task;
@@ -122,7 +121,7 @@ Device_mapper::add_crypt_target(
     uint64_t start_sector, uint64_t num_sectors,
     const std::string &cipher_spec,
     const uint8_t *key, size_t sz_key,
-    const std::string &device_path) throw (Dm_error)
+    const std::string &device_path) noexcept(false)
 {
 	std::ostringstream param_out;
 
@@ -153,7 +152,7 @@ Device_mapper::add_crypt_target(
 }
 
 void
-Device_mapper::set_uuid(const boost::uuids::uuid &uuid) throw (Dm_error)
+Device_mapper::set_uuid(const boost::uuids::uuid &uuid) noexcept(false)
 {
 	std::string uuid_hex = boost::lexical_cast<std::string>(uuid);
 
@@ -166,7 +165,7 @@ Device_mapper::set_uuid(const boost::uuids::uuid &uuid) throw (Dm_error)
 }
 
 void
-fluks::dm_close(const std::string &name) throw (Dm_error)
+fluks::dm_close(const std::string &name) noexcept(false)
 {
 	Device_mapper task(DM_DEVICE_REMOVE);
 	task.set_name(name);
@@ -180,7 +179,7 @@ fluks::dm_open(const std::string &name,
     const uint8_t *key, size_t sz_key,
     const boost::uuids::uuid &uuid,
     const std::string &device_path)
-    throw (Dm_error)
+    noexcept(false)
 {
 	Device_mapper task(DM_DEVICE_CREATE);
 	task.set_name(name);

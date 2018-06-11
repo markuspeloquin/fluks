@@ -24,16 +24,15 @@
 namespace fluks {
 namespace {
 
-void	compute_last_d(const uint8_t *, size_t, unsigned, enum hash_type,
+void	compute_last_d(const uint8_t *, size_t, unsigned, hash_type,
 	    uint8_t *);
-void	hash1(const uint8_t *, size_t, enum hash_type, uint8_t *);
-void	hash2(const uint8_t *, size_t, enum hash_type, uint8_t *);
+void	hash1(const uint8_t *, size_t, hash_type, uint8_t *);
+void	hash2(const uint8_t *, size_t, hash_type, uint8_t *);
 
 // compute d_{n-1}: the last d_i value
 void
-compute_last_d(const uint8_t *s, size_t sz, unsigned stripes,
-    enum hash_type type, uint8_t *d_f)
-{
+compute_last_d(const uint8_t *s, size_t sz, unsigned stripes, hash_type type,
+    uint8_t *d_f) {
 	uint8_t		d[sz];
 	uint8_t		*d_0; // d_{i+0}
 	uint8_t		*d_1; // d_{i+1}
@@ -74,8 +73,7 @@ compute_last_d(const uint8_t *s, size_t sz, unsigned stripes,
 // basically a one-way hash where ||in|| = ||out||; defined in the LUKS spec;
 // this is the *improper* version used in LUKSv1
 void
-hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
-{
+hash1(const uint8_t *in, size_t sz, hash_type type, uint8_t *out) {
 	std::shared_ptr<Hash_function> hashfn(Hash_function::create(type));
 
 	uint32_t	iv;
@@ -117,8 +115,7 @@ hash1(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 // basically a one-way hash where ||in|| = ||out||; defined in the LUKS spec;
 // this is the *proper* version *not* used in LUKSv1
 void
-hash2(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
-{
+hash2(const uint8_t *in, size_t sz, hash_type type, uint8_t *out) {
 	std::shared_ptr<Hash_function> hashfn(Hash_function::create(type));
 
 	uint32_t	iv;
@@ -162,10 +159,9 @@ hash2(const uint8_t *in, size_t sz, enum hash_type type, uint8_t *out)
 }
 
 void
-fluks::af_split(const uint8_t *in, size_t sz, size_t stripes,
-    enum hash_type type, uint8_t *out)
-{
-	Assert(type != HT_UNDEFINED, "undefined hash in af_split()");
+fluks::af_split(const uint8_t *in, size_t sz, size_t stripes, hash_type type,
+    uint8_t *out) {
+	Assert(type != hash_type::UNDEFINED, "undefined hash in af_split()");
 
 	uint8_t d[sz];
 #ifdef DEBUG
@@ -183,10 +179,9 @@ fluks::af_split(const uint8_t *in, size_t sz, size_t stripes,
 }
 
 void
-fluks::af_merge(const uint8_t *in, size_t sz, size_t stripes,
-    enum hash_type type, uint8_t *out)
-{
-	Assert(type != HT_UNDEFINED, "undefined hash in af_merge()");
+fluks::af_merge(const uint8_t *in, size_t sz, size_t stripes, hash_type type,
+    uint8_t *out) {
+	Assert(type != hash_type::UNDEFINED, "undefined hash in af_merge()");
 
 	uint8_t d[sz];
 

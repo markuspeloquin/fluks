@@ -30,7 +30,7 @@ namespace fluks {
  * \param name		The name of the mapping
  * \throw Dm_error	An error occurred
  */
-void	dm_close(const std::string &name) throw (Dm_error);
+void	dm_close(const std::string &name) noexcept(false);
 
 /** Add a mapping for a DM device
  *
@@ -51,7 +51,7 @@ void	dm_open(const std::string &name,
 	    const uint8_t *key, size_t sz_key,
 	    const boost::uuids::uuid &uuid,
 	    const std::string &device_path)
-	    throw (Dm_error);
+	    noexcept(false);
 }
 
 #endif

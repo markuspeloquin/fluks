@@ -231,7 +231,7 @@ void s_hat_inv(uint8_t which, const uint32_t in[4], uint32_t out[4])
 
 void trans(const uint32_t in[4], uint32_t out[4])
 {
-	register uint32_t t0, t1, t2, t3;
+	uint32_t t0, t1, t2, t3;
 	t0 = ROL(in[0], 13);
 	t2 = ROL(in[2], 3);
 	t1 = in[1] ^ t0 ^ t2;
@@ -250,7 +250,7 @@ void trans(const uint32_t in[4], uint32_t out[4])
 
 void trans_inv(const uint32_t in[4], uint32_t out[4])
 {
-	register uint32_t t0, t1, t2, t3;
+	uint32_t t0, t1, t2, t3;
 	t2 = ROR(in[2], 22);
 	t0 = ROR(in[0], 5);
 	t2 ^= in[3] ^ in[1]<<7;

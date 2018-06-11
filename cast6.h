@@ -49,7 +49,9 @@ struct cast6_ctx {
 	uint8_t		Kr[12][4];
 };
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Initialize a CAST-256 context
  *
@@ -85,6 +87,8 @@ void	cast6_decrypt(const struct cast6_ctx *ctx,
 	    const uint8_t ciphertext[CAST6_BLOCK],
 	    uint8_t plaintext[CAST6_BLOCK]);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

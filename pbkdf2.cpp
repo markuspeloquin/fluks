@@ -74,14 +74,14 @@ pbkdf2_f(Hmac_function *hmacfn,
 
 // Password-Based Key Derivation Function, version 2 (from PKCS #5 v2.0)
 void
-fluks::pbkdf2(enum hash_type type,
+fluks::pbkdf2(hash_type type,
     const uint8_t *in, uint32_t sz_in,
     const uint8_t *salt, size_t sz_salt,
     uint32_t iterations,
     uint8_t *derived_key, uint32_t sz_key)
-    throw (Bad_spec)
+    noexcept(false)
 {
-	if (type == HT_UNDEFINED)
+	if (type == hash_type::UNDEFINED)
 		throw Bad_spec("PBKDF2 needs a hash function");
 	uint32_t sz_hash = Hash_traits::traits(type)->digest_size;
 

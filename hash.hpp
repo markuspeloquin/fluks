@@ -21,7 +21,6 @@
 #include <stdexcept>
 #include <streambuf>
 #include <string>
-#include <boost/scoped_array.hpp>
 
 #include <openssl/md5.h>
 #include <openssl/ripemd.h>
@@ -36,9 +35,11 @@
 namespace fluks {
 
 /** Information for a hash function */
-struct Hash_traits {
+class Hash_traits {
+public:
 	/** Required for storage in a vector, otherwise not used */
 	Hash_traits() {}
+
 	/** Init the struct
 	 * \param name	    The hash name
 	 * \param sz_blk    The block size
@@ -57,16 +58,18 @@ struct Hash_traits {
 	 * \param type	The type of the hash function
 	 * \return	The properties of the function
 	 */
-	static const Hash_traits *traits(enum hash_type type);
+	static const Hash_traits *traits(hash_type type);
+
 	/** Get the type of the named hash function
 	 * \param name	The name of the function
 	 * \return	The type
 	 */
-	static enum hash_type type(const std::string &name);
+	static hash_type type(const std::string &name);
+
 	/** Get the hash types supported by fluks
 	 * \return	The shit
 	 */
-	static const std::vector<enum hash_type> &types();
+	static const std::vector<hash_type> &types();
 
 	std::string name; /**< The hash name */
 	uint16_t block_size;
@@ -76,8 +79,9 @@ struct Hash_traits {
 };
 
 /** Computes hash function digests */
-struct Hash_function {
-	Hash_function(enum hash_type type) :
+class Hash_function {
+public:
+	Hash_function(hash_type type) :
 		_traits(Hash_traits::traits(type))
 	{}
 
@@ -88,17 +92,18 @@ struct Hash_function {
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
-	static std::shared_ptr<Hash_function> create(const std::string &name)
-	{	return create(Hash_traits::type(name)); }
+	static std::shared_ptr<Hash_function> create(const std::string &name) {
+		return create(Hash_traits::type(name));
+	}
 
 	/** Create a hash function given a hash type.
 	 *
 	 * \param type	The hash algorithm.
 	 * \return	A hash function pointer.
 	 */
-	static std::shared_ptr<Hash_function> create(enum hash_type type);
+	static std::shared_ptr<Hash_function> create(hash_type type);
 
-	virtual ~Hash_function() throw () {}
+	virtual ~Hash_function() noexcept {}
 
 	/**
 	 * Call this to set or reset the hashing function's context. It must
@@ -108,7 +113,7 @@ struct Hash_function {
 	 * \throw Hash_error	The hashing function has some error. This
 	 *	shouldn't happen.
 	 */
-	virtual void init() throw (Hash_error) = 0;
+	virtual void init() noexcept(false) = 0;
 
 	/** Pipe data into the hash computation.
 	 *
@@ -118,21 +123,23 @@ struct Hash_function {
 	 * \throw Hash_error	The hashing function has some error. This
 	 *	shouldn't happen.
 	 */
-	virtual void add(const uint8_t *buf, size_t sz) throw (Hash_error) = 0;
+	virtual void add(const uint8_t *buf, size_t sz) noexcept(false) = 0;
 
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer, assumed to be large enough.
 	 * \see digest_size()
 	 */
-	virtual void end(uint8_t *buf) throw (Hash_error) = 0;
+	virtual void end(uint8_t *buf) noexcept(false) = 0;
 
 	/** Get information on the hash function
 	 *
 	 * \return	properties of the function
 	 */
-	const Hash_traits *traits() const
-	{	return _traits; }
+	const Hash_traits *traits() const {
+		return _traits;
+	}
+
 private:
 	const Hash_traits *_traits;
 };
@@ -144,25 +151,24 @@ template <
     int (*Init)(CTX *),
     int (*Update)(CTX *, const void *, size_t),
     int (*Final)(uint8_t *, CTX *),
-    enum hash_type type>
+    hash_type type>
 class Hash_ssl : public Hash_function {
 public:
 	Hash_ssl() : Hash_function(type), _valid(false) {}
-	~Hash_ssl() throw () {}
+	~Hash_ssl() noexcept {}
 
-	void init() throw (Hash_error)
-	{
+	void init() noexcept(false) {
 		_valid = false;
 		if (!Init(&_ctx)) throw Ssl_hash_error();
 		_valid = true;
 	}
-	void add(const uint8_t *buf, size_t sz) throw (Hash_error)
-	{
+
+	void add(const uint8_t *buf, size_t sz) noexcept(false) {
 		if (!_valid) return;
 		if (!Update(&_ctx, buf, sz)) throw Ssl_hash_error();
 	}
-	void end(uint8_t *buf) throw (Hash_error)
-	{
+
+	void end(uint8_t *buf) noexcept(false) {
 		if (!_valid) return;
 		if (!Final(buf, &_ctx)) throw Ssl_hash_error();
 		_valid = false;
@@ -180,36 +186,36 @@ public:
 	/** Create a Tiger hash object
 	 *
 	 * \param type		The type of the Tiger hash, must be one of
-	 *	{ HT_TIGER128, HT_TIGER160, HT_TIGER192 }.
+	 *	{ TIGER128, TIGER160, TIGER192 }.
 	 * \param version	The Tiger padding version to use. Note that
 	 *	the Linux kernel uses version 1, so that's probably more
 	 *	appropriate.
 	 */
-	Hash_tiger(enum hash_type type, uint8_t version=1) :
+	Hash_tiger(hash_type type, uint8_t version=1) :
 		Hash_function(type),
 		_version(version),
 		_valid(false)
 	{
 		Assert(
-		    type == HT_TIGER128 ||
-		    type == HT_TIGER160 ||
-		    type == HT_TIGER192,
-		    "Hash_tiger constructor needs a HT_TIGER* enum");
+		    type == hash_type::TIGER128 ||
+		    type == hash_type::TIGER160 ||
+		    type == hash_type::TIGER192,
+		    "Hash_tiger constructor needs a TIGER* enum value");
 	}
-	~Hash_tiger() throw () {}
 
-	void init() throw ()
-	{
+	~Hash_tiger() noexcept {}
+
+	void init() noexcept {
 		tiger_init(&_ctx, _version);
 		_valid = true;
 	}
-	void add(const uint8_t *buf, size_t sz) throw ()
-	{
+
+	void add(const uint8_t *buf, size_t sz) noexcept {
 		if (!_valid) return;
 		tiger_update(&_ctx, buf, sz);
 	}
-	void end(uint8_t *buf) throw ()
-	{
+
+	void end(uint8_t *buf) noexcept {
 		if (!_valid) return;
 		tiger_end(&_ctx, buf, traits()->digest_size);
 		_valid = false;
@@ -228,32 +234,31 @@ public:
 	/** Create a Whirlpool hash object
 	 *
 	 * \param type the type of the Whirlpool hash, must be one of
-	 *	of { HT_WHIRLPOOL256, HT_WHIRLPOOL384, HT_WHIRLPOOL512 }.
+	 *	of { WHIRLPOOL256, WHIRLPOOL384, WHIRLPOOL512 }.
 	 */
-	Hash_whirlpool(enum hash_type type) :
+	Hash_whirlpool(hash_type type) :
 		Hash_function(type),
 		_valid(false)
 	{
 		Assert(
-		    type == HT_WHIRLPOOL256 ||
-		    type == HT_WHIRLPOOL384 ||
-		    type == HT_WHIRLPOOL512,
-		    "Hash_whirlpool constructor needs a HT_WHIRLPOOL* enum");
+		    type == hash_type::WHIRLPOOL256 ||
+		    type == hash_type::WHIRLPOOL384 ||
+		    type == hash_type::WHIRLPOOL512,
+		    "Hash_whirlpool constructor needs a WHIRLPOOL* enum value");
 	}
-	~Hash_whirlpool() throw () {}
+	~Hash_whirlpool() noexcept {}
 
-	void init() throw ()
-	{
+	void init() noexcept {
 		whirlpool_init(&_ctx);
 		_valid = true;
 	}
-	void add(const uint8_t *buf, size_t sz) throw ()
-	{
+
+	void add(const uint8_t *buf, size_t sz) noexcept {
 		if (!_valid) return;
 		whirlpool_update(&_ctx, buf, sz);
 	}
-	void end(uint8_t *buf) throw ()
-	{
+
+	void end(uint8_t *buf) noexcept {
 		if (!_valid) return;
 		whirlpool_end(&_ctx, buf, traits()->digest_size);
 	}
@@ -263,29 +268,27 @@ private:
 	bool		_valid;
 };
 
-
-typedef Hash_ssl<
-    MD5_CTX, MD5_Init, MD5_Update, MD5_Final, HT_MD5>
-    Hash_md5;
-typedef Hash_ssl<
-    RIPEMD160_CTX, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
-    HT_RMD160>
-    Hash_rmd160;
-typedef Hash_ssl<
-    SHA_CTX, SHA1_Init, SHA1_Update, SHA1_Final, HT_SHA1>
-    Hash_sha1;
-typedef Hash_ssl<
-    SHA256_CTX, SHA224_Init, SHA224_Update, SHA224_Final, HT_SHA224>
-    Hash_sha224;
-typedef Hash_ssl<
-    SHA256_CTX, SHA256_Init, SHA256_Update, SHA256_Final, HT_SHA256>
-    Hash_sha256;
-typedef Hash_ssl<
-    SHA512_CTX, SHA384_Init, SHA384_Update, SHA384_Final, HT_SHA384>
-    Hash_sha384;
-typedef Hash_ssl<
-    SHA512_CTX, SHA512_Init, SHA512_Update, SHA512_Final, HT_SHA512>
-    Hash_sha512;
+using Hash_md5 = Hash_ssl<MD5_CTX,
+    MD5_Init, MD5_Update, MD5_Final,
+    hash_type::MD5>;
+using Hash_rmd160 = Hash_ssl<RIPEMD160_CTX,
+    RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
+    hash_type::RMD160>;
+using Hash_sha1 = Hash_ssl<SHA_CTX,
+    SHA1_Init, SHA1_Update, SHA1_Final,
+    hash_type::SHA1>;
+using Hash_sha224 = Hash_ssl<SHA256_CTX,
+    SHA224_Init, SHA224_Update, SHA224_Final,
+    hash_type::SHA224>;
+using Hash_sha256 = Hash_ssl<SHA256_CTX,
+    SHA256_Init, SHA256_Update, SHA256_Final,
+    hash_type::SHA256>;
+using Hash_sha384 = Hash_ssl<SHA512_CTX,
+    SHA384_Init, SHA384_Update, SHA384_Final,
+    hash_type::SHA384>;
+using Hash_sha512 = Hash_ssl<SHA512_CTX,
+    SHA512_Init, SHA512_Update, SHA512_Final,
+    hash_type::SHA512>;
 
 }
 

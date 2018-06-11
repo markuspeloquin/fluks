@@ -24,14 +24,12 @@
 namespace fluks {
 
 /** Securely erase data from a location on the hard disk.
- * \param file	The file object to be erased.
- * \param pos	The starting position in bytes.
- * \param bytes	The number of bytes to be erased.
- * \return	The same file object sent in.
+ *
+ * \param fd	to be erased
+ * \param pos	starting position in bytes
+ * \param bytes	bytes to be erased
  */
-template <class Fstream>
-Fstream	&gutmann_erase(Fstream &file, off_t pos, size_t bytes)
-	    throw (Disk_error);
+void	gutmann_erase(int fd, off_t pos, size_t bytes) noexcept(false);
 
 }
 

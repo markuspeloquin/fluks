@@ -34,8 +34,8 @@ namespace fluks {
  * \param[out] out	The output buffer, which is assumed to be of size
  *	<code>(sz * stripes)</code> bytes.
  */
-void	af_split(const uint8_t *in, size_t sz, size_t stripes,
-	    enum hash_type type, uint8_t *out);
+void	af_split(const uint8_t *in, size_t sz, size_t stripes, hash_type type,
+	    uint8_t *out);
 
 /** Anti-forensic merge.
  *
@@ -48,8 +48,8 @@ void	af_split(const uint8_t *in, size_t sz, size_t stripes,
  * \param[in] type	The type of hash to use.
  * \param[out] out	The output buffer.
  */
-void	af_merge(const uint8_t *in, size_t sz, size_t stripes,
-	    enum hash_type type, uint8_t *out);
+void	af_merge(const uint8_t *in, size_t sz, size_t stripes, hash_type type,
+	    uint8_t *out);
 
 }
 

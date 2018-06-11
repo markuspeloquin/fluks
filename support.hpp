@@ -23,17 +23,19 @@
 namespace fluks {
 namespace block_mode_info {
 
-	enum block_mode		type(const std::string &mode);
-	std::vector<enum block_mode> types();
-	const std::string	&name(enum block_mode mode);
-	uint16_t		version(enum block_mode mode);
+	block_mode		type(const std::string &mode);
+	std::vector<block_mode>	types();
+	const std::string	&name(block_mode mode);
+	uint16_t		version(block_mode mode);
 
-} namespace iv_mode_info {
+}
 
-	enum iv_mode		type(const std::string &name);
-	std::vector<enum iv_mode> types();
-	const std::string	&name(enum iv_mode mode);
-	uint16_t		version(enum iv_mode mode);
+namespace iv_mode_info {
+
+	iv_mode			type(const std::string &name);
+	std::vector<iv_mode>	types();
+	const std::string	&name(iv_mode mode);
+	uint16_t		version(iv_mode mode);
 
 }
 }

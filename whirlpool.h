@@ -51,7 +51,9 @@ struct whirlpool_ctx {
 	uint8_t		pos;
 };
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Initialize/reset a whirlpool context.
  * \param ctx	The context.
@@ -74,6 +76,8 @@ void	whirlpool_update(struct whirlpool_ctx *ctx,
  */
 void	whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

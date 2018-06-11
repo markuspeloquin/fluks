@@ -2,7 +2,6 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <boost/regex.hpp>
 
 #include "cipher.hpp"
 #include "crypt.hpp"
@@ -61,21 +60,20 @@ public:
 
 class Cipher_test : public Test {
 public:
-	Cipher_test(enum cipher_type, const uint8_t *key, size_t sz_key,
-	    const uint8_t *block, size_t sz_blk, enum crypt_direction);
+	Cipher_test(cipher_type, const uint8_t *key, size_t sz_key,
+	    const uint8_t *block, size_t sz_blk, crypt_direction);
 
 	void run();
 private:
-	enum cipher_type _type;
-	enum crypt_direction _dir;
-	boost::scoped_array<uint8_t> _key;
-	boost::scoped_array<uint8_t> _block;
+	cipher_type _type;
+	crypt_direction _dir;
+	std::unique_ptr<uint8_t> _key;
+	std::unique_ptr<uint8_t> _block;
 	size_t _sz_key;
 };
 
-Cipher_test::Cipher_test(enum cipher_type type, const uint8_t *key,
-    size_t sz_key, const uint8_t *block, size_t sz_blk,
-    enum crypt_direction dir) :
+Cipher_test::Cipher_test(cipher_type type, const uint8_t *key, size_t sz_key,
+    const uint8_t *block, size_t sz_blk, crypt_direction dir) :
 	_type(type),
 	_dir(dir),
 	_key(new uint8_t[sz_key]),
@@ -109,16 +107,16 @@ Cipher_test::run()
 
 class Hash_test : public Test {
 public:
-	Hash_test(enum hash_type type, const uint8_t *data, size_t sz);
+	Hash_test(hash_type type, const uint8_t *data, size_t sz);
 	void run();
 
 private:
-	enum hash_type _type;
-	boost::scoped_array<uint8_t> _data;
+	hash_type _type;
+	std::unique_ptr<uint8_t> _data;
 	size_t _sz;
 };
 
-Hash_test::Hash_test(enum hash_type type, const uint8_t *data, size_t sz) :
+Hash_test::Hash_test(hash_type type, const uint8_t *data, size_t sz) :
 	_type(type),
 	_data(new uint8_t[sz]),
 	_sz(sz)
@@ -143,19 +141,19 @@ Hash_test::run()
 
 class Hmac_test : public Test {
 public:
-	Hmac_test(enum hash_type type, const uint8_t *key, size_t sz_key,
+	Hmac_test(hash_type type, const uint8_t *key, size_t sz_key,
 	    const uint8_t *data, size_t sz_data);
 	void run();
 
 private:
-	enum hash_type _type;
-	boost::scoped_array<uint8_t> _key;
-	boost::scoped_array<uint8_t> _data;
+	hash_type _type;
+	std::unique_ptr<uint8_t> _key;
+	std::unique_ptr<uint8_t> _data;
 	size_t _sz_key;
 	size_t _sz_data;
 };
 
-Hmac_test::Hmac_test(enum hash_type type, const uint8_t *key, size_t sz_key,
+Hmac_test::Hmac_test(hash_type type, const uint8_t *key, size_t sz_key,
     const uint8_t *data, size_t sz_data) :
 	_type(type),
 	_key(new uint8_t[sz_key]),
@@ -205,7 +203,7 @@ main(int argc, char **argv)
 	using namespace fluks;
 	using namespace test;
 
-	boost::scoped_ptr<Test> test;
+	std::unique_ptr<Test> test;
 
 	prog = *argv;
 	if (argc < 2) {
@@ -224,13 +222,13 @@ main(int argc, char **argv)
 		std::string key = argv[4];
 		std::string data = argv[5];
 
-		enum cipher_type cipher_ = Cipher_traits::type(cipher);
+		cipher_type cipher_ = Cipher_traits::type(cipher);
 		Assert(cipher_ != CT_UNDEFINED, "undefined cipher: " + cipher);
-		enum crypt_direction dir_;
+		crypt_direction dir_;
 		if (dir == "encrypt")
-			dir_ = DIR_ENCRYPT;
+			dir_ = crypt_direction::ENCRYPT;
 		else if (dir == "decrypt")
-			dir_ = DIR_DECRYPT;
+			dir_ = crypt_direction::DECRYPT;
 		else {
 			Assert(0, "undefined crypt direction: " + dir);
 			return 1; // won't return
@@ -258,7 +256,7 @@ main(int argc, char **argv)
 		std::string hash = argv[2];
 		std::string data = argv[3];
 
-		enum hash_type hash_type = Hash_traits::type(hash);
+		hash_type hash_type = Hash_traits::type(hash);
 		Assert(hash_type != HT_UNDEFINED, "undefined hash: " + hash);
 		uint8_t databuf[data.size()];
 		size_t datasz;
@@ -281,7 +279,7 @@ main(int argc, char **argv)
 		std::string key = argv[3];
 		std::string data = argv[4];
 
-		enum hash_type hash_ = Hash_traits::type(hash);
+		hash_type hash_ = Hash_traits::type(hash);
 		Assert(hash_ != HT_UNDEFINED, "undefined hash: " + hash);
 		uint8_t keybuf[key.size()/2];
 		dehex(key, keybuf);

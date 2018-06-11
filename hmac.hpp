@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <boost/scoped_array.hpp>
 
 #include <openssl/hmac.h>
 
@@ -35,7 +34,7 @@ protected:
 	/** Init the hash properties
 	 * \param type The hash type
 	 */
-	Hmac_function(enum hash_type type) :
+	Hmac_function(hash_type type) :
 		_traits(Hash_traits::traits(type))
 	{}
 	/** Init the hash properties
@@ -61,9 +60,9 @@ public:
 	 * \param type	The hash algorithm.
 	 * \return	An HMAC function pointer.
 	 */
-	static std::shared_ptr<Hmac_function> create(enum hash_type type);
+	static std::shared_ptr<Hmac_function> create(hash_type type);
 
-	virtual ~Hmac_function() throw () {}
+	virtual ~Hmac_function() noexcept {}
 
 	/**
 	 * Call this to set or reset the HMAC function's context. It must be
@@ -73,21 +72,21 @@ public:
 	 * \param key	The HMAC %key.
 	 * \param sz	The size of <code>%key</code> in bytes.
 	 */
-	virtual void init(const uint8_t *key, size_t sz) throw () = 0;
+	virtual void init(const uint8_t *key, size_t sz) noexcept = 0;
 
 	/** Pipe data into the HMAC computation.
 	 *
 	 * \param buf	Bytes to add.
 	 * \param sz	Number of bytes in <code>buf</code>.
 	 */
-	virtual void add(const uint8_t *buf, size_t sz) throw () = 0;
+	virtual void add(const uint8_t *buf, size_t sz) noexcept = 0;
 
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer. At least
 	 *	<code>traits()->digest_size</code> bytes.
 	 */
-	virtual void end(uint8_t *buf) throw () = 0;
+	virtual void end(uint8_t *buf) noexcept = 0;
 
 	/** Get the traits of the underlying hash function.
 	 *
@@ -117,26 +116,26 @@ public:
 		_key(new uint8_t[hashfn->traits()->block_size])
 	{}
 
-	~Hmac_impl() throw () {}
+	~Hmac_impl() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) throw ();
-	void add(const uint8_t *buf, size_t sz) throw ()
+	void init(const uint8_t *key, size_t sz) noexcept;
+	void add(const uint8_t *buf, size_t sz) noexcept
 	{	_hashfn->add(buf, sz); }
-	void end(uint8_t *out) throw ();
+	void end(uint8_t *out) noexcept;
 
 private:
 	Hmac_impl(const Hmac_impl &h) : Hmac_function(0) {}
 	void operator=(const Hmac_impl &h) {}
 
 	std::shared_ptr<Hash_function>	_hashfn;
-	boost::scoped_array<uint8_t>	_key;
+	std::unique_ptr<uint8_t>	_key;
 };
 
 
 /** OpenSSL HMAC function template */
 template <
     const EVP_MD *(*EVP_hashfn)(),
-    enum hash_type type>
+    hash_type type>
 class Hmac_ssl : public Hmac_function {
 public:
 	Hmac_ssl() :
@@ -146,20 +145,22 @@ public:
 	{
 		HMAC_CTX_init(&_ctx);
 	}
-	~Hmac_ssl() throw ()
-	{	HMAC_CTX_cleanup(&_ctx); }
-	void init(const uint8_t *key, size_t sz) throw ()
-	{
+
+	~Hmac_ssl() noexcept {
+		HMAC_CTX_cleanup(&_ctx);
+	}
+
+	void init(const uint8_t *key, size_t sz) noexcept {
 		HMAC_Init_ex(&_ctx, key, sz, _md, 0);
 		_valid = true;
 	}
-	void add(const uint8_t *data, size_t sz) throw ()
-	{
+
+	void add(const uint8_t *data, size_t sz) noexcept {
 		if (!_valid) return;
 		HMAC_Update(&_ctx, data, sz);
 	}
-	void end(uint8_t *out) throw ()
-	{
+
+	void end(uint8_t *out) noexcept {
 		if (!_valid) return;
 		unsigned sz = traits()->digest_size;
 		HMAC_Final(&_ctx, out, &sz);
@@ -173,13 +174,13 @@ private:
 };
 
 
-typedef Hmac_ssl<EVP_md5, HT_MD5>		Hmac_md5;
-typedef Hmac_ssl<EVP_ripemd160, HT_RMD160>	Hmac_rmd160;
-typedef Hmac_ssl<EVP_sha1, HT_SHA1>		Hmac_sha1;
-typedef Hmac_ssl<EVP_sha224, HT_SHA224>		Hmac_sha224;
-typedef Hmac_ssl<EVP_sha256, HT_SHA256>		Hmac_sha256;
-typedef Hmac_ssl<EVP_sha384, HT_SHA384>		Hmac_sha384;
-typedef Hmac_ssl<EVP_sha512, HT_SHA512>		Hmac_sha512;
+typedef Hmac_ssl<EVP_md5, hash_type::MD5>		Hmac_md5;
+typedef Hmac_ssl<EVP_ripemd160, hash_type::RMD160>	Hmac_rmd160;
+typedef Hmac_ssl<EVP_sha1, hash_type::SHA1>		Hmac_sha1;
+typedef Hmac_ssl<EVP_sha224, hash_type::SHA224>		Hmac_sha224;
+typedef Hmac_ssl<EVP_sha256, hash_type::SHA256>		Hmac_sha256;
+typedef Hmac_ssl<EVP_sha384, hash_type::SHA384>		Hmac_sha384;
+typedef Hmac_ssl<EVP_sha512, hash_type::SHA512>		Hmac_sha512;
 
 
 }

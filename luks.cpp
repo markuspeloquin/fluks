@@ -12,12 +12,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <algorithm>
+#include <cerrno>
 #include <iomanip>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
 #include <boost/timer.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -44,6 +48,8 @@ std::string	make_mode(const std::string &, const std::string &,
 		    const std::string &);
 bool		parse_cipher(const std::string &, std::string &,
 		    std::string &, std::string &, std::string &);
+int		read_all(int, void *, size_t) noexcept(false);
+int		write_all(int, const void *, size_t) noexcept;
 
 // reconstruct the mode string (e.g. 'cbc', 'cbc-essiv', 'cbc-essiv:sha256')
 std::string
@@ -72,13 +78,11 @@ parse_cipher(const std::string &cipher_spec, std::string &cipher,
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
 	// [^-]* - [^-*] - [^:]* : .*
-	boost::regex expr(
-	    "([^-]+) - ([^-]+)  (?: - ([^:]+) )?  (?: : (.+) )?",
-	    boost::regex_constants::normal |
-	    boost::regex_constants::mod_x); // ignore space
+	std::regex expr(
+	    "([^-]+)-([^-]+)(?:-([^:]+))?(?::(.+))?");
 
-	boost::smatch matches;
-	if (!boost::regex_match(cipher_spec, matches, expr))
+	std::smatch matches;
+	if (!std::regex_match(cipher_spec, matches, expr))
 		return false;
 
 	cipher = matches[1];
@@ -104,13 +108,42 @@ void dump(const std::string &pfx, const uint8_t *buf, size_t sz)
 
 void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
 {
-	std::shared_ptr<Hash_function> hash = Hash_function::create(HT_SHA1);
+	std::shared_ptr<Hash_function> hash = Hash_function::create(
+	    hash_type::SHA1);
 	hash->init();
 	hash->add(buf, sz);
 	uint8_t out[hash->traits()->digest_size];
 	hash->end(out);
 
 	dump(pfx, out, sizeof(out));
+}
+
+int
+read_all(int fd, void *buf, size_t count) noexcept(false) {
+	uint8_t *pos = static_cast<uint8_t *>(buf);
+	while (count) {
+		ssize_t by = ::read(fd, pos, count);
+		if (by < 0)
+			return -1;
+		if (!by)
+			throw Disk_error("premature EOF");
+		count -= by;
+		pos += by;
+	}
+	return 0;
+}
+
+int
+write_all(int fd, const void *buf, size_t count) noexcept {
+	const uint8_t *pos = static_cast<const uint8_t *>(buf);
+	while (count) {
+		ssize_t by = ::write(fd, pos, count);
+		if (by < 0)
+			return -1;
+		count -= by;
+		pos += by;
+	}
+	return 0;
 }
 
 } // end anon namespace
@@ -128,24 +161,27 @@ fluks::check_version_1(const struct phdr1 *header)
 	return header->version == 1;
 }
 
-fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device,
-    int32_t sz_key, const std::string &cipher_spec,
-    const std::string &hash_spec, uint32_t mk_iterations, uint32_t stripes)
-    throw (boost::system::system_error, Bad_spec) :
+fluks::Luks_header::Luks_header(int device, int32_t sz_key,
+    const std::string &cipher_spec, const std::string &hash_spec,
+    uint32_t mk_iterations, uint32_t stripes) noexcept(false) :
 	_device(device),
 	_hdr(new struct phdr1),
-	_master_key(0),
-	_sz_sect(sector_size(*device)),
+	_master_key(),
+	_cipher_spec(),
+	_sz_sect(0),
 	_hash_type(Hash_traits::type(hash_spec)),
 	_proved_passwd(-1),
 	_mach_end(true),
 	_dirty(true),
-	_key_need_erase(NUM_KEYS, false)
+	_key_need_erase(NUM_KEYS, false),
+	_key_crypt()
 {
+	_sz_sect = sector_size(device);
+
 	init_cipher_spec(cipher_spec, sz_key);
 	_master_key.reset(new uint8_t[_hdr->sz_key]);
 
-	if (_hash_type == HT_UNDEFINED)
+	if (_hash_type == hash_type::UNDEFINED)
 		throw Bad_spec("unrecognized hash");
 
 	// initialize LUKS header
@@ -206,22 +242,23 @@ fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device,
 	std::copy(uuid_str.begin(), uuid_str.end(), _hdr->uuid);
 }
 
-fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device)
-    throw (boost::system::system_error, Bad_spec, Disk_error, No_header,
-    Unsupported_version) :
+fluks::Luks_header::Luks_header(int device) noexcept(false) :
 	_device(device),
 	_hdr(new struct phdr1),
-	_sz_sect(sector_size(*device)),
+	_master_key(),
+	_cipher_spec(),
+	_sz_sect(0),
 	_proved_passwd(-1),
 	_mach_end(false),
 	_dirty(false),
-	_key_need_erase(NUM_KEYS, false)
+	_key_need_erase(NUM_KEYS, false),
+	_key_crypt()
 {
-	if (!_device->seekg(0, std::ios_base::beg))
-		throw Disk_error("failed to seek to header");
-	if (!_device->read(reinterpret_cast<char *>(_hdr.get()),
-	    sizeof(struct phdr1)))
-		throw Disk_error("failed to read header");
+	_sz_sect = sector_size(device);
+	if (::lseek(device, 0, SEEK_SET) == static_cast<off_t>(-1))
+		throw_errno(errno);
+	if (read_all(device, _hdr.get(), sizeof(struct phdr1)) == -1)
+		throw_errno(errno);
 
 	// big-endian -> machine-endian
 	set_mach_end(true);
@@ -234,7 +271,7 @@ fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device)
 
 	_hash_type = Hash_traits::type(_hdr->hash_spec);
 
-	if (_hash_type == HT_UNDEFINED)
+	if (_hash_type == hash_type::UNDEFINED)
 		throw Bad_spec(
 		    std::string("undefined hash spec in header: ") +
 		    _hdr->hash_spec);
@@ -250,7 +287,7 @@ fluks::Luks_header::Luks_header(std::shared_ptr<std::sys_fstream> device)
 
 bool
 fluks::Luks_header::read_key(const std::string &passwd, int8_t hint)
-    throw (Disk_error)
+    noexcept(false)
 {
 	if (_master_key)
 		return false;
@@ -433,7 +470,7 @@ fluks::Luks_header::info() const
 }
 
 void
-fluks::Luks_header::revoke_slot(uint8_t which) throw (Safety)
+fluks::Luks_header::revoke_slot(uint8_t which) noexcept(false)
 {
 	if (!_master_key)
 		throw Safety("will not allow a revokation while the "
@@ -456,11 +493,11 @@ fluks::Luks_header::wipe() throw (Disk_error, Safety)
 		throw Safety("will not allow the header to be wiped while "
 		    "the master key is unknown");
 
-	gutmann_erase(*_device, 0, _hdr->off_payload);
+	gutmann_erase(_device, 0, _hdr->off_payload);
 }
 
 void
-fluks::Luks_header::save() throw (Disk_error)
+fluks::Luks_header::save() noexcept(false)
 {
 	if (!_dirty) return;
 
@@ -469,23 +506,24 @@ fluks::Luks_header::save() throw (Disk_error)
 	// first erase old keys and then commit new keys
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		if (_key_need_erase[i]) {
-			gutmann_erase(*_device,
+			gutmann_erase(_device,
 			    _hdr->keys[i].off_km * _sz_sect,
 			    _hdr->sz_key * _hdr->keys[i].stripes);
 			_key_need_erase[i] = false;
 		}
 
 		if (_key_crypt[i]) {
-			if (!_device->seekp(_hdr->keys[i].off_km * _sz_sect,
-			    std::ios_base::beg))
-				throw Disk_error("writing key "
-				    "material: seek error");
+			if (::lseek(_device, _hdr->keys[i].off_km * _sz_sect,
+			    SEEK_SET)) {
+				// "writing key material: seek error"
+				throw_errno(errno);
+			}
 
-			if (!_device->write(reinterpret_cast<char *>(
-			    _key_crypt[i].get()),
-			    _hdr->sz_key * _hdr->keys[i].stripes))
-				throw Disk_error("writing key "
-				    "material: write error");
+			if (write_all(_device, _key_crypt[i].get(),
+			    _hdr->sz_key * _hdr->keys[i].stripes) == -1) {
+				// "writing key material: write error"
+				throw_errno(errno);
+			}
 			_key_crypt[i].reset();
 		}
 	}
@@ -494,12 +532,16 @@ fluks::Luks_header::save() throw (Disk_error)
 		// ensure big-endian
 		set_mach_end(false);
 
-		if (!_device->seekp(0, std::ios_base::beg))
-			throw Disk_error("writing header: seek error");
+		if (::lseek(_device, 0, SEEK_SET)) {
+			// "writing header: seek error"
+			throw_errno(errno);
+		}
 
-		if (!_device->write(reinterpret_cast<char *>(_hdr.get()),
-		    sizeof(struct phdr1)))
-			throw Disk_error("writing header: write error");
+		if (write_all(_device, _hdr.get(), sizeof(struct phdr1)) ==
+		    -1) {
+			// "writing header: write error"
+			throw_errno(errno);
+		}
 
 		_dirty = false;
 	}
@@ -515,7 +557,7 @@ fluks::Luks_header::save() throw (Disk_error)
 // throwing Bad_spec as necessary
 void
 fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
-    int32_t sz_key) throw (Bad_spec)
+    int32_t sz_key) noexcept(false)
 {
 	set_mach_end(true);
 
@@ -543,7 +585,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 }
 
 int8_t
-fluks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
+fluks::Luks_header::locate_passwd(const std::string &passwd) noexcept(false)
 {
 	set_mach_end(true);
 
@@ -566,7 +608,7 @@ fluks::Luks_header::locate_passwd(const std::string &passwd) throw (Disk_error)
 // master_key should be as large as _hdr->sz_key
 void
 fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
-    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key)
+    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key) noexcept(false)
 {
 	set_mach_end(true);
 
@@ -582,12 +624,16 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 	    pw_digest, sizeof(pw_digest));
 
 	// disk => key_crypt
-	if (!_device->seekg(key->off_km * _sz_sect, std::ios_base::beg))
-		throw Disk_error("failed to seek to key material");
+	if (::lseek(_device, key->off_km * _sz_sect, SEEK_SET) ==
+	    static_cast<off_t>(-1)) {
+		// "failed to seek to key material"
+		throw_errno(errno);
+	}
 
-	if (!_device->read(reinterpret_cast<char *>(key_crypt),
-	    sizeof(key_crypt)))
-		throw Disk_error("failed to read key material");
+	if (read_all(_device, key_crypt, sizeof(key_crypt)) == -1) {
+		// "failed to read key material"
+		throw_errno(errno);
+	}
 
 	// (pw_digest, key_crypt) => split_key
 	{

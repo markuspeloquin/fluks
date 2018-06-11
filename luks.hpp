@@ -21,8 +21,6 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <boost/scoped_array.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/system/system_error.hpp>
 
 #include "cipher_spec.hpp"
@@ -136,19 +134,21 @@ public:
 	 * \throw boost::system::system_error	Error encountered determining
 	 *	the sector size.
 	 */
-	Luks_header(std::shared_ptr<std::sys_fstream> device,
-	    int32_t sz_key, const std::string &cipher_spec,
-	    const std::string &hash_spec, uint32_t mk_iterations=NUM_MK_ITER,
-	    uint32_t stripes=NUM_STRIPES)
-	    throw (boost::system::system_error, Bad_spec);
+	Luks_header(int device, int32_t sz_key,
+	    const std::string &cipher_spec, const std::string &hash_spec,
+	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES)
+	    noexcept(false);
 
 	/** Read a header from the disk
 	 *
 	 * \param device	The device to read/write
+	 * \throw Bad_spec
+	 * \throw Disk_error
+	 * \throw No_header
+	 * \throw Unsupported_version
+	 * \throw boost::system::system_error
 	 */
-	Luks_header(std::shared_ptr<std::sys_fstream> device)
-	    throw (boost::system::system_error, Bad_spec, Disk_error,
-	    No_header, Unsupported_version);
+	Luks_header(int device) noexcept(false);
 
 	~Luks_header() {}
 
@@ -206,7 +206,7 @@ public:
 	 * \throw Disk_error	A device open/seek/read error occurred.
 	 */
 	bool read_key(const std::string &passwd, int8_t hint=-1)
-	    throw (Disk_error);
+	    noexcept(false);
 
 	/** Add a password for the private key
 	 *
@@ -244,7 +244,7 @@ public:
 	 * \throw Safety	Either the private key hasn't been decrypted
 	 *	yet or it was decrypted with the same password being deleted.
 	 */
-	void revoke_slot(uint8_t which) throw (Safety);
+	void revoke_slot(uint8_t which) noexcept(false);
 
 	/** Disable a password
 	 *
@@ -274,7 +274,7 @@ public:
 	 *
 	 * \throw Disk_error	Some write/seek failure.
 	 */
-	void save() throw (Disk_error);
+	void save() noexcept(false);
 
 private:
 	void set_mach_end(bool which)
@@ -285,9 +285,9 @@ private:
 		}
 	}
 	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key)
-	    throw (Bad_spec);
+	    noexcept(false);
 
-	int8_t locate_passwd(const std::string &passwd) throw (Disk_error);
+	int8_t locate_passwd(const std::string &passwd) noexcept(false);
 
 	void decrypt_key(const std::string &passwd, uint8_t slot,
 	    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key);
@@ -295,13 +295,12 @@ private:
 	Luks_header(const Luks_header &l) {}
 	void operator=(const Luks_header &l) {}
 
-	std::shared_ptr<std::sys_fstream>
-					_device;
-	boost::scoped_ptr<struct phdr1>	_hdr;
-	boost::scoped_array<uint8_t>	_master_key;
-	std::auto_ptr<Cipher_spec>	_cipher_spec;
+	int				_device;
+	std::unique_ptr<struct phdr1>	_hdr;
+	std::unique_ptr<uint8_t>	_master_key;
+	std::unique_ptr<Cipher_spec>	_cipher_spec;
 	uint16_t			_sz_sect;
-	enum hash_type			_hash_type;
+	hash_type			_hash_type;
 
 	// the index of the entered password (-1=invalid)
 	int8_t				_proved_passwd;
@@ -310,9 +309,9 @@ private:
 	// has the header been changed
 	bool				_dirty;
 	// which keys need to be erased
-	std::vector<bool>		_key_need_erase;
+	std::vector<uint8_t>		_key_need_erase;
 	// encrypted keys that need to be written to disk
-	boost::scoped_array<uint8_t>	_key_crypt[NUM_KEYS];
+	std::unique_ptr<uint8_t>	_key_crypt[NUM_KEYS];
 };
 
 

@@ -383,7 +383,7 @@ const uint8_t Tr[4][8] = {
 static inline uint32_t
 f1(uint32_t d, uint8_t kr, uint32_t km)
 {
-	register uint32_t i = ROL(km + d, kr);
+	uint32_t i = ROL(km + d, kr);
 	return ((
 	    sbox1[         (i >> 24)]  ^
 	    sbox2[(uint8_t)(i >> 16)]) -
@@ -394,7 +394,7 @@ f1(uint32_t d, uint8_t kr, uint32_t km)
 static inline uint32_t
 f2(uint32_t d, uint8_t kr, uint32_t km)
 {
-	register uint32_t i = ROL(km ^ d, kr);
+	uint32_t i = ROL(km ^ d, kr);
 	return ((
 	    sbox1[         (i >> 24)]  -
 	    sbox2[(uint8_t)(i >> 16)]) +
@@ -405,7 +405,7 @@ f2(uint32_t d, uint8_t kr, uint32_t km)
 static inline uint32_t
 f3(uint32_t d, uint8_t kr, uint32_t km)
 {
-	register uint32_t i = ROL(km - d, kr);
+	uint32_t i = ROL(km - d, kr);
 	return ((
 	    sbox1[         (i >> 24)]  +
 	    sbox2[(uint8_t)(i >> 16)]) ^
@@ -447,7 +447,7 @@ static inline void
 kappa_w(uint32_t kappa[8], uint8_t i)
 {
 	assert(i < 24);
-	register uint8_t ir = i & 0x3;
+	uint8_t ir = i & 0x3;
 	kappa[6] ^= f1(kappa[7], Tr[ir][0], Tm[i][0]);
 	kappa[5] ^= f2(kappa[6], Tr[ir][1], Tm[i][1]);
 	kappa[4] ^= f3(kappa[5], Tr[ir][2], Tm[i][2]);
@@ -483,7 +483,7 @@ cast6_encrypt(const struct cast6_ctx *ctx,
     const uint8_t plaintext[16], uint8_t ciphertext[16])
 {
 	uint32_t block[4];
-	register uint32_t b0, b1, b2, b3;
+	uint32_t b0, b1, b2, b3;
 
 	/* copy to a 32-bit block, fixing any potential alignment or endian
 	 * issues */
@@ -519,7 +519,7 @@ cast6_decrypt(const struct cast6_ctx *ctx,
     const uint8_t ciphertext[16], uint8_t plaintext[16])
 {
 	uint32_t block[4];
-	register uint32_t b0, b1, b2, b3;
+	uint32_t b0, b1, b2, b3;
 
 	/* copy to a 32-bit block, fixing any potential alignment or endian
 	 * issues */

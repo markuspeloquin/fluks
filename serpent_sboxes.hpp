@@ -25,7 +25,7 @@ inline void
 sbox_0(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x0 | x3;
 	t1 = x1 ^ t0;
 	y3 = x2 ^ t1;
@@ -47,7 +47,7 @@ inline void
 sbox_0_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x0 | x1;
 	t1 = x2 ^ t0;
 	t2 = ~t1;
@@ -69,7 +69,7 @@ inline void
 sbox_1(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = ~x1;
 	t1 = x0 | t0;
 	t2 = x2 ^ t1;
@@ -91,7 +91,7 @@ inline void
 sbox_1_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x1 & x3;
 	t1 = x0 ^ t0;
 	t2 = x3 ^ t1;
@@ -113,7 +113,7 @@ inline void
 sbox_2(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8;
 	t0 = x0 & x2;
 	t1 = x3 ^ t0;
 	t2 = x1 ^ t1;
@@ -134,7 +134,7 @@ inline void
 sbox_2_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x0 ^ x3;
 	t1 = x2 ^ x3;
 	t2 = x1 | t1;
@@ -156,7 +156,7 @@ inline void
 sbox_3(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
 	t0 = x0 ^ x2;
 	t1 = x3 ^ t0;
 	t2 = x0 | t1;
@@ -181,7 +181,7 @@ inline void
 sbox_3_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
 	t0 = x1 ^ x2;
 	t1 = x1 & t0;
 	t2 = x0 ^ t1;
@@ -205,7 +205,7 @@ inline void
 sbox_4(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
 	t0 = x0 ^ x3;
 	t1 = x3 & t0;
 	t2 = x2 ^ t1;
@@ -228,7 +228,7 @@ inline void
 sbox_4_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
 	t0 = x2 | x3;
 	t1 = x1 ^ t0;
 	t2 = x0 & t1;
@@ -252,7 +252,7 @@ inline void
 sbox_5(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
 	t0 = x0 ^ x1;
 	t1 = x1 & t0;
 	t2 = x2 ^ t1;
@@ -275,7 +275,7 @@ inline void
 sbox_5_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb;
 	t0 = x0 & x3;
 	t1 = x2 ^ t0;
 	t2 = x1 & t1;
@@ -299,7 +299,7 @@ inline void
 sbox_6(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
 	t0 = x0 & x3;
 	t1 = x2 ^ t0;
 	t2 = ~t1;
@@ -321,7 +321,7 @@ inline void
 sbox_6_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta;
 	t0 = ~x2;
 	t1 = x0 | t0;
 	t2 = x3 ^ t1;
@@ -344,7 +344,7 @@ inline void
 sbox_7(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
 	t0 = x1 ^ x2;
 	t1 = x2 & t0;
 	t2 = x3 ^ t1;
@@ -369,7 +369,7 @@ inline void
 sbox_7_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
     uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
 {
-	register uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
+	uint32_t t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, ta, tb, tc;
 	t0 = x0 & x1;
 	t1 = x0 | x1;
 	t2 = x3 & t1;

@@ -44,7 +44,9 @@ struct tiger_ctx {
 	uint8_t		version;
 };
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Initializes the context structure
  *
@@ -74,6 +76,8 @@ void	tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz);
  */
 void	tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

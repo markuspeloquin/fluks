@@ -12,7 +12,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <algorithm>
+#include <cerrno>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -44,18 +50,17 @@ const unsigned NUM_TRIES = 3;
 void
 list_modes()
 {
-	const std::vector<enum cipher_type> &ciphers = Cipher_traits::types();
-	std::vector<enum hash_type> hashes = Hash_traits::types();
-	std::vector<enum block_mode> block_modes = block_mode_info::types();
-	std::vector<enum iv_mode> iv_modes = iv_mode_info::types();
+	const std::vector<cipher_type> &ciphers = Cipher_traits::types();
+	std::vector<hash_type> hashes = Hash_traits::types();
+	std::vector<block_mode> block_modes = block_mode_info::types();
+	std::vector<iv_mode> iv_modes = iv_mode_info::types();
 
 	std::cout <<
 "Entries prefixed with [VERSION] (indicating required version of LUKS) or\n"
 "[!] (not in any LUKS spec).\n\n";
 
 	std::cout << "ciphers (with supported key sizes):\n";
-	std::for_each(ciphers.begin(), ciphers.end(),
-	    [](enum cipher_type cipher) {
+	for (cipher_type cipher : ciphers) {
 		const Cipher_traits *traits = Cipher_traits::traits(cipher);
 
 		uint16_t version = traits->luks_version;
@@ -66,17 +71,16 @@ list_modes()
 
 		std::cout << traits->name << " (";
 		bool first = true;
-		std::for_each(traits->key_sizes.begin(),
-		    traits->key_sizes.end(), [&first](uint16_t size) {
+		for (uint16_t size : traits->key_sizes) {
 			if (!first) std::cout << ' ';
 			first = false;
 			std::cout << size * 8;
-		});
+		}
 		std::cout << ")\n";
-	});
+	}
 
 	std::cout << "\nhashes (with digest size):\n";
-	std::for_each(hashes.begin(), hashes.end(), [](enum hash_type hash) {
+	for (hash_type hash : hashes) {
 		const Hash_traits *traits = Hash_traits::traits(hash);
 		std::cout << "\t[";
 		if (!traits->luks_version)
@@ -87,11 +91,10 @@ list_modes()
 
 		std::cout << traits->name << " ("
 		    << traits->digest_size * 8 << ")\n";
-	});
+	}
 
 	std::cout << "\nblock modes:\n";
-	std::for_each(block_modes.begin(), block_modes.end(),
-	    [](enum block_mode block_mode) {
+	for (block_mode block_mode : block_modes) {
 		uint16_t version = block_mode_info::version(block_mode);
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
@@ -99,11 +102,10 @@ list_modes()
 		std::cout << "] ";
 
 		std::cout << block_mode_info::name(block_mode) << '\n';
-	});
+	}
 
 	std::cout << "\nIV generation modes:\n";
-	std::for_each(iv_modes.begin(), iv_modes.end(),
-	    [](enum iv_mode iv_mode) {
+	for (iv_mode iv_mode : iv_modes) {
 		uint16_t version = iv_mode_info::version(iv_mode);
 		std::cout << "\t[";
 		if (!version)	std::cout << '!';
@@ -111,7 +113,7 @@ list_modes()
 		std::cout << "] ";
 
 		std::cout << iv_mode_info::name(iv_mode) << '\n';
-	});
+	}
 }
 
 /** Prompt for a passphrase
@@ -142,7 +144,7 @@ prompt_passwd(const std::string &msg, bool repeat)
 	std::getline(std::cin, pass);
 	std::cout << '\n';
 
-	boost::scoped_ptr<std::string> pass2;
+	std::unique_ptr<std::string> pass2;
 	if (repeat) {
 		std::cout << "Repeat" << (echo ? ": " : " (no echo): ");
 		pass2.reset(new std::string);
@@ -393,27 +395,25 @@ main(int argc, char **argv)
 	case UUID:
 	case WIPE:
 		need_device = true;
-	default:;
+	default:
+		;
 	}
 
 	// read device path and open device if needed
 	std::string device_path;
-	std::shared_ptr<std::sys_fstream> device;
+	int device = -1; // TODO RTTI
 	if (need_device) {
 		if (var_map["device"].empty()) {
 			std::cout << "must provide a device\n";
 			return 1;
 		}
 		device_path = var_map["device"].as<std::string>();
-		std::ios_base::openmode mode =
-		    std::ios_base::in | std::ios_base::binary;
-		if (!pretend)
-			mode |= std::ios_base::out;
-		device.reset(
-		    new std::sys_fstream(device_path.c_str(), mode));
+		int flags = pretend ? O_RDONLY : O_RDWR;
+		device = ::open(device_path.c_str(), flags);
 
-		if (!*device) {
-			std::cerr << prog << ": failed to open device\n";
+		if (device == -1) {
+			std::cerr << prog << ": failed to open device: "
+			    << strerror(errno) << '\n';
 			return 1;
 		}
 	}
@@ -521,7 +521,7 @@ main(int argc, char **argv)
 			std::cout << "(--dump command has no pretend mode, "
 			    "proceeding...)\n";
 		std::string backup_path = var_map["dump"].as<std::string>();
-		make_backup(*device, backup_path);
+		make_backup(device, backup_path);
 		std::cout << "Backup completed\n";
 		break;
 	}
@@ -559,7 +559,7 @@ main(int argc, char **argv)
 			// could not be decrypted
 			return 1;
 
-		uint32_t num_sect = num_sectors(*device);
+		uint32_t num_sect = num_sectors(device);
 
 		if (!pretend) {
 			std::string uuid_str = header->uuid();

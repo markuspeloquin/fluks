@@ -68,7 +68,7 @@ public:
 	 */
 	void encrypt(uint32_t start_sector, size_t sz_sector,
 	    const uint8_t *data, size_t sz_plain, uint8_t *out)
-	    throw (Crypt_error);
+	    noexcept(false);
 
 	/** Encrypt data spanning across blocks (cipher, not disk blocks)
 	 *
@@ -87,7 +87,7 @@ public:
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
 	    const uint8_t *in, size_t sz_plain, uint8_t *out)
-	    throw (Crypt_error) = 0;
+	    noexcept(false) = 0;
 
 	/** Decrypt data spanning across sectors
 	 *
@@ -102,7 +102,7 @@ public:
 	 */
 	void decrypt(uint32_t start_sector, size_t sz_sector,
 	    const uint8_t *data, size_t sz_plain, uint8_t *out)
-	    throw (Crypt_error);
+	    noexcept(false);
 
 	/** Decrypt data spanning across blocks (cipher, not disk blocks)
 	 *
@@ -121,7 +121,7 @@ public:
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
 	    const uint8_t *in, size_t sz_plain, uint8_t *out)
-	    throw (Crypt_error) = 0;
+	    noexcept(false) = 0;
 
 protected:
 	/** Convenience function for implementing ciphertext_size() for
@@ -176,7 +176,7 @@ public:
 	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
 
 	/** Decrypt using Cyclic Block Chaining mode
 	 *
@@ -187,7 +187,7 @@ public:
 	 * \param[out] out	The plaintext
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
 };
 
 class Crypter_cbc_cts : public Crypter {
@@ -225,7 +225,7 @@ public:
 	 *	the plaintext
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw (Crypt_error);
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept(false);
 
 	/** Decrypt using Cyclic Block Chaining mode with Ciphertext Stealing
 	 *
@@ -240,7 +240,7 @@ public:
 	 *	the ciphertext
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw (Crypt_error);
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept(false);
 };
 
 class Crypter_cfb : public Crypter {
@@ -274,7 +274,7 @@ public:
 	 *	as the plaintext buffer.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
 
 	/** Decrypt using Cipher feedback
 	 *
@@ -286,7 +286,7 @@ public:
 	 *	ciphertext buffer.
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
 };
 
 class Crypter_ctr : public Crypter {
@@ -323,14 +323,14 @@ public:
 	 *	<code>sz</code>.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
 
 	/** Decrypt using Counter mode
 	 *
 	 * \see encrypt()
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw ()
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept
 	{
 		encrypt(cipher, iv, in, sz, out);
 	}
@@ -370,7 +370,7 @@ public:
 	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
 
 	/** Encrypt using Electronic Code Book mode
 	 *
@@ -382,7 +382,7 @@ public:
 	 *	<code>sz_plain</code>.
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
 };
 
 class Crypter_ofb : public Crypter {
@@ -416,7 +416,7 @@ public:
 	 *	as the plaintext buffer.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
 
 	/** Decrypt using Output feedback
 	 *
@@ -428,7 +428,7 @@ public:
 	 *	ciphertext buffer.
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) throw ()
+	    const uint8_t *in, size_t sz, uint8_t *out) noexcept
 	{
 		encrypt(cipher, iv, in, sz, out);
 	}
@@ -468,7 +468,7 @@ public:
 	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
 
 	/** Decrypt using Propagating Cyclic Block Chaining mode
 	 *
@@ -480,7 +480,7 @@ public:
 	 *	<code>sz_plain</code>.
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) throw ();
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
 };
 
 }

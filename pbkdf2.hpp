@@ -40,12 +40,12 @@ namespace fluks {
  * \param[in] sz_key	The size of <code>derived_key</code> in bytes.
  * \throw Bad_spec	<code>type</code> is invalid.
  */
-void		pbkdf2(enum hash_type type,
+void		pbkdf2(hash_type type,
 		    const uint8_t *in, uint32_t sz_in,
 		    const uint8_t *salt, size_t sz_salt,
 		    uint32_t iterations,
 		    uint8_t *derived_key, uint32_t sz_key)
-		    throw (Bad_spec);
+		    noexcept(false);
 
 }
 

@@ -213,7 +213,7 @@ print_var(FILE *out, bool in, uint8_t i)
 void
 print_chain(FILE *out, const struct op_chain *seq)
 {
-	fprintf(out, "\tregister uint32_t ");
+	fprintf(out, "\tuint32_t ");
 	for (uint8_t i = 0; i < seq->sz; i++) {
 		fprintf(out, "%st%hhu", i ? ", " : "", i);
 	}

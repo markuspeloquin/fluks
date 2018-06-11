@@ -12,9 +12,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <regex>
 #include <set>
 #include <sstream>
-#include <boost/regex.hpp>
 
 #include "cipher.hpp"
 #include "cipher_spec.hpp"
@@ -29,8 +29,7 @@ namespace {
 
 void
 fluks::Cipher_spec::check_spec_support(const Cipher_traits *cipher_traits,
-    const Hash_traits *hash_traits) throw (Bad_spec)
-{
+    const Hash_traits *hash_traits) noexcept(false) {
 	// is the cipher spec supported by the system?
 	const std::set<std::string> &sys_ciph = system_ciphers();
 	if (!sys_ciph.count(cipher_traits->name))
@@ -44,16 +43,15 @@ fluks::Cipher_spec::check_spec_support(const Cipher_traits *cipher_traits,
 }
 
 void
-fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
-{
-	if (_ty_cipher == CT_UNDEFINED)
+fluks::Cipher_spec::check_spec(ssize_t sz_key) noexcept(false) {
+	if (_ty_cipher == cipher_type::UNDEFINED)
 		throw Bad_spec("unrecognized cipher: " + _nm_cipher);
-	if (_ty_block_mode == BM_UNDEFINED)
+	if (_ty_block_mode == block_mode::UNDEFINED)
 		throw Bad_spec("unrecognized block mode: " +
 		    _nm_block_mode);
-	if (!_nm_iv_mode.empty() && _ty_iv_mode == IM_UNDEFINED)
+	if (!_nm_iv_mode.empty() && _ty_iv_mode == iv_mode::UNDEFINED)
 		throw Bad_spec("unrecognized IV mode: " + _nm_iv_mode);
-	if (!_nm_iv_hash.empty() && _ty_iv_hash == HT_UNDEFINED)
+	if (!_nm_iv_hash.empty() && _ty_iv_hash == hash_type::UNDEFINED)
 		throw Bad_spec("unrecognized IV hash: " + _nm_iv_hash);
 
 	const Cipher_traits *cipher_traits =
@@ -74,27 +72,30 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 		out << "cipher `" << _nm_cipher
 		    << "' only supports keys of sizes";
 		bool first = true;
-		std::for_each(sizes.begin(), sizes.end(),
-		    [&first, &out](uint16_t size) {
+		for (uint16_t size : sizes) {
 			if (!first) out << ',';
 			first = false;
 			out << ' ' << size * 8;
-		});
+		}
 		out << " (not " << sz_key << ')';
 		throw Bad_spec(out.str());
 	}
 
 	// are the specs compatible?
-	if (_ty_block_mode == BM_ECB && _ty_iv_mode != IM_UNDEFINED)
+	if (_ty_block_mode == block_mode::ECB &&
+	    _ty_iv_mode != iv_mode::UNDEFINED)
 		throw Bad_spec("ECB cannot use an IV mode");
-	if (_ty_block_mode != BM_ECB && _ty_iv_mode == IM_UNDEFINED)
+	if (_ty_block_mode != block_mode::ECB &&
+	    _ty_iv_mode == iv_mode::UNDEFINED)
 		throw Bad_spec(
 		    "block modes other than ECB require an IV mode");
-	if (_ty_iv_mode == IM_ESSIV && _ty_iv_hash == HT_UNDEFINED)
+	if (_ty_iv_mode == iv_mode::ESSIV &&
+	    _ty_iv_hash == hash_type::UNDEFINED)
 		throw Bad_spec("IV mode `essiv' requires an IV hash");
-	if (_ty_iv_mode == IM_PLAIN && _ty_iv_hash != HT_UNDEFINED)
+	if (_ty_iv_mode == iv_mode::PLAIN &&
+	    _ty_iv_hash != hash_type::UNDEFINED)
 		throw Bad_spec("IV mode `plain' cannot use an IV hash");
-	if (_ty_iv_mode == IM_ESSIV) {
+	if (_ty_iv_mode == iv_mode::ESSIV) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
 		uint16_t size = ivhash_traits->digest_size;
@@ -103,12 +104,11 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 			out << "cipher `" << _nm_cipher
 			    << "' only supports keys of sizes";
 			bool first = true;
-			std::for_each(sizes.begin(), sizes.end(),
-			    [&first, &out](uint16_t size) {
+			for (uint16_t size : sizes) {
 				if (!first) out << ',';
 				first = false;
 				out << ' ' << size * 8;
-			});
+			}
 			out << "; incompatible with hash `" << _nm_iv_hash
 			    << '\'';
 			throw Bad_spec(out.str());
@@ -118,19 +118,16 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) throw (Bad_spec)
 
 void
 fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec)
-    throw (Bad_spec)
-{
+    noexcept(false) {
 	// valid patterns:
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
 	// [^-]* - [^-*] - [^:]* : .*
-	boost::regex expr(
-	    "([^-]+) - ([^-]+)  (?: - ([^:]+) )?  (?: : (.+) )?",
-	    boost::regex_constants::normal |
-	    boost::regex_constants::mod_x); // ignore space
+	std::regex expr(
+	    "([^-]+)-([^-]+)(?:-([^:]+))?(?::(.+))?");
 
-	boost::smatch matches;
-	if (!boost::regex_match(spec, matches, expr))
+	std::smatch matches;
+	if (!std::regex_match(spec, matches, expr))
 		throw Bad_spec("cannot be parsed");
 
 	_nm_cipher = matches[1];
@@ -147,10 +144,9 @@ fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec)
 }
 
 void
-fluks::Cipher_spec::reset(ssize_t sz_key, enum cipher_type cipher,
-    enum block_mode block_mode, enum iv_mode iv_mode, enum hash_type iv_hash)
-    throw (Bad_spec)
-{
+fluks::Cipher_spec::reset(ssize_t sz_key, cipher_type cipher,
+    block_mode block_mode, iv_mode iv_mode, hash_type iv_hash)
+    noexcept(false) {
 	const Cipher_traits *ctraits = Cipher_traits::traits(_ty_cipher);
 	_nm_cipher = ctraits->name;
 	_nm_block_mode = block_mode_info::name(_ty_block_mode);
@@ -162,21 +158,19 @@ fluks::Cipher_spec::reset(ssize_t sz_key, enum cipher_type cipher,
 }
 
 std::string
-fluks::Cipher_spec::canon_cipher() const
-{
+fluks::Cipher_spec::canon_cipher() const {
 	const Cipher_traits *traits = Cipher_traits::traits(_ty_cipher);
 	return traits->name;
 }
 
 std::string
-fluks::Cipher_spec::canon_mode() const
-{
+fluks::Cipher_spec::canon_mode() const {
 	std::string result = block_mode_info::name(_ty_block_mode);
-	if (_ty_iv_mode) {
+	if (_ty_iv_mode != iv_mode::UNDEFINED) {
 		result += '-';
 		result += iv_mode_info::name(_ty_iv_mode);
 	}
-	if (_ty_iv_hash) {
+	if (_ty_iv_hash != hash_type::UNDEFINED) {
 		const Hash_traits *traits = Hash_traits::traits(_ty_iv_hash);
 		result += ':';
 		result += traits->name;

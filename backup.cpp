@@ -12,24 +12,53 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <cerrno>
+#include <cstdint>
 #include <cstring>
 
 #include "backup.hpp"
+#include "errors.hpp"
 #include "luks.hpp"
 #include "os.hpp"
 
+namespace fluks {
+namespace {
+
 void
-fluks::make_backup(std::sys_fstream &device, const std::string &backup_path)
-    throw (boost::system::system_error, Disk_error, No_header,
-    Unsupported_version)
-{
+read_all(int fd, void *buf, size_t count) noexcept(false) {
+	uint8_t *pos = static_cast<uint8_t *>(buf);
+	while (count) {
+		ssize_t by = read(fd, pos, count);
+		if (by < 0)
+			throw_errno(errno);
+		if (!by)
+			throw Disk_error("premature EOF");
+		count -= by;
+		pos += by;
+	}
+}
+
+}
+}
+
+/**
+ * \throws boost::system::system_error
+ * \throws Disk_error
+ * \throws No_header
+ * \throws Unsupported_version
+ */
+void
+fluks::make_backup(int device, const std::string &backup_path)
+    noexcept(false) {
 	struct phdr1 hdr;
 
 	// read the header
-	if (!device.seekg(0, std::ios_base::beg))
-		throw Disk_error("seek error");
-	if (!device.read(reinterpret_cast<char *>(&hdr), sizeof(hdr)))
-		throw Disk_error("read error");
+	if (lseek(device, 0, SEEK_SET) == static_cast<off_t>(-1))
+		throw_errno(errno);
+	read_all(device, &hdr, sizeof(hdr));
 
 	// check the header
 	endian_switch(&hdr, false);
@@ -40,8 +69,8 @@ fluks::make_backup(std::sys_fstream &device, const std::string &backup_path)
 	endian_switch(&hdr, false);
 
 	// read the remainder
-	boost::scoped_array<char> buf(new char[bytes]);
-	device.read(buf.get(), bytes);
+	std::unique_ptr<char> buf(new char[bytes]);
+	read_all(device, buf.get(), bytes);
 
 	// open dump
 	std::ofstream dump(backup_path.c_str(),

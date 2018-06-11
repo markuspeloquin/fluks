@@ -19,8 +19,8 @@
 
 // PHI: Constant used in the key schedule
 const uint32_t PHI = 0x9e3779b9UL;
-const size_t KEY_BYTES = 32;
-const size_t BLK_WORDS = 4;
+//const size_t KEY_BYTES = 32;
+//const size_t BLK_WORDS = 4;
 
 inline void
 transform(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
@@ -141,9 +141,9 @@ extern "C" void
 serpent_encrypt(const struct serpent_ctx *ctx,
     const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK])
 {
-	uint32_t		buf[SERPENT_BLOCK/4];
-	register uint32_t	x0, x1, x2, x3;
-	register uint32_t	y0, y1, y2, y3;
+	uint32_t	buf[SERPENT_BLOCK/4];
+	uint32_t	x0, x1, x2, x3;
+	uint32_t	y0, y1, y2, y3;
 
 	// fix both endian and alignment
 	le_to_host32(buf, in, SERPENT_BLOCK);
@@ -293,9 +293,9 @@ extern "C" void
 serpent_decrypt(const struct serpent_ctx *ctx,
     const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK])
 {
-	uint32_t		buf[SERPENT_BLOCK/4];
-	register uint32_t	x0, x1, x2, x3;
-	register uint32_t	y0, y1, y2, y3;
+	uint32_t	buf[SERPENT_BLOCK/4];
+	uint32_t	x0, x1, x2, x3;
+	uint32_t	y0, y1, y2, y3;
 
 	// fix both endian and alignment
 	le_to_host32(buf, in, SERPENT_BLOCK);

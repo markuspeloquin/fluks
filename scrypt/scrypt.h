@@ -11,7 +11,9 @@
 #	include <stdint.h>
 #endif
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void
 scrypt(const uint8_t *passwd, size_t passwd_len,
@@ -19,6 +21,8 @@ scrypt(const uint8_t *passwd, size_t passwd_len,
     unsigned cpu_mem_cost, unsigned r, unsigned parallelization,
     uint8_t *dk, size_t dk_len);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

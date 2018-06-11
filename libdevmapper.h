@@ -49,7 +49,9 @@ typedef void (*dm_log_fn) (int level, const char *file, int line,
 			   const char *f, ...)
     __attribute__ ((format(printf, 4, 5)));
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void dm_log_init(dm_log_fn fn);
 void dm_log_init_verbose(int level);
@@ -64,6 +66,8 @@ int	dm_task_add_target(struct dm_task *dmt, uint64_t start, uint64_t size,
 int	dm_task_run(struct dm_task *dmt);
 int	dm_task_set_uuid(struct dm_task *dmt, const char *uuid);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

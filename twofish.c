@@ -178,7 +178,7 @@ tf_g(uint32_t x, uint32_t S[4][0x100])
 /* F() (4.1) */
 #define tf_F(r0,r1, f0,f1, round, K, S)				do \
 {								\
-	register uint32_t t0, t1;				\
+	uint32_t t0, t1;				\
 	t0 = tf_g(r0, S);					\
 	t1 = tf_g(ROL(r1, 8), S);				\
 	f0 = t0 +     t1 + K[2 * round + 8];			\
@@ -202,7 +202,7 @@ tf_g(uint32_t x, uint32_t S[4][0x100])
 /* one encryption round */
 #define ENC_ROUND(r0,r1, r2,r3, round, K, S)			do \
 {								\
-	register uint32_t f0, f1;				\
+	uint32_t f0, f1;				\
 	tf_F(r0,r1, f0,f1, round, K, S);			\
 	rot_enc(f0,f1, r2,r3);					\
 }								while(0)
@@ -210,7 +210,7 @@ tf_g(uint32_t x, uint32_t S[4][0x100])
 /* one decryption round */
 #define DEC_ROUND(r0,r1, r2,r3, round, K, S)			do \
 {								\
-	register uint32_t f0, f1;				\
+	uint32_t f0, f1;				\
 	tf_F(r0,r1, f0,f1, round, K, S);			\
 	rot_dec(f0,f1, r2,r3);					\
 }								while(0)
@@ -219,7 +219,7 @@ static inline void
 encrypt(uint32_t K[40], uint32_t S[4][0x100], const uint8_t plaintext[16],
     uint8_t ciphertext[16])
 {
-	register uint32_t	r0,r1,r2,r3;
+	uint32_t	r0,r1,r2,r3;
 
 	/* load/byteswap/whiten input */
 	r0 = K[0] ^ htole32(((uint32_t *)plaintext)[0]);
@@ -255,7 +255,7 @@ static inline void
 decrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t ciphertext[16],
     uint8_t plaintext[16])
 {
-	register uint32_t r0,r1,r2,r3;
+	uint32_t r0,r1,r2,r3;
 
 	/* load/byteswap/whiten input */
 	r0 = K[4] ^ htole32(((uint32_t *)ciphertext)[0]);

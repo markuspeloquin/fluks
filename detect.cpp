@@ -15,8 +15,8 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <sstream>
-#include <boost/regex.hpp>
 
 #include "detect.hpp"
 #include "hash.hpp"
@@ -58,7 +58,7 @@ Crypto_detect::Crypto_detect()
 	// can't throw an exception
 	if (!file_in) return;
 
-	boost::regex expr("(.+?)\\s*:\\s(.+)");
+	std::regex expr("(.+?)\\s*:\\s(.+)");
 
 	std::string line;
 	std::string name;
@@ -79,8 +79,8 @@ Crypto_detect::Crypto_detect()
 			name = "";
 			type = "";
 		} else {
-			boost::smatch matches;
-			if (!boost::regex_match(line, matches, expr))
+			std::smatch matches;
+			if (!std::regex_match(line, matches, expr))
 				std::cerr << "/proc/crypto match failed: "
 				    << line << '\n';
 			else if (matches[1] == "name") name = matches[2];

@@ -564,11 +564,9 @@ static inline uint8_t by7(uint64_t x) { return x >> 56; }
 static inline void
 compress(const uint64_t *str, uint64_t state[3])
 {
-	/* 'register' probably gets ignored by the compiler, but it's a
-	 * hint from the original C89 macro-powered source */
-	register uint64_t a, b, c, tmpa;
-	register uint64_t aa, bb, cc;
-	register uint64_t x0, x1, x2, x3, x4, x5, x6, x7;
+	uint64_t a, b, c, tmpa;
+	uint64_t aa, bb, cc;
+	uint64_t x0, x1, x2, x3, x4, x5, x6, x7;
 
 	a = state[0];
 	b = state[1];
@@ -610,7 +608,7 @@ compress(const uint64_t *str, uint64_t state[3])
 		}
 
 		/* 'pass' */
-		register uint8_t mul;
+		uint8_t mul;
 		switch (pass_no) {
 		case 0:		mul = 5; break;
 		case 1:		mul = 7; break;
@@ -652,8 +650,8 @@ tiger_init(struct tiger_ctx *ctx, uint8_t version)
 void
 tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 {
-	uint64_t		temp[TIGER_SZ_BLOCK/8];
-	register uint8_t	*ctxbuf8 = (uint8_t *)ctx->buf;
+	uint64_t	temp[TIGER_SZ_BLOCK/8];
+	uint8_t		*ctxbuf8 = (uint8_t *)ctx->buf;
 
 	ctx->length += sz;
 
@@ -740,10 +738,10 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 void
 tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 {
-	uint8_t			temp[TIGER_SZ_BLOCK];
-	register uint64_t	i;
-	register uint64_t	j;
-	register const uint64_t *str = (const uint64_t *)str8;
+	uint8_t		temp[TIGER_SZ_BLOCK];
+	uint64_t	i;
+	uint64_t	j;
+	const uint64_t	*str = (const uint64_t *)str8;
 
 	res[0] = 0x0123456789ABCDEFLL;
 	res[1] = 0xFEDCBA9876543210LL;

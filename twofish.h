@@ -42,7 +42,9 @@ struct twofish_ctx {
 	uint32_t QF[4][256];
 };
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Set the %key for en/decryption
  *
@@ -80,6 +82,8 @@ void	twofish_decrypt(struct twofish_ctx *key,
 	    const uint8_t in[TWOFISH_BLOCK],
 	    uint8_t out[TWOFISH_BLOCK]);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

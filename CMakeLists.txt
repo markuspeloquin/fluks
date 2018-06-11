@@ -6,7 +6,7 @@ enable_testing()
 # START OF USER CONFIG
 
 # remember to do a `make clean` and `rm CMakeCache.txt` after changing this
-set(static_linking true)
+set(static_linking false) #true)
 
 set(CMAKE_BUILD_TYPE release)
 
@@ -15,26 +15,20 @@ set(CMAKE_BUILD_TYPE release)
 
 project(fluks CXX C)
 
+set(Boost_FIND_QUIETLY false)
+set(Boost_FIND_REQUIRED true)
 set(Boost_USE_STATIC_LIBS ${static_linking})
 set(Boost_USE_MULTITHREADED true)
 #set(Boost_USE_STATIC_RUNTIME true)
 
-find_package(Boost 1.35 COMPONENTS filesystem program_options regex system)
+find_package(Boost 1.35 COMPONENTS filesystem program_options system)
+find_package(OpenSSL)
 
 set(ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 if(static_linking)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 endif()
 
-find_library(OPENSSL_libssl ssl DOC "OpenSSL libssl")
-find_library(OPENSSL_libcrypto crypto DOC "OpenSSL libcrypto")
-find_path(OPENSSL_INCLUDE_DIR openssl/ssl.h DOC "OpenSSL headers")
-if(${OPENSSL_libssl} STREQUAL "OPENSSL_libssl-NOTFOUND" OR
-    ${OPENSSL_libcrypto} STREQUAL "OPENSSL_libcrypto-NOTFOUND" OR
-    ${OPENSSL_INCLUDE_DIR} STREQUAL "OPENSSL_INCLUDE_DIR-NOTFOUND")
-	message(FATAL_ERROR "OpenSSL not found")
-endif()
-message(STATUS "OpenSSL found")
 
 find_library(DEVICE_MAPPER_libdevmapper devmapper
     DOC "Device Mapper (libdevmapper)")
@@ -98,7 +92,7 @@ add_definitions(-D_BSD_SOURCE)
 set(CMAKE_C_FLAGS         "${CFLAGS} -Wall -pthread -std=c99 -pedantic")
 set(CMAKE_C_FLAGS_DEBUG   "-O0 -g -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG -s")
-set(CMAKE_CXX_FLAGS         "${CXXFLAGS} -Wall -pthread -std=c++0x")
+set(CMAKE_CXX_FLAGS         "${CXXFLAGS} -Wall -pthread -std=c++14")
 set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -s")
 
@@ -132,7 +126,7 @@ target_link_libraries(fluks
 
 	${Boost_LIBRARIES}
 	# need ssl before crypto
-	${OPENSSL_libssl} ${OPENSSL_libcrypto}
+	${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
 	${DEVICE_MAPPER_libdevmapper}
 
 	# i'm not sure about the order here

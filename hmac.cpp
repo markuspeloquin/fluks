@@ -16,22 +16,21 @@
 #include "util.hpp"
 
 std::shared_ptr<fluks::Hmac_function>
-fluks::Hmac_function::create(enum hash_type type)
-{
+fluks::Hmac_function::create(hash_type type) {
 	switch (type) {
-	case HT_MD5:
+	case hash_type::MD5:
 		return std::shared_ptr<Hmac_function>(new Hmac_md5);
-	case HT_RMD160:
+	case hash_type::RMD160:
 		return std::shared_ptr<Hmac_function>(new Hmac_rmd160);
-	case HT_SHA1:
+	case hash_type::SHA1:
 		return std::shared_ptr<Hmac_function>(new Hmac_sha1);
-	case HT_SHA224:
+	case hash_type::SHA224:
 		return std::shared_ptr<Hmac_function>(new Hmac_sha224);
-	case HT_SHA256:
+	case hash_type::SHA256:
 		return std::shared_ptr<Hmac_function>(new Hmac_sha256);
-	case HT_SHA384:
+	case hash_type::SHA384:
 		return std::shared_ptr<Hmac_function>(new Hmac_sha384);
-	case HT_SHA512:
+	case hash_type::SHA512:
 		return std::shared_ptr<Hmac_function>(new Hmac_sha512);
 	default:
 		return std::shared_ptr<Hmac_function>(new Hmac_impl(
@@ -40,7 +39,7 @@ fluks::Hmac_function::create(enum hash_type type)
 }
 
 void
-fluks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
+fluks::Hmac_impl::init(const uint8_t *key, size_t sz) noexcept
 {
 	size_t sz_block = traits()->block_size;
 	if (sz > sz_block) {
@@ -71,7 +70,7 @@ fluks::Hmac_impl::init(const uint8_t *key, size_t sz) throw ()
 }
 
 void
-fluks::Hmac_impl::end(uint8_t *out) throw ()
+fluks::Hmac_impl::end(uint8_t *out) noexcept
 {
 	size_t sz_block = traits()->block_size;
 	uint8_t key_opad[sz_block];
