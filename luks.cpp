@@ -17,9 +17,7 @@
 
 #include <algorithm>
 #include <cerrno>
-#include <iomanip>
 #include <iostream>
-#include <regex>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/timer.hpp>
@@ -44,82 +42,11 @@ namespace {
 
 const uint16_t	PBKDF2_BENCH_ITER = 10000;
 
-std::string	make_mode(const std::string &, const std::string &,
-		    const std::string &);
-bool		parse_cipher(const std::string &, std::string &,
-		    std::string &, std::string &, std::string &);
-int		read_all(int, void *, size_t) noexcept(false);
+int		read_all(int, void *, size_t);
 int		write_all(int, const void *, size_t) noexcept;
 
-// reconstruct the mode string (e.g. 'cbc', 'cbc-essiv', 'cbc-essiv:sha256')
-std::string
-make_mode(const std::string &block_mode, const std::string &ivmode,
-    const std::string &ivhash)
-{
-	std::ostringstream out;
-	if (block_mode.size()) {
-		out << block_mode;
-		if (ivmode.size()) {
-			out << '-' << ivmode;
-			if (ivhash.size())
-				out << ':' << ivhash;
-		}
-	}
-	return out.str();
-}
-
-
-// TODO use parse_cipher_spec() instead
-bool
-parse_cipher(const std::string &cipher_spec, std::string &cipher,
-	    std::string &block_mode, std::string &ivmode, std::string &ivhash)
-{
-	// valid patterns:
-	// [^-]* - [^-*]
-	// [^-]* - [^-*] - [^:]*
-	// [^-]* - [^-*] - [^:]* : .*
-	std::regex expr(
-	    "([^-]+)-([^-]+)(?:-([^:]+))?(?::(.+))?");
-
-	std::smatch matches;
-	if (!std::regex_match(cipher_spec, matches, expr))
-		return false;
-
-	cipher = matches[1];
-	block_mode = matches[2];
-	ivmode = matches[3];
-	ivhash = matches[4];
-	return true;
-}
-
-void dump(const std::string &pfx, const uint8_t *buf, size_t sz)
-{
-	char oldfill = std::cout.fill('0');
-	std::cout << std::hex;
-
-	std::cout << pfx << '\n';
-	for (size_t i = 0; i < sz; i++)
-		std::cout << std::setw(2) << (short)buf[i];
-	std::cout << '\n';
-
-	std::cout.fill(oldfill);
-	std::cout << std::dec;
-}
-
-void dump_hash(const std::string &pfx, const uint8_t *buf, size_t sz)
-{
-	std::shared_ptr<Hash_function> hash = Hash_function::create(
-	    hash_type::SHA1);
-	hash->init();
-	hash->add(buf, sz);
-	uint8_t out[hash->traits()->digest_size];
-	hash->end(out);
-
-	dump(pfx, out, sizeof(out));
-}
-
 int
-read_all(int fd, void *buf, size_t count) noexcept(false) {
+read_all(int fd, void *buf, size_t count) {
 	uint8_t *pos = static_cast<uint8_t *>(buf);
 	while (count) {
 		ssize_t by = ::read(fd, pos, count);
@@ -150,20 +77,18 @@ write_all(int fd, const void *buf, size_t count) noexcept {
 }
 
 bool
-fluks::check_magic(const struct phdr1 *header)
-{
-	return std::equal(MAGIC, MAGIC + sizeof(MAGIC), header->magic);
+fluks::check_magic(const struct phdr1 *header) {
+	return std::equal(MAGIC, MAGIC + sizeof MAGIC, header->magic);
 }
 
 bool
-fluks::check_version_1(const struct phdr1 *header)
-{
+fluks::check_version_1(const struct phdr1 *header) {
 	return header->version == 1;
 }
 
 fluks::Luks_header::Luks_header(int device, int32_t sz_key,
     const std::string &cipher_spec, const std::string &hash_spec,
-    uint32_t mk_iterations, uint32_t stripes) noexcept(false) :
+    uint32_t mk_iterations, uint32_t stripes) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(),
@@ -193,7 +118,7 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 	if (!RAND_bytes(_master_key.get(), _hdr->sz_key))
 		throw Ssl_error();
 
-	std::copy(MAGIC, MAGIC + sizeof(MAGIC),_hdr->magic);
+	std::copy(MAGIC, MAGIC + sizeof MAGIC, _hdr->magic);
 	_hdr->version = 1;
 
 	// write the canonized hash name into the header
@@ -217,9 +142,9 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 	    _hdr->mk_digest, SZ_MK_DIGEST);
 
 	// LUKS defines off_base as
-	//	floor(sizeof(phdr) / sz_sect) + 1,
+	//	floor(sizeof(phdr1) / sz_sect) + 1,
 	// but it is clearly more correct to use
-	//	ceil(sizeof(phdr) / sz_sect).
+	//	ceil(sizeof(phdr1) / sz_sect).
 	// the same goes for km_sectors
 	uint32_t off_base = (sizeof(phdr1) + _sz_sect - 1) / _sz_sect;
 	uint32_t km_sectors =
@@ -242,7 +167,7 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 	std::copy(uuid_str.begin(), uuid_str.end(), _hdr->uuid);
 }
 
-fluks::Luks_header::Luks_header(int device) noexcept(false) :
+fluks::Luks_header::Luks_header(int device) :
 	_device(device),
 	_hdr(new struct phdr1),
 	_master_key(),
@@ -257,7 +182,7 @@ fluks::Luks_header::Luks_header(int device) noexcept(false) :
 	_sz_sect = sector_size(device);
 	if (::lseek(device, 0, SEEK_SET) == static_cast<off_t>(-1))
 		throw_errno(errno);
-	if (read_all(device, _hdr.get(), sizeof(struct phdr1)) == -1)
+	if (read_all(device, _hdr.get(), sizeof(phdr1)) == -1)
 		throw_errno(errno);
 
 	// big-endian -> machine-endian
@@ -286,15 +211,13 @@ fluks::Luks_header::Luks_header(int device) noexcept(false) :
 }
 
 bool
-fluks::Luks_header::read_key(const std::string &passwd, int8_t hint)
-    noexcept(false)
-{
+fluks::Luks_header::read_key(const std::string &passwd, int8_t hint) {
 	if (_master_key)
 		return false;
 
 	set_mach_end(true);
 
-	uint8_t master_key[_hdr->sz_key];
+	std::unique_ptr<uint8_t[]> master_key{new uint8_t[_hdr->sz_key]};
 	uint8_t key_digest[SZ_MK_DIGEST];
 	uint8_t i;
 	uint8_t max;
@@ -313,13 +236,13 @@ fluks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 	// data to _master_key
 	for (; i < max; i++) {
 		if (_hdr->keys[i].active == KEY_DISABLED) continue;
-		decrypt_key(passwd, i, key_digest, master_key);
+		decrypt_key(passwd, i, key_digest, master_key.get());
 
-		if (std::equal(key_digest, key_digest + sizeof(key_digest),
+		if (std::equal(key_digest, key_digest + sizeof key_digest,
 		    _hdr->mk_digest)) {
 			_proved_passwd = i;
 			_master_key.reset(new uint8_t[_hdr->sz_key]);
-			std::copy(master_key, master_key + sizeof(master_key),
+			std::copy(master_key.get(), master_key.get() + _hdr->sz_key,
 			    _master_key.get());
 			return true;
 		}
@@ -328,9 +251,8 @@ fluks::Luks_header::read_key(const std::string &passwd, int8_t hint)
 }
 
 void
-fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
-    throw (No_private_key, Slots_full)
-{
+fluks::Luks_header::add_passwd(const std::string &passwd,
+    uint32_t check_time) {
 	struct key	*avail = 0;
 	uint8_t		avail_idx = 0;
 
@@ -348,7 +270,8 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	}
 	if (!avail) throw Slots_full();
 
-	uint8_t split_key[_hdr->sz_key * avail->stripes];
+	size_t sz_split_key = _hdr->sz_key * avail->stripes;
+	std::unique_ptr<uint8_t[]> split_key{new uint8_t[sz_split_key]};
 
 #ifdef DEBUG
 	// for valgrind
@@ -357,16 +280,16 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	if (!RAND_bytes(avail->salt, SZ_SALT))
 		throw Ssl_error();
 	af_split(_master_key.get(), _hdr->sz_key, avail->stripes,
-	    _hash_type, split_key);
+	    _hash_type, split_key.get());
 
-	uint8_t pw_digest[_hdr->sz_key];
+	std::unique_ptr<uint8_t[]> pw_digest{new uint8_t[_hdr->sz_key]};
 
 	// benchmark the PBKDF2 function
 	boost::timer timer;
 	pbkdf2(_hash_type,
 	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
 	    avail->salt, SZ_SALT, PBKDF2_BENCH_ITER,
-	    pw_digest, sizeof(pw_digest));
+	    pw_digest.get(), _hdr->sz_key);
 	// timer.elapsed() gives seconds
 	avail->iterations = static_cast<uint32_t>(
 	    PBKDF2_BENCH_ITER * check_time / (timer.elapsed() * 1000000));
@@ -375,30 +298,29 @@ fluks::Luks_header::add_passwd(const std::string &passwd, uint32_t check_time)
 	pbkdf2(_hash_type,
 	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
 	    avail->salt, SZ_SALT, avail->iterations,
-	    pw_digest, sizeof(pw_digest));
+	    pw_digest.get(), _hdr->sz_key);
 
 	// encrypt the master key with pw_digest
-	std::shared_ptr<Crypter> crypter = Crypter::create(pw_digest,
-	    sizeof(pw_digest), *_cipher_spec);
-	_key_crypt[avail_idx].reset(new uint8_t[sizeof(split_key)]);
+	std::shared_ptr<Crypter> crypter = Crypter::create(pw_digest.get(),
+	    _hdr->sz_key, *_cipher_spec);
+	_key_crypt[avail_idx].reset(new uint8_t[sz_split_key]);
 	crypter->encrypt(avail->off_km, _sz_sect,
-	    split_key, sizeof(split_key), _key_crypt[avail_idx].get());
+	    split_key.get(), sz_split_key, _key_crypt[avail_idx].get());
 
 	// verify that decryption works just as well
-	uint8_t crypt_check[sizeof(split_key)];
+	std::unique_ptr<uint8_t[]> crypt_check{new uint8_t[sz_split_key]};
 	crypter->decrypt(avail->off_km, _sz_sect,
-	    _key_crypt[avail_idx].get(), sizeof(split_key), crypt_check);
+	    _key_crypt[avail_idx].get(), sz_split_key, crypt_check.get());
 
-	Assert(std::equal(crypt_check, crypt_check + sizeof(crypt_check),
-	    split_key), "ciphertext couldn't be decrypted");
+	Assert(std::equal(crypt_check.get(), crypt_check.get() + sz_split_key,
+	    split_key.get()), "ciphertext couldn't be decrypted");
 
 	avail->active = KEY_ENABLED;
 	_dirty = true;
 }
 
 bool
-fluks::Luks_header::check_supported(std::ostream *out, uint16_t max_version)
-{
+fluks::Luks_header::check_supported(std::ostream *out, uint16_t max_version) {
 	uint16_t	vers;
 	bool		good = true;
 
@@ -442,8 +364,7 @@ fluks::Luks_header::check_supported(std::ostream *out, uint16_t max_version)
 }
 
 std::string
-fluks::Luks_header::info() const
-{
+fluks::Luks_header::info() const {
 	const_cast<Luks_header *>(this)->set_mach_end(true);
 	std::ostringstream out;
 
@@ -470,8 +391,7 @@ fluks::Luks_header::info() const
 }
 
 void
-fluks::Luks_header::revoke_slot(uint8_t which) noexcept(false)
-{
+fluks::Luks_header::revoke_slot(uint8_t which) {
 	if (!_master_key)
 		throw Safety("will not allow a revokation while the "
 		    "master key is unknown");
@@ -487,8 +407,7 @@ fluks::Luks_header::revoke_slot(uint8_t which) noexcept(false)
 }
 
 void
-fluks::Luks_header::wipe() throw (Disk_error, Safety)
-{
+fluks::Luks_header::wipe() {
 	if (!_master_key)
 		throw Safety("will not allow the header to be wiped while "
 		    "the master key is unknown");
@@ -497,8 +416,7 @@ fluks::Luks_header::wipe() throw (Disk_error, Safety)
 }
 
 void
-fluks::Luks_header::save() noexcept(false)
-{
+fluks::Luks_header::save() {
 	if (!_dirty) return;
 
 	set_mach_end(true);
@@ -537,7 +455,7 @@ fluks::Luks_header::save() noexcept(false)
 			throw_errno(errno);
 		}
 
-		if (write_all(_device, _hdr.get(), sizeof(struct phdr1)) ==
+		if (write_all(_device, _hdr.get(), sizeof(phdr1)) ==
 		    -1) {
 			// "writing header: write error"
 			throw_errno(errno);
@@ -557,8 +475,7 @@ fluks::Luks_header::save() noexcept(false)
 // throwing Bad_spec as necessary
 void
 fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
-    int32_t sz_key) noexcept(false)
-{
+    int32_t sz_key) {
 	set_mach_end(true);
 
 	// parse and check
@@ -585,19 +502,18 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 }
 
 int8_t
-fluks::Luks_header::locate_passwd(const std::string &passwd) noexcept(false)
-{
+fluks::Luks_header::locate_passwd(const std::string &passwd) {
 	set_mach_end(true);
 
 	uint8_t key_digest[SZ_MK_DIGEST];
-	uint8_t master_key[_hdr->sz_key];
+	std::unique_ptr<uint8_t[]> master_key{new uint8_t[_hdr->sz_key]};
 
 	// find the first slot that can be decrypted with the password
 	for (uint8_t i = 0; i < NUM_KEYS; i++) {
 		if (_hdr->keys[i].active == KEY_DISABLED) continue;
-		decrypt_key(passwd, i, key_digest, master_key);
+		decrypt_key(passwd, i, key_digest, master_key.get());
 
-		if (std::equal(key_digest, key_digest + sizeof(key_digest),
+		if (std::equal(key_digest, key_digest + sizeof key_digest,
 		    _hdr->mk_digest))
 			return i;
 	}
@@ -608,20 +524,20 @@ fluks::Luks_header::locate_passwd(const std::string &passwd) noexcept(false)
 // master_key should be as large as _hdr->sz_key
 void
 fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
-    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key) noexcept(false)
-{
+    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key) {
 	set_mach_end(true);
 
-	uint8_t pw_digest[_hdr->sz_key];
+	std::unique_ptr<uint8_t[]> pw_digest{new uint8_t[_hdr->sz_key]};
 	struct key *key = _hdr->keys + slot;
-	uint8_t key_crypt[_hdr->sz_key * key->stripes];
-	uint8_t split_key[sizeof(key_crypt)];
+	size_t sz_split_key = _hdr->sz_key * key->stripes;
+	std::unique_ptr<uint8_t[]> key_crypt{new uint8_t[sz_split_key]};
+	std::unique_ptr<uint8_t[]> split_key{new uint8_t[sz_split_key]};
 
 	// password => pw_digest
 	pbkdf2(_hash_type,
 	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
 	    key->salt, SZ_SALT, key->iterations,
-	    pw_digest, sizeof(pw_digest));
+	    pw_digest.get(), _hdr->sz_key);
 
 	// disk => key_crypt
 	if (::lseek(_device, key->off_km * _sz_sect, SEEK_SET) ==
@@ -630,21 +546,21 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 		throw_errno(errno);
 	}
 
-	if (read_all(_device, key_crypt, sizeof(key_crypt)) == -1) {
+	if (read_all(_device, key_crypt.get(), sz_split_key) == -1) {
 		// "failed to read key material"
 		throw_errno(errno);
 	}
 
 	// (pw_digest, key_crypt) => split_key
 	{
-		std::shared_ptr<Crypter> crypter = Crypter::create(pw_digest,
-		    sizeof(pw_digest), *_cipher_spec);
+		std::shared_ptr<Crypter> crypter = Crypter::create(
+		    pw_digest.get(), _hdr->sz_key, *_cipher_spec);
 		crypter->decrypt(key->off_km, _sz_sect,
-		    key_crypt, sizeof(key_crypt), split_key);
+		    key_crypt.get(), sz_split_key, split_key.get());
 	}
 
 	// split_key => master_key
-	af_merge(split_key, _hdr->sz_key, key->stripes,
+	af_merge(split_key.get(), _hdr->sz_key, key->stripes,
 	    _hash_type, master_key);
 
 	// master_key => key_digest

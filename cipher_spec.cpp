@@ -29,7 +29,7 @@ namespace {
 
 void
 fluks::Cipher_spec::check_spec_support(const Cipher_traits *cipher_traits,
-    const Hash_traits *hash_traits) noexcept(false) {
+    const Hash_traits *hash_traits) {
 	// is the cipher spec supported by the system?
 	const std::set<std::string> &sys_ciph = system_ciphers();
 	if (!sys_ciph.count(cipher_traits->name))
@@ -43,7 +43,7 @@ fluks::Cipher_spec::check_spec_support(const Cipher_traits *cipher_traits,
 }
 
 void
-fluks::Cipher_spec::check_spec(ssize_t sz_key) noexcept(false) {
+fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 	if (_ty_cipher == cipher_type::UNDEFINED)
 		throw Bad_spec("unrecognized cipher: " + _nm_cipher);
 	if (_ty_block_mode == block_mode::UNDEFINED)
@@ -117,8 +117,7 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) noexcept(false) {
 }
 
 void
-fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec)
-    noexcept(false) {
+fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec) {
 	// valid patterns:
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
@@ -145,8 +144,7 @@ fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec)
 
 void
 fluks::Cipher_spec::reset(ssize_t sz_key, cipher_type cipher,
-    block_mode block_mode, iv_mode iv_mode, hash_type iv_hash)
-    noexcept(false) {
+    block_mode block_mode, iv_mode iv_mode, hash_type iv_hash) {
 	const Cipher_traits *ctraits = Cipher_traits::traits(_ty_cipher);
 	_nm_cipher = ctraits->name;
 	_nm_block_mode = block_mode_info::name(_ty_block_mode);

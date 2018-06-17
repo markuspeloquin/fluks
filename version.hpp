@@ -14,7 +14,7 @@ public:
 	/** Construct the current version of fluks. */
 	Version() :
 		_version(VERSION_BUF,
-		    VERSION_BUF + sizeof(VERSION_BUF) / sizeof(*VERSION_BUF))
+		    VERSION_BUF + sizeof VERSION_BUF / sizeof *VERSION_BUF)
 	{
 		init_str();
 	}

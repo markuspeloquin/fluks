@@ -18,6 +18,8 @@
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
+#include <fstream>
+#include <memory>
 
 #include "backup.hpp"
 #include "errors.hpp"
@@ -28,7 +30,7 @@ namespace fluks {
 namespace {
 
 void
-read_all(int fd, void *buf, size_t count) noexcept(false) {
+read_all(int fd, void *buf, size_t count) {
 	uint8_t *pos = static_cast<uint8_t *>(buf);
 	while (count) {
 		ssize_t by = read(fd, pos, count);
@@ -51,25 +53,24 @@ read_all(int fd, void *buf, size_t count) noexcept(false) {
  * \throws Unsupported_version
  */
 void
-fluks::make_backup(int device, const std::string &backup_path)
-    noexcept(false) {
+fluks::make_backup(int device, const std::string &backup_path) {
 	struct phdr1 hdr;
 
 	// read the header
 	if (lseek(device, 0, SEEK_SET) == static_cast<off_t>(-1))
 		throw_errno(errno);
-	read_all(device, &hdr, sizeof(hdr));
+	read_all(device, &hdr, sizeof hdr);
 
 	// check the header
 	endian_switch(&hdr, false);
 
 	if (!check_magic(&hdr)) throw No_header();
 	if (!check_version_1(&hdr)) throw Unsupported_version();
-	size_t bytes = sector_size(device) * hdr.off_payload - sizeof(hdr);
+	size_t bytes = sector_size(device) * hdr.off_payload - sizeof hdr;
 	endian_switch(&hdr, false);
 
 	// read the remainder
-	std::unique_ptr<char> buf(new char[bytes]);
+	std::unique_ptr<char[]> buf{new char[bytes]};
 	read_all(device, buf.get(), bytes);
 
 	// open dump
@@ -79,6 +80,6 @@ fluks::make_backup(int device, const std::string &backup_path)
 		throw Disk_error("failed to open output file");
 
 	// dump the header
-	dump.write(reinterpret_cast<char *>(&hdr), sizeof(hdr));
+	dump.write(reinterpret_cast<char *>(&hdr), sizeof hdr);
 	dump.write(buf.get(), bytes);
 }

@@ -15,6 +15,8 @@
 #include <cstdarg>
 #include <cstdio>
 #include <iomanip>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -28,16 +30,16 @@ namespace {
 std::string log_output;
 
 extern "C" void
-dm_logger(int level, const char *file, int line, const char *f, ...)
-{
+dm_logger(int level, const char *file, int line, const char *f, ...) {
 	if (level > 3) return;
 
 	const int SZ = 100;
-	std::unique_ptr<char> buf(new char[SZ]);
+	std::unique_ptr<char> buf{new char[SZ]};
 	int sz = SZ;
 	va_list ap;
 
-	log_output += "\n\t";
+	std::ostringstream out;
+	out << "\n\t";
 
 	for (;;) {
 		va_start(ap, f);
@@ -47,8 +49,8 @@ dm_logger(int level, const char *file, int line, const char *f, ...)
 		if (n >= 0) {
 			if (n < sz) {
 				// the string fit into the buffer
-				log_output += buf.get();
-				return;
+				out << buf.get();
+				break;
 			}
 
 			// buffer not big enough, resize to the proper size
@@ -56,28 +58,25 @@ dm_logger(int level, const char *file, int line, const char *f, ...)
 			sz = n + 1;
 			buf.reset(new char[sz]);
 		} else {
-			log_output += "vsnprintf() failed; ";
-			log_output += file;
-			log_output += ": ";
-			log_output += f;
-			return;
+			out << "vsnprintf() failed; " << file << ": " << f;
+			break;
 		}
 	}
+
+	log_output += out.str();
 }
 
-void dm_setup_log()
-{
-	static bool needed = true;
-	if (!needed) return;
-
-	dm_log_init(dm_logger);
-	needed = false;
+void
+dm_setup_log() {
+	static std::once_flag flag;
+	std::call_once(flag, []() {
+		dm_log_init(dm_logger);
+	});
 }
 
 class Device_mapper {
 public:
-	Device_mapper(int type) noexcept(false)
-	{
+	Device_mapper(int type) {
 		dm_setup_log();
 
 		log_output = "";
@@ -85,22 +84,19 @@ public:
 			throw Dm_error(log_output);
 	}
 
-	~Device_mapper()
-	{
+	~Device_mapper() {
 		dm_task_destroy(_task);
 	}
 
-	void set_name(const std::string &name) noexcept(false)
-	{
+	void set_name(const std::string &name) {
 		log_output = "";
 		if (!dm_task_set_name(_task, name.c_str()))
 			throw Dm_error(log_output);
 	}
 
-	void set_uuid(const boost::uuids::uuid &uuid) noexcept(false);
+	void set_uuid(const boost::uuids::uuid &uuid);
 
-	void run() noexcept(false)
-	{
+	void run() {
 		log_output = "";
 		if (!dm_task_run(_task))
 			throw Dm_error(log_output);
@@ -110,7 +106,7 @@ public:
 	    uint64_t start_sector, uint64_t num_sectors,
 	    const std::string &cipher_spec,
 	    const uint8_t *key, size_t sz_key,
-	    const std::string &device_path) noexcept(false);
+	    const std::string &device_path);
 
 private:
 	struct dm_task *_task;
@@ -121,8 +117,7 @@ Device_mapper::add_crypt_target(
     uint64_t start_sector, uint64_t num_sectors,
     const std::string &cipher_spec,
     const uint8_t *key, size_t sz_key,
-    const std::string &device_path) noexcept(false)
-{
+    const std::string &device_path) {
 	std::ostringstream param_out;
 
 	// format of param argument:
@@ -152,8 +147,7 @@ Device_mapper::add_crypt_target(
 }
 
 void
-Device_mapper::set_uuid(const boost::uuids::uuid &uuid) noexcept(false)
-{
+Device_mapper::set_uuid(const boost::uuids::uuid &uuid) {
 	std::string uuid_hex = boost::lexical_cast<std::string>(uuid);
 
 	log_output = "";
@@ -165,8 +159,7 @@ Device_mapper::set_uuid(const boost::uuids::uuid &uuid) noexcept(false)
 }
 
 void
-fluks::dm_close(const std::string &name) noexcept(false)
-{
+fluks::dm_close(const std::string &name) {
 	Device_mapper task(DM_DEVICE_REMOVE);
 	task.set_name(name);
 	task.run();
@@ -178,9 +171,7 @@ fluks::dm_open(const std::string &name,
     const std::string &cipher_spec,
     const uint8_t *key, size_t sz_key,
     const boost::uuids::uuid &uuid,
-    const std::string &device_path)
-    noexcept(false)
-{
+    const std::string &device_path) {
 	Device_mapper task(DM_DEVICE_CREATE);
 	task.set_name(name);
 	task.set_uuid(uuid);

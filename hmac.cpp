@@ -12,6 +12,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <memory>
+
 #include "hmac.hpp"
 #include "util.hpp"
 
@@ -39,8 +41,7 @@ fluks::Hmac_function::create(hash_type type) {
 }
 
 void
-fluks::Hmac_impl::init(const uint8_t *key, size_t sz) noexcept
-{
+fluks::Hmac_impl::init(const uint8_t *key, size_t sz) noexcept {
 	size_t sz_block = traits()->block_size;
 	if (sz > sz_block) {
 		// key too long, so
@@ -58,35 +59,34 @@ fluks::Hmac_impl::init(const uint8_t *key, size_t sz) noexcept
 		std::fill(_key.get() + sz, _key.get() + sz_block, 0);
 
 	// (2) XOR result of (1) with ipad
-	uint8_t key_ipad[sz_block];
-	xor_buf_byte(_key.get(), sz_block, IPAD, key_ipad);
+	std::unique_ptr<uint8_t[]> key_ipad{new uint8_t[sz_block]};
+	xor_buf_byte(_key.get(), sz_block, IPAD, key_ipad.get());
 
 	// done below as well as successive calls to add():
 	// (3) append text to result of (2)
 	// (4) apply H to result of (3)
 
 	_hashfn->init();
-	_hashfn->add(key_ipad, sz_block);
+	_hashfn->add(key_ipad.get(), sz_block);
 }
 
 void
-fluks::Hmac_impl::end(uint8_t *out) noexcept
-{
+fluks::Hmac_impl::end(uint8_t *out) noexcept {
 	size_t sz_block = traits()->block_size;
-	uint8_t key_opad[sz_block];
-	uint8_t mid_digest[traits()->digest_size];
+	std::unique_ptr<uint8_t[]> key_opad{new uint8_t[sz_block]};
+	std::unique_ptr<uint8_t[]> mid_digest{new uint8_t[traits()->digest_size]};
 
 	// (5) XOR result of (1) with opad
-	xor_buf_byte(_key.get(), sz_block, OPAD, key_opad);
+	xor_buf_byte(_key.get(), sz_block, OPAD, key_opad.get());
 
 	// (6) append result of (4) to result of (5)
 	// (7) apply H to result of (6) and output result
 
 	// get H1 = H( K^ipad . data )
-	_hashfn->end(mid_digest);
+	_hashfn->end(mid_digest.get());
 	_hashfn->init();
-	_hashfn->add(key_opad, sz_block);
-	_hashfn->add(mid_digest, traits()->digest_size);
+	_hashfn->add(key_opad.get(), sz_block);
+	_hashfn->add(mid_digest.get(), traits()->digest_size);
 	// get H( K^opad . H1 )
 	_hashfn->end(out);
 }

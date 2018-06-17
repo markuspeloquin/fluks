@@ -34,8 +34,7 @@ protected:
 	Crypter(const Crypter &rhs);
 	Crypter &operator=(const Crypter &rhs);
 
-	void swap(Crypter &rhs)
-	{
+	void swap(Crypter &rhs) {
 		std::swap(_key, rhs._key);
 		std::swap(_cipher, rhs._cipher);
 		std::swap(_iv_hash, rhs._iv_hash);
@@ -67,8 +66,7 @@ public:
 	 *	given the size of the plaintext
 	 */
 	void encrypt(uint32_t start_sector, size_t sz_sector,
-	    const uint8_t *data, size_t sz_plain, uint8_t *out)
-	    noexcept(false);
+	    const uint8_t *data, size_t sz_plain, uint8_t *out);
 
 	/** Encrypt data spanning across blocks (cipher, not disk blocks)
 	 *
@@ -86,8 +84,7 @@ public:
 	 *	given the size of the plaintext
 	 */
 	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out)
-	    noexcept(false) = 0;
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) = 0;
 
 	/** Decrypt data spanning across sectors
 	 *
@@ -101,8 +98,7 @@ public:
 	 *	given the size of the ciphertext
 	 */
 	void decrypt(uint32_t start_sector, size_t sz_sector,
-	    const uint8_t *data, size_t sz_plain, uint8_t *out)
-	    noexcept(false);
+	    const uint8_t *data, size_t sz_plain, uint8_t *out);
 
 	/** Decrypt data spanning across blocks (cipher, not disk blocks)
 	 *
@@ -120,8 +116,7 @@ public:
 	 *	given the size of the ciphertext
 	 */
 	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out)
-	    noexcept(false) = 0;
+	    const uint8_t *in, size_t sz_plain, uint8_t *out) = 0;
 
 protected:
 	/** Convenience function for implementing ciphertext_size() for
@@ -148,17 +143,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_cbc(const Crypter_cbc &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_cbc &operator=(const Crypter_cbc &rhs)
-	{
+
+	Crypter_cbc &operator=(const Crypter_cbc &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return ciphertext_size_ceil(sz_plaintext);
 	}
 
@@ -175,8 +170,8 @@ public:
 	 *	\f$ \lceil \mathtt{sz\_plain}/C_\mathit{BS} \rceil \f$, where
 	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz_plain, uint8_t *out) noexcept override;
 
 	/** Decrypt using Cyclic Block Chaining mode
 	 *
@@ -186,8 +181,8 @@ public:
 	 * \param[in] sz_plain	The size of the plaintext
 	 * \param[out] out	The plaintext
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz_plain, uint8_t *out) noexcept override;
 };
 
 class Crypter_cbc_cts : public Crypter {
@@ -196,17 +191,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_cbc_cts(const Crypter_cbc_cts &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_cbc_cts &operator=(const Crypter_cbc_cts &rhs)
-	{
+
+	Crypter_cbc_cts &operator=(const Crypter_cbc_cts &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return sz_plaintext;
 	}
 
@@ -224,8 +219,8 @@ public:
 	 * \throw Crypt_error	If CBC-CTS isn't possible given the size of
 	 *	the plaintext
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept(false);
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) override;
 
 	/** Decrypt using Cyclic Block Chaining mode with Ciphertext Stealing
 	 *
@@ -239,8 +234,8 @@ public:
 	 * \throw Crypt_error	If CBC-CTS isn't possible given the size of
 	 *	the ciphertext
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept(false);
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) override;
 };
 
 class Crypter_cfb : public Crypter {
@@ -249,17 +244,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_cfb(const Crypter_cfb &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_cfb &operator=(const Crypter_cfb &rhs)
-	{
+
+	Crypter_cfb &operator=(const Crypter_cfb &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return ciphertext_size_ceil(sz_plaintext);
 	}
 
@@ -273,8 +268,8 @@ public:
 	 * \param[out] out	The ciphertext. It should be at least as big
 	 *	as the plaintext buffer.
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) noexcept override;
 
 	/** Decrypt using Cipher feedback
 	 *
@@ -285,8 +280,8 @@ public:
 	 * \param[out] out	Plaintext. It should be at least as big as the
 	 *	ciphertext buffer.
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) noexcept override;
 };
 
 class Crypter_ctr : public Crypter {
@@ -295,17 +290,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_ctr(const Crypter_ctr &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_ctr &operator=(const Crypter_ctr &rhs)
-	{
+
+	Crypter_ctr &operator=(const Crypter_ctr &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return sz_plaintext;
 	}
 
@@ -322,16 +317,15 @@ public:
 	 * \param[out] out	The ciphertext. Its size should be at least
 	 *	<code>sz</code>.
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) noexcept override;
 
 	/** Decrypt using Counter mode
 	 *
 	 * \see encrypt()
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept
-	{
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) noexcept override {
 		encrypt(cipher, iv, in, sz, out);
 	}
 };
@@ -342,17 +336,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_ecb(const Crypter_ecb &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_ecb &operator=(const Crypter_ecb &rhs)
-	{
+
+	Crypter_ecb &operator=(const Crypter_ecb &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return ciphertext_size_ceil(sz_plaintext);
 	}
 
@@ -369,8 +363,8 @@ public:
 	 *	\f$ \lceil \mathtt{sz\_plain}/C_\mathit{BS} \rceil \f$, where
 	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz_plain, uint8_t *out) noexcept override;
 
 	/** Encrypt using Electronic Code Book mode
 	 *
@@ -381,8 +375,8 @@ public:
 	 * \param[out] out	The plaintext. Its size should be at least
 	 *	<code>sz_plain</code>.
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz_plain, uint8_t *out) noexcept override;
 };
 
 class Crypter_ofb : public Crypter {
@@ -391,17 +385,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_ofb(const Crypter_ofb &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_ofb &operator=(const Crypter_ofb &rhs)
-	{
+
+	Crypter_ofb &operator=(const Crypter_ofb &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return sz_plaintext;
 	}
 
@@ -415,8 +409,8 @@ public:
 	 * \param[out] out	The ciphertext. It should be at least as big
 	 *	as the plaintext buffer.
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept;
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) noexcept override;
 
 	/** Decrypt using Output feedback
 	 *
@@ -427,9 +421,8 @@ public:
 	 * \param[out] out	Plaintext. It should be at least as big as the
 	 *	ciphertext buffer.
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz, uint8_t *out) noexcept
-	{
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz, uint8_t *out) noexcept override {
 		encrypt(cipher, iv, in, sz, out);
 	}
 };
@@ -440,17 +433,17 @@ public:
 	    const Cipher_spec &spec) :
 		Crypter(key, sz_key, spec)
 	{}
+
 	Crypter_pcbc(const Crypter_pcbc &rhs) :
 		Crypter(rhs)
 	{}
-	Crypter_pcbc &operator=(const Crypter_pcbc &rhs)
-	{
+
+	Crypter_pcbc &operator=(const Crypter_pcbc &rhs) {
 		Crypter::operator=(rhs);
 		return *this;
 	}
 
-	virtual size_t ciphertext_size(size_t sz_plaintext) const
-	{
+	size_t ciphertext_size(size_t sz_plaintext) const override {
 		return ciphertext_size_ceil(sz_plaintext);
 	}
 
@@ -467,8 +460,8 @@ public:
 	 *	\f$ \lceil \mathtt{sz\_plain}/C_\mathit{BS} \rceil \f$, where
 	 *	\f$ C_\mathit{BS} \f$ is the block size of the cipher.
 	 */
-	virtual void encrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
+	void encrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz_plain, uint8_t *out) noexcept override;
 
 	/** Decrypt using Propagating Cyclic Block Chaining mode
 	 *
@@ -479,8 +472,8 @@ public:
 	 * \param[out] out	The plaintext. Its size should be at least
 	 *	<code>sz_plain</code>.
 	 */
-	virtual void decrypt(Cipher *cipher, const uint8_t *iv,
-	    const uint8_t *in, size_t sz_plain, uint8_t *out) noexcept;
+	void decrypt(Cipher *cipher, const uint8_t *iv, const uint8_t *in,
+	    size_t sz_plain, uint8_t *out) noexcept override;
 };
 
 }

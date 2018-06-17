@@ -23,8 +23,11 @@ class Lookup {
 public:
 	static const Hash_traits *traits(hash_type type);
 	static hash_type type(const std::string &name);
-	static const std::vector<hash_type> &types()
-	{	return inst._types; }
+
+	static const std::vector<hash_type> &types() {
+		return inst._types;
+	}
+
 private:
 	Lookup();
 	Lookup(const Lookup &) {}
@@ -102,8 +105,7 @@ Lookup Lookup::inst;
 }
 
 std::shared_ptr<fluks::Hash_function>
-fluks::Hash_function::create(hash_type type)
-{
+fluks::Hash_function::create(hash_type type) {
 	switch (type) {
 	case hash_type::MD5:
 		return std::shared_ptr<Hash_function>(new Hash_md5);

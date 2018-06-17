@@ -74,7 +74,7 @@ rs_mat_mult(uint8_t sd[8])
 			t ^= gf_mult(rs[j][k], sd[k], RS_MOD);
 		result.buf[j ^ 3] = t;
 	}
-	return be32toh(result.word);
+	return fluks_be32toh(result.word);
 }
 
 /* the Zero-keyed h function (used by the key setup routine) */
@@ -222,10 +222,10 @@ encrypt(uint32_t K[40], uint32_t S[4][0x100], const uint8_t plaintext[16],
 	uint32_t	r0,r1,r2,r3;
 
 	/* load/byteswap/whiten input */
-	r0 = K[0] ^ htole32(((uint32_t *)plaintext)[0]);
-	r1 = K[1] ^ htole32(((uint32_t *)plaintext)[1]);
-	r2 = K[2] ^ htole32(((uint32_t *)plaintext)[2]);
-	r3 = K[3] ^ htole32(((uint32_t *)plaintext)[3]);
+	r0 = K[0] ^ fluks_htole32(((uint32_t *)plaintext)[0]);
+	r1 = K[1] ^ fluks_htole32(((uint32_t *)plaintext)[1]);
+	r2 = K[2] ^ fluks_htole32(((uint32_t *)plaintext)[2]);
+	r3 = K[3] ^ fluks_htole32(((uint32_t *)plaintext)[3]);
 
 	ENC_ROUND(r0,r1, r2,r3,  0, K, S);
 	ENC_ROUND(r2,r3, r0,r1,  1, K, S);
@@ -245,10 +245,10 @@ encrypt(uint32_t K[40], uint32_t S[4][0x100], const uint8_t plaintext[16],
 	ENC_ROUND(r2,r3, r0,r1, 15, K, S);
 
 	/* load/byteswap/whiten output */
-	((uint32_t *)ciphertext)[0] = le32toh(r2 ^ K[4]);
-	((uint32_t *)ciphertext)[1] = le32toh(r3 ^ K[5]);
-	((uint32_t *)ciphertext)[2] = le32toh(r0 ^ K[6]);
-	((uint32_t *)ciphertext)[3] = le32toh(r1 ^ K[7]);
+	((uint32_t *)ciphertext)[0] = fluks_le32toh(r2 ^ K[4]);
+	((uint32_t *)ciphertext)[1] = fluks_le32toh(r3 ^ K[5]);
+	((uint32_t *)ciphertext)[2] = fluks_le32toh(r0 ^ K[6]);
+	((uint32_t *)ciphertext)[3] = fluks_le32toh(r1 ^ K[7]);
 }
 
 static inline void
@@ -258,10 +258,10 @@ decrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t ciphertext[16],
 	uint32_t r0,r1,r2,r3;
 
 	/* load/byteswap/whiten input */
-	r0 = K[4] ^ htole32(((uint32_t *)ciphertext)[0]);
-	r1 = K[5] ^ htole32(((uint32_t *)ciphertext)[1]);
-	r2 = K[6] ^ htole32(((uint32_t *)ciphertext)[2]);
-	r3 = K[7] ^ htole32(((uint32_t *)ciphertext)[3]);
+	r0 = K[4] ^ fluks_htole32(((uint32_t *)ciphertext)[0]);
+	r1 = K[5] ^ fluks_htole32(((uint32_t *)ciphertext)[1]);
+	r2 = K[6] ^ fluks_htole32(((uint32_t *)ciphertext)[2]);
+	r3 = K[7] ^ fluks_htole32(((uint32_t *)ciphertext)[3]);
 
 	DEC_ROUND(r0,r1, r2,r3, 15, K, S);
 	DEC_ROUND(r2,r3, r0,r1, 14, K, S);
@@ -281,10 +281,10 @@ decrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t ciphertext[16],
 	DEC_ROUND(r2,r3, r0,r1,  0, K, S);
 
 	/* load/byteswap/whiten output */
-	((uint32_t *)plaintext)[0] = le32toh(r2 ^ K[0]);
-	((uint32_t *)plaintext)[1] = le32toh(r3 ^ K[1]);
-	((uint32_t *)plaintext)[2] = le32toh(r0 ^ K[2]);
-	((uint32_t *)plaintext)[3] = le32toh(r1 ^ K[3]);
+	((uint32_t *)plaintext)[0] = fluks_le32toh(r2 ^ K[0]);
+	((uint32_t *)plaintext)[1] = fluks_le32toh(r3 ^ K[1]);
+	((uint32_t *)plaintext)[2] = fluks_le32toh(r0 ^ K[2]);
+	((uint32_t *)plaintext)[3] = fluks_le32toh(r1 ^ K[3]);
 }
 
 /* the key schedule routine */
@@ -313,13 +313,13 @@ key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40])
 		key = user_key;
 
 	for (uint8_t i = 0; i < word_pairs; i++) {
-		Me[i] = htole32(((const uint32_t *)key)[2 * i    ]);
-		Mo[i] = htole32(((const uint32_t *)key)[2 * i + 1]);
+		Me[i] = fluks_htole32(((const uint32_t *)key)[2 * i    ]);
+		Mo[i] = fluks_htole32(((const uint32_t *)key)[2 * i + 1]);
 
 		/* copy b0(Me[i]) to vector.buf[0], ...; LE systems need no
 		 * swap, but BE systems do */
-		(vector.words)[0] = htole32(Me[i]);
-		(vector.words)[1] = htole32(Mo[i]);
+		(vector.words)[0] = fluks_htole32(Me[i]);
+		(vector.words)[1] = fluks_htole32(Mo[i]);
 		S[word_pairs - i - 1] = rs_mat_mult(vector.buf);
 	}
 

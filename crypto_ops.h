@@ -19,26 +19,24 @@
 
 #ifdef __cplusplus
 #	include <cstdint>
-#	define INLINE inline
+#	define FLUKS_INLINE inline
 #else
 #	include <stdint.h>
-#	define INLINE static inline
+#	define FLUKS_INLINE static inline
 #endif
 
 /** Rotate left. */
-INLINE uint32_t
-ROL(uint32_t x, uint8_t n)
-{
+FLUKS_INLINE uint32_t
+ROL(uint32_t x, int n) {
 	return x << n | x >> (32 - n);
 }
 
 /** Rotate right. */
-INLINE uint32_t
-ROR(uint32_t x, uint8_t n)
-{
+FLUKS_INLINE uint32_t
+ROR(uint32_t x, int n) {
 	return x << (32 - n) | x >> n;
 }
 
-#undef INLINE
+#undef FLUKS_INLINE
 
 #endif

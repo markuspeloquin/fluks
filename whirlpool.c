@@ -643,7 +643,7 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 	uint64_t	L[8];
 
 	/* map the buffer to a block */
-	be_to_host64(block, buf, WBLOCKBYTES);
+	be64toh_buf(block, buf, WBLOCKBYTES);
 
 	/* compute and apply K_0 to the cipher state */
 	state[0] = block[0] ^ (K[0] = hash[0]);
@@ -836,8 +836,8 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 void
 whirlpool_init(struct whirlpool_ctx *ctx)
 {
-	memset(ctx->hash, 0, sizeof(ctx->hash));
-	memset(ctx->bit_count, 0, sizeof(ctx->bit_count));
+	memset(ctx->hash, 0, sizeof ctx->hash);
+	memset(ctx->bit_count, 0, sizeof ctx->bit_count);
 	ctx->pos = 0;
 }
 
@@ -894,8 +894,8 @@ whirlpool_update(struct whirlpool_ctx *ctx, const uint8_t *buf, size_t sz)
 static inline void
 append_bit_count(struct whirlpool_ctx *ctx)
 {
-	uint8_t		buf[LENGTHBYTES];
-	host_to_be32(buf, ctx->bit_count, LENGTHBYTES);
+	uint8_t buf[LENGTHBYTES];
+	htobe32_buf(buf, ctx->bit_count, LENGTHBYTES);
 	memcpy(ctx->buf + ctx->pos, buf, LENGTHBYTES);
 }
 
@@ -935,5 +935,5 @@ whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf)
 
 	/* return digest */
 	if (sz_buf > DIGESTBYTES) sz_buf = DIGESTBYTES;
-	host_to_be64(buf, ctx->hash, sz_buf);
+	htobe64_buf(buf, ctx->hash, sz_buf);
 }

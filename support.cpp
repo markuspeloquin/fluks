@@ -108,13 +108,13 @@ private:
 Lookup Lookup::_instance;
 
 Lookup::Lookup() {
-	block_mode_stat_map[block_mode::CBC] = (block_mode_stat){ "cbc", 1 };
-	block_mode_stat_map[block_mode::CBC_CTS] = (block_mode_stat){ "cts", 1 };
-	block_mode_stat_map[block_mode::CFB] = (block_mode_stat){ "cfb", 0 };
-	block_mode_stat_map[block_mode::CTR] = (block_mode_stat){ "ctr", 0 };
-	block_mode_stat_map[block_mode::ECB] = (block_mode_stat){ "ecb", 1 };
-	block_mode_stat_map[block_mode::OFB] = (block_mode_stat){ "ofb", 0 };
-	block_mode_stat_map[block_mode::PCBC] = (block_mode_stat){ "pcbc", 0 };
+	block_mode_stat_map[block_mode::CBC] = { "cbc", 1 };
+	block_mode_stat_map[block_mode::CBC_CTS] = { "cts", 1 };
+	block_mode_stat_map[block_mode::CFB] = { "cfb", 0 };
+	block_mode_stat_map[block_mode::CTR] = { "ctr", 0 };
+	block_mode_stat_map[block_mode::ECB] = { "ecb", 1 };
+	block_mode_stat_map[block_mode::OFB] = { "ofb", 0 };
+	block_mode_stat_map[block_mode::PCBC] = { "pcbc", 0 };
 
 	block_mode_name_map["cbc"] = block_mode::CBC;
 	block_mode_name_map["cbc-cts"] = block_mode::CBC_CTS;
@@ -125,8 +125,8 @@ Lookup::Lookup() {
 	block_mode_name_map["ofb"] = block_mode::OFB;
 	block_mode_name_map["pcbc"] = block_mode::PCBC;
 
-	iv_mode_stat_map[iv_mode::ESSIV] = (iv_mode_stat){ "essiv", 1 };
-	iv_mode_stat_map[iv_mode::PLAIN] = (iv_mode_stat){ "plain", 1 };
+	iv_mode_stat_map[iv_mode::ESSIV] = { "essiv", 1 };
+	iv_mode_stat_map[iv_mode::PLAIN] = { "plain", 1 };
 
 	iv_mode_name_map["essiv"] = iv_mode::ESSIV;
 	iv_mode_name_map["plain"] = iv_mode::PLAIN;

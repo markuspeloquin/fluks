@@ -14,6 +14,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <mutex>
 #include <sstream>
 
 #include <openssl/err.h>
@@ -23,19 +24,17 @@
 
 namespace {
 
-inline void ssl_load_errors()
-{
-	static bool loaded = false;
-	if (!loaded) {
+inline void
+ssl_load_errors() {
+	static std::once_flag flag;
+	std::call_once(flag, []() {
 		SSL_load_error_strings();
-		loaded = true;
-	}
+	});
 }
 
 }
 
-fluks::Ssl_error::Ssl_error()
-{
+fluks::Ssl_error::Ssl_error() {
 	// '120' comes from ERR_error_string(3); seems like an
 	// oversight on their part
 	char ssl_err_buf[120];
@@ -44,9 +43,9 @@ fluks::Ssl_error::Ssl_error()
 	_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
 }
 
+/** \throw boost::system::system_error */
 void
-fluks::throw_errno(int e) throw (boost::system::system_error)
-{
+fluks::throw_errno(int e) {
 	// wow
 	throw boost::system::system_error(
 	    boost::system::linux_error::make_error_code(

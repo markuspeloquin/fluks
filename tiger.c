@@ -666,8 +666,8 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	if (ctx->sz) {
 		size_t bytes = TIGER_SZ_BLOCK - ctx->sz;
 		memcpy(ctxbuf8 + ctx->sz, buf, bytes);
-#if BYTE_ORDER == BIG_ENDIAN
-		host_to_le64(temp, ctx->buf, TIGER_SZ_BLOCK);
+#if FLUKS_IS_BIG_ENDIAN
+		htole64_buf(temp, ctx->buf, TIGER_SZ_BLOCK);
 		compress(temp, ctx->res);
 #else
 		/* LE can run straight off ctx->buf */
@@ -681,7 +681,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 	while (sz >= TIGER_SZ_BLOCK) {
 		/* LE needs to copy for alignment issues, and BE needs to
 		 * both copy (for alignment) and swith endians */
-		host_to_le64(temp, buf, TIGER_SZ_BLOCK);
+		htole64_buf(temp, buf, TIGER_SZ_BLOCK);
 		compress(temp, ctx->res);
 		sz -= TIGER_SZ_BLOCK;
 		buf += TIGER_SZ_BLOCK;
@@ -704,9 +704,9 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 	 * then pad with zeros until the number of bytes is 0 mod 8; the
 	 * buffer will have room; Tiger2 uses 0x80 instead of 1 for the next
 	 * byte */
-	host_to_le64(temp, ctx->buf, ctx->sz);
+	htole64_buf(temp, ctx->buf, ctx->sz);
 	i = ctx->sz;
-#if BYTE_ORDER == BIG_ENDIAN
+#if FLUKS_IS_BIG_ENDIAN
 	temp8[i++ ^ 7] = ctx->version == 1 ? 0x01 : 0x80;
 	while (i & 7) temp8[i++ ^ 7] = 0;
 #else
@@ -729,7 +729,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
 	compress(temp, ctx->res);
 
 	if (sz_res > TIGER_SZ_DIGEST) sz_res = TIGER_SZ_DIGEST;
-	le_to_host64(res, ctx->res, sz_res);
+	le64toh_buf(res, ctx->res, sz_res);
 }
 
 /* the original implementation of tiger(), with my annotations and coding
@@ -753,7 +753,7 @@ tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 
 	/* once for each whole 64-byte block, compress on next 64 bytes */
 	for (i = length; i >= TIGER_SZ_BLOCK; i -= TIGER_SZ_BLOCK) {
-#if BYTE_ORDER == BIG_ENDIAN
+#if FLUKS_IS_BIG_ENDIAN
 		/* switch endian to little, 8 bytes at a time */
 		for (j = 0; j < TIGER_SZ_BLOCK; j++)
 			temp[j ^ 7] = ((const uint8_t *)str)[j];
@@ -768,7 +768,7 @@ tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
 
 	/* copy next i bytes from str into start of temp, then 0x01, then
 	 * pad with zeros until the number of bytes in temp is 0 mod 8 */
-#if BYTE_ORDER == BIG_ENDIAN
+#if FLUKS_IS_BIG_ENDIAN
 	for (j = 0; j < i; j++)
 		temp[j ^ 7] = ((const uint8_t *)str)[j];
 	temp[j++ ^ 7] = 0x01;

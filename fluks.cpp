@@ -428,7 +428,7 @@ main(int argc, char **argv)
 			std::cerr << "/dev/urandom not found, "
 			    "seeding PRNG with clock\n";
 			time_t now = time(0);
-			RAND_seed(&now, sizeof(now));
+			RAND_seed(&now, sizeof now);
 		}
 	default:;
 	}

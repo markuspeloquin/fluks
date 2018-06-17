@@ -36,7 +36,7 @@ void add_intermediate_values(uint8_t i,
     uint32_t b0, uint32_t b1, uint32_t b2, uint32_t b3)
 {
 	uint32_t block[] = { b0, b1, b2, b3 };
-	host_to_be32(cast6_iv_out[i], block, CAST6_BLOCK);
+	htobe32_buf(cast6_iv_out[i], block, CAST6_BLOCK);
 	memcpy(cast6_iv_rotk[i], rotk, 4);
 	memcpy(cast6_iv_mask[i], mask, 16);
 }
@@ -487,7 +487,7 @@ cast6_encrypt(const struct cast6_ctx *ctx,
 
 	/* copy to a 32-bit block, fixing any potential alignment or endian
 	 * issues */
-	be_to_host32(block, plaintext, 16);
+	be32toh_buf(block, plaintext, 16);
 	b0 = block[0];
 	b1 = block[1];
 	b2 = block[2];
@@ -511,7 +511,7 @@ cast6_encrypt(const struct cast6_ctx *ctx,
 	block[1] = b1;
 	block[2] = b2;
 	block[3] = b3;
-	host_to_be32(ciphertext, block, 16);
+	htobe32_buf(ciphertext, block, 16);
 }
 
 void
@@ -523,7 +523,7 @@ cast6_decrypt(const struct cast6_ctx *ctx,
 
 	/* copy to a 32-bit block, fixing any potential alignment or endian
 	 * issues */
-	be_to_host32(block, ciphertext, 16);
+	be32toh_buf(block, ciphertext, 16);
 	b0 = block[0];
 	b1 = block[1];
 	b2 = block[2];
@@ -547,7 +547,7 @@ cast6_decrypt(const struct cast6_ctx *ctx,
 	block[1] = b1;
 	block[2] = b2;
 	block[3] = b3;
-	host_to_be32(plaintext, block, 16);
+	htobe32_buf(plaintext, block, 16);
 }
 
 #ifdef GEN_TABLES
@@ -632,7 +632,7 @@ cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz)
 
 	/* sizes are multiples of 4, so this works fine:
 	 * copy key (switching endian) into kappa, then fill rest with 0 */
-	be_to_host32(kappa, key, sz);
+	be32toh_buf(kappa, key, sz);
 	if (sz < 32) memset(kappa + sz/4, 0, 32 - sz);
 
 	for (uint8_t i = 0; i < 12; i++) {

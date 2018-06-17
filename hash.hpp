@@ -113,7 +113,7 @@ public:
 	 * \throw Hash_error	The hashing function has some error. This
 	 *	shouldn't happen.
 	 */
-	virtual void init() noexcept(false) = 0;
+	virtual void init() = 0;
 
 	/** Pipe data into the hash computation.
 	 *
@@ -123,14 +123,14 @@ public:
 	 * \throw Hash_error	The hashing function has some error. This
 	 *	shouldn't happen.
 	 */
-	virtual void add(const uint8_t *buf, size_t sz) noexcept(false) = 0;
+	virtual void add(const uint8_t *buf, size_t sz) = 0;
 
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer, assumed to be large enough.
 	 * \see digest_size()
 	 */
-	virtual void end(uint8_t *buf) noexcept(false) = 0;
+	virtual void end(uint8_t *buf) = 0;
 
 	/** Get information on the hash function
 	 *
@@ -157,18 +157,18 @@ public:
 	Hash_ssl() : Hash_function(type), _valid(false) {}
 	~Hash_ssl() noexcept {}
 
-	void init() noexcept(false) {
+	void init() {
 		_valid = false;
 		if (!Init(&_ctx)) throw Ssl_hash_error();
 		_valid = true;
 	}
 
-	void add(const uint8_t *buf, size_t sz) noexcept(false) {
+	void add(const uint8_t *buf, size_t sz) {
 		if (!_valid) return;
 		if (!Update(&_ctx, buf, sz)) throw Ssl_hash_error();
 	}
 
-	void end(uint8_t *buf) noexcept(false) {
+	void end(uint8_t *buf) {
 		if (!_valid) return;
 		if (!Final(buf, &_ctx)) throw Ssl_hash_error();
 		_valid = false;
@@ -246,6 +246,7 @@ public:
 		    type == hash_type::WHIRLPOOL512,
 		    "Hash_whirlpool constructor needs a WHIRLPOOL* enum value");
 	}
+
 	~Hash_whirlpool() noexcept {}
 
 	void init() noexcept {

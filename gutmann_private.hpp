@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <memory>
+
 #include <openssl/rand.h>
 
 namespace fluks {
@@ -53,8 +55,7 @@ const char PATTERNS[NUM_PATTERNS][PATTERN_LENGTH + 1] = {
     "\xdb\x6d\xb6\xdb\x6d\xb6\xdb\x6d\xb6",
 };
 
-uint8_t rand_index(uint8_t max)
-{
+uint8_t rand_index(uint8_t max) {
 	// to give all numbers on [0,max) the same probability, disqualify
 	// numbers as large as max_accept (e.g. if max is 25, max_accept
 	// is 250; if there are 250 possible values, they can be divided
@@ -82,8 +83,7 @@ gut_write_all(int fd, const void *buf, size_t count) noexcept {
 }
 
 void
-write_pattern(int fd, off_t pos, const char *buf, size_t bytes)
-    noexcept(false) {
+write_pattern(int fd, off_t pos, const char *buf, size_t bytes) {
 	if (::lseek(fd, pos, SEEK_SET) == static_cast<off_t>(-1)) {
 		// "Gutmann erase: seek failed"
 		throw_errno(errno);
@@ -104,8 +104,8 @@ write_pattern(int fd, off_t pos, const char *buf, size_t bytes)
 // TODO write rant about why the Gutmann erase method is stupid
 
 void
-fluks::gutmann_erase(int fd, off_t pos, size_t bytes) noexcept(false) {
-	char buf[bytes];
+fluks::gutmann_erase(int fd, off_t pos, size_t bytes) {
+	std::unique_ptr<char[]> buf{new char[bytes]};
 	uint8_t order[NUM_PATTERNS];
 
 	// make order sequential
@@ -121,12 +121,13 @@ fluks::gutmann_erase(int fd, off_t pos, size_t bytes) noexcept(false) {
 
 #ifdef DEBUG
 	// for valgrind
-	std::fill(buf, buf + bytes, 0);
+	std::fill(buf.get(), buf.get() + bytes, 0);
 #endif
 	for (uint8_t i = 0; i < 4; i++) {
-		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf), bytes))
+		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf.get()),
+		    bytes))
 			throw Ssl_error();
-		write_pattern(fd, pos, buf, bytes);
+		write_pattern(fd, pos, buf.get(), bytes);
 	}
 	for (uint8_t i = 0; i < NUM_PATTERNS; i++) {
 		size_t j = 0;
@@ -134,18 +135,20 @@ fluks::gutmann_erase(int fd, off_t pos, size_t bytes) noexcept(false) {
 		uint8_t left = bytes % PATTERN_LENGTH;
 		while (blocks--) {
 			std::copy(PATTERNS[order[i]],
-			    PATTERNS[order[i]] + PATTERN_LENGTH, buf + j);
+			    PATTERNS[order[i]] + PATTERN_LENGTH,
+			    buf.get() + j);
 			j += PATTERN_LENGTH;
 		}
 		if (left) {
 			std::copy(PATTERNS[order[i]],
-			    PATTERNS[order[i]] + left, buf + j);
+			    PATTERNS[order[i]] + left, buf.get() + j);
 		}
-		write_pattern(fd, pos, buf, bytes);
+		write_pattern(fd, pos, buf.get(), bytes);
 	}
 	for (uint8_t i = 0; i < 4; i++) {
-		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf), bytes))
+		if (!RAND_bytes(reinterpret_cast<uint8_t *>(buf.get()),
+		    bytes))
 			throw Ssl_error();
-		write_pattern(fd, pos, buf, bytes);
+		write_pattern(fd, pos, buf.get(), bytes);
 	}
 }

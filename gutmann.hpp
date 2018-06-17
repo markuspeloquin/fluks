@@ -29,7 +29,7 @@ namespace fluks {
  * \param pos	starting position in bytes
  * \param bytes	bytes to be erased
  */
-void	gutmann_erase(int fd, off_t pos, size_t bytes) noexcept(false);
+void	gutmann_erase(int fd, off_t pos, size_t bytes);
 
 }
 

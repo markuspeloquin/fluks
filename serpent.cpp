@@ -77,7 +77,7 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 		return SERPENT_BAD_KEY_MAT;
 
 	// internal representation is little-endian
-	le_to_host32(v8, keyin, sz);
+	le32toh_buf(v8, keyin, sz);
 	if (sz < 32) {
 		// fill the remainder with the binary pattern b10000..., but
 		// reversed
@@ -146,7 +146,7 @@ serpent_encrypt(const struct serpent_ctx *ctx,
 	uint32_t	y0, y1, y2, y3;
 
 	// fix both endian and alignment
-	le_to_host32(buf, in, SERPENT_BLOCK);
+	le32toh_buf(buf, in, SERPENT_BLOCK);
 	x0 = buf[0];
 	x1 = buf[1];
 	x2 = buf[2];
@@ -286,7 +286,7 @@ serpent_encrypt(const struct serpent_ctx *ctx,
 	buf[1] = y1;
 	buf[2] = y2;
 	buf[3] = y3;
-	host_to_le32(out, buf, SERPENT_BLOCK);
+	htole32_buf(out, buf, SERPENT_BLOCK);
 }
 
 extern "C" void
@@ -298,7 +298,7 @@ serpent_decrypt(const struct serpent_ctx *ctx,
 	uint32_t	y0, y1, y2, y3;
 
 	// fix both endian and alignment
-	le_to_host32(buf, in, SERPENT_BLOCK);
+	le32toh_buf(buf, in, SERPENT_BLOCK);
 	x0 = buf[0];
 	x1 = buf[1];
 	x2 = buf[2];
@@ -438,5 +438,5 @@ serpent_decrypt(const struct serpent_ctx *ctx,
 	buf[1] = y1;
 	buf[2] = y2;
 	buf[3] = y3;
-	host_to_le32(out, buf, SERPENT_BLOCK);
+	htole32_buf(out, buf, SERPENT_BLOCK);
 }

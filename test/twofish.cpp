@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include <fstream>
-#include <boost/regex.hpp>
+#include <regex>
 
 #include "common.hpp"
 #include "../twofish.h"
@@ -11,12 +11,12 @@ char *prog;
 
 namespace test {
 
-enum type { monte_carlo, table, variable_key, variable_txt };
+enum class test_type { monte_carlo, table, variable_key, variable_txt };
 
-bool run(uint16_t i, const uint8_t *key, uint16_t szkey,
+bool
+run(uint16_t i, const uint8_t *key, uint16_t szkey,
     const uint8_t pt[TWOFISH_BLOCK], const uint8_t ct[TWOFISH_BLOCK],
-    enum type type, bool encrypt)
-{
+    test_type type, bool encrypt) {
 	uint8_t buf[TWOFISH_BLOCK];
 	twofish_ctx ctx;
 	const uint8_t *correct;
@@ -26,7 +26,7 @@ bool run(uint16_t i, const uint8_t *key, uint16_t szkey,
 		return false;
 	}
 
-	uint16_t iter = type == monte_carlo ? 10000 : 1;
+	uint16_t iter = type == test_type::monte_carlo ? 10000 : 1;
 
 	if (encrypt) {
 		correct = ct;
@@ -48,9 +48,9 @@ bool run(uint16_t i, const uint8_t *key, uint16_t szkey,
 	}
 
 	switch (type) {
-	case table:
-	case variable_key:
-	case variable_txt:
+	case test_type::table:
+	case test_type::variable_key:
+	case test_type::variable_txt:
 		// do opposite direction for known_answer
 		if (encrypt) {
 			correct = pt;
@@ -73,8 +73,8 @@ bool run(uint16_t i, const uint8_t *key, uint16_t szkey,
 	return true;
 }
 
-bool run_script(const std::string &path, enum type type)
-{
+bool
+run_script(const std::string &path, test_type type) {
 	std::ifstream file(path.c_str());
 	if (!file) {
 		std::cerr << prog << ": failed to open file " << path << '\n';
@@ -90,10 +90,10 @@ bool run_script(const std::string &path, enum type type)
 	bool have_job = false;
 	bool encrypt = false;
 
-	boost::regex expr("(KEYSIZE|I|KEY|CT|PT)=(.*)");
-	boost::regex re_digits("([0-9]+).*");
-	boost::regex re_hex("[0-9A-Fa-f]+");
-	boost::regex re_keysize("(128|192|256)");
+	std::regex expr("(KEYSIZE|I|KEY|CT|PT)=(.*)");
+	std::regex re_digits("([0-9]+).*");
+	std::regex re_hex("[0-9A-Fa-f]+");
+	std::regex re_keysize("(128|192|256)");
 
 	while (file) {
 		std::string line;
@@ -103,22 +103,22 @@ bool run_script(const std::string &path, enum type type)
 			break;
 		}
 
-		boost::smatch matches;
-		if (!boost::regex_match(line, matches, expr)) continue;
+		std::smatch matches;
+		if (!std::regex_match(line, matches, expr)) continue;
 		std::string prop = matches[1];
 		std::string value = matches[2];
 		if (prop == "KEYSIZE") {
-			if (!boost::regex_match(value, re_keysize)) {
+			if (!std::regex_match(value, re_keysize))
 				std::cerr << "bad key size\n";
-			} else {
+			else {
 				keysize = atoi(value.c_str()) / 8;
 				have_job = false;
 			}
 		}
 
 		if (prop == "I") {
-			boost::smatch i_match;
-			if (!boost::regex_match(value, i_match, re_digits)) {
+			std::smatch i_match;
+			if (!std::regex_match(value, i_match, re_digits)) {
 				std::cerr << "bad number\n";
 				continue;
 			}
@@ -133,14 +133,14 @@ bool run_script(const std::string &path, enum type type)
 			have_job = true;
 		} else if (prop == "KEY") {
 			if (value.size() != keysize * 2 ||
-			    !boost::regex_match(value, re_hex)) {
+			    !std::regex_match(value, re_hex)) {
 				std::cerr << "bad key\n";
 				continue;
 			}
 			dehex(value, key);
 		} else if (prop == "CT") {
 			if (value.size() != TWOFISH_BLOCK * 2 ||
-			    !boost::regex_match(value, re_hex)) {
+			    !std::regex_match(value, re_hex)) {
 				std::cerr << "bad ct\n";
 				continue;
 			}
@@ -148,7 +148,7 @@ bool run_script(const std::string &path, enum type type)
 			encrypt = true;
 		} else if (prop == "PT") {
 			if (value.size() != TWOFISH_BLOCK * 2 ||
-			    !boost::regex_match(value, re_hex)) {
+			    !std::regex_match(value, re_hex)) {
 				std::cerr << "bad pt\n";
 				continue;
 			}
@@ -164,8 +164,8 @@ bool run_script(const std::string &path, enum type type)
 
 // usage: ./twofish [DIR]
 // DIR contains the test scripts
-int main(int argc, char **argv)
-{
+int
+main(int argc, char **argv) {
 	using namespace test;
 
 	prog = *argv;
@@ -194,15 +194,15 @@ int main(int argc, char **argv)
 
 	if (verbose)
 		std::cerr << '(' << base  << ": variable key, known text)\n";
-	all_good &= run_script("twofish_varkey.txt", variable_key);
+	all_good &= run_script("twofish_varkey.txt", test_type::variable_key);
 
 	if (verbose)
 		std::cerr << '(' << base  << ": variable text, known key)\n";
-	all_good &= run_script("twofish_vartxt.txt", variable_txt);
+	all_good &= run_script("twofish_vartxt.txt", test_type::variable_txt);
 
 	if (verbose)
 		std::cerr << '(' << base  << ": table, known text)\n";
-	all_good &= run_script("twofish_table.txt", table);
+	all_good &= run_script("twofish_table.txt", test_type::table);
 
 	return all_good ? 0 : 1;
 }

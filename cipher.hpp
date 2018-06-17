@@ -115,8 +115,7 @@ public:
 	 * \param sz_key	The size of the encryption key in bytes
 	 * \throw Crypt_error	Probably the key size is bad
 	 */
-	virtual void init(const uint8_t *key, size_t sz_key)
-	    noexcept(false) = 0;
+	virtual void init(const uint8_t *key, size_t sz_key) = 0;
 
 	/** Encrypt a block of data
 	 *
@@ -126,8 +125,7 @@ public:
 	 *	not first called or if <code>in<code> cannot be equal to
 	 *	</code>out</code>.
 	 */
-	virtual void encrypt(const uint8_t *in, uint8_t *out)
-	    noexcept(false) = 0;
+	virtual void encrypt(const uint8_t *in, uint8_t *out) = 0;
 
 	/** Decrypt a block of data
 	 *
@@ -137,8 +135,7 @@ public:
 	 *	not first called or if <code>in<code> cannot be equal to
 	 *	</code>out</code>.
 	 */
-	virtual void decrypt(const uint8_t *in, uint8_t *out)
-	    noexcept(false) = 0;
+	virtual void decrypt(const uint8_t *in, uint8_t *out) = 0;
 
 	/** Get information on the current cipher
 	 *
@@ -173,7 +170,7 @@ public:
 		_init = true;
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
 		if (_dir != crypt_direction::ENCRYPT) {
@@ -185,7 +182,7 @@ public:
 		AES_encrypt(in, out, &_key);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
 		if (_dir != crypt_direction::DECRYPT) {
@@ -211,7 +208,7 @@ public:
 	Cipher_blowfish() : Cipher(cipher_type::BLOWFISH), _init(false) {}
 	~Cipher_blowfish() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept(false) {
+	void init(const uint8_t *key, size_t sz) {
 		// BF_set_key() doesn't check its input size (or silently
 		// fixes it)
 		const std::vector<uint16_t> &sizes =
@@ -223,13 +220,13 @@ public:
 		BF_set_key(&_key, sz, key);
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
 		BF_ecb_encrypt(in, out, &_key, BF_ENCRYPT);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
 		BF_ecb_encrypt(in, out, &_key, BF_DECRYPT);
@@ -248,19 +245,19 @@ public:
 	Cipher_camellia() : Cipher(cipher_type::CAMELLIA), _init(false) {}
 	~Cipher_camellia() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept(false) {
+	void init(const uint8_t *key, size_t sz) {
 		if (Camellia_set_key(key, sz*8, &_ctx) < 0)
 			throw Crypt_error("bad key size");
 		_init = true;
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
 		Camellia_encrypt(in, out, &_ctx);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
 		Camellia_decrypt(in, out, &_ctx);
@@ -279,7 +276,7 @@ public:
 	Cipher_cast5() : Cipher(cipher_type::CAST5), _init(false) {}
 	~Cipher_cast5() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept(false) {
+	void init(const uint8_t *key, size_t sz) {
 		// CAST_set_key() doesn't check its input size (or silently
 		// fixes it)
 		const std::vector<uint16_t> &sizes =
@@ -291,13 +288,13 @@ public:
 		CAST_set_key(&_key, sz, key);
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
 		CAST_ecb_encrypt(in, out, &_key, CAST_ENCRYPT);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
 		CAST_ecb_encrypt(in, out, &_key, CAST_DECRYPT);
@@ -315,19 +312,19 @@ public:
 	Cipher_cast6() : Cipher(cipher_type::CAST6), _init(false) {}
 	~Cipher_cast6() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept(false) {
+	void init(const uint8_t *key, size_t sz) {
 		if (!cast6_init(&_ctx, key, sz))
 			throw Crypt_error("bad key size");
 		_init = true;
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
 		cast6_encrypt(&_ctx, in, out);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
 		cast6_decrypt(&_ctx, in, out);
@@ -346,19 +343,19 @@ public:
 	Cipher_serpent() : Cipher(cipher_type::SERPENT), _init(false) {}
 	~Cipher_serpent() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept(false) {
+	void init(const uint8_t *key, size_t sz) {
 		if (serpent_init(&_ctx, key, sz) == SERPENT_BAD_KEY_MAT)
 			throw Crypt_error("bad key size");
 		_init = true;
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
 		serpent_encrypt(&_ctx, in, out);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
 		serpent_decrypt(&_ctx, in, out);
@@ -376,19 +373,19 @@ public:
 	Cipher_twofish() : Cipher(cipher_type::TWOFISH), _init(false) {}
 	~Cipher_twofish() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept(false) {
+	void init(const uint8_t *key, size_t sz) {
 		if (!twofish_init(&_ctx, key, sz))
 			throw Crypt_error("bad key size");
 		_init = true;
 	}
 
-	void encrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
 		twofish_encrypt(&_ctx, in, out);
 	}
 
-	void decrypt(const uint8_t *in, uint8_t *out) noexcept(false) {
+	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
 		twofish_decrypt(&_ctx, in, out);

@@ -12,8 +12,10 @@ set(CMAKE_BUILD_TYPE release)
 
 # END OF USER CONFIG (glad that's over)
 
+include (TestBigEndian)
 
-project(fluks CXX C)
+project(fluks LANGUAGES CXX C)
+enable_testing()
 
 set(Boost_FIND_QUIETLY false)
 set(Boost_FIND_REQUIRED true)
@@ -87,14 +89,26 @@ endif()
 # revert to old setting
 set(CMAKE_FIND_LIBRARY_SUFFIXES ${ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
 
+
 include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-add_definitions(-D_BSD_SOURCE)
-set(CMAKE_C_FLAGS         "${CFLAGS} -Wall -pthread -std=c99 -pedantic")
+add_definitions(-D_XOPEN_SOURCE=700)
+TEST_BIG_ENDIAN(big_endian)
+if(big_endian STREQUAL 1)
+	add_definitions(-DFLUKS_IS_BIG_ENDIAN=1)
+else()
+	add_definitions(-DFLUKS_IS_BIG_ENDIAN=0)
+endif()
+set(CMAKE_C_FLAGS         "${CMAKE_C_FLAGS} -Wall -pedantic")
 set(CMAKE_C_FLAGS_DEBUG   "-O0 -g -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG -s")
-set(CMAKE_CXX_FLAGS         "${CXXFLAGS} -Wall -pthread -std=c++14")
+set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG")
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -Wall -pedantic")
 set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -s")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG")
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(fluks
 	af.cpp
@@ -149,23 +163,23 @@ install(TARGETS fluks
 	)
 
 # recompile cast6.c with -DCAST6_TEST
-add_custom_command(OUTPUT cast6_t.o COMMAND ${CMAKE_C_COMPILER} ${CMAKE_SOURCE_DIR}/cast6.c -c -o cast6_t.o -DCAST6_TEST -D_BSD_SOURCE -std=c99 -Wall -pedantic)
+add_custom_command(OUTPUT cast6_t.o COMMAND ${CMAKE_C_COMPILER}	-std=c11 -Wall -pedantic -DCAST6_TEST -D_XOPEN_SOURCE=700 ${CMAKE_SOURCE_DIR}/cast6.c -c -o cast6_t.o)
 add_executable(test-cast6 test/cast6.cpp cast6_t.o)
-target_link_libraries(test-cast6 boost_regex)
-add_test(test-cast6 ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test-cast6)
+target_link_libraries(test-cast6)
+add_test(NAME test-cast6 COMMAND test-cast6 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
 
 add_executable(test-serpent test/serpent.cpp serpent.cpp)
-target_link_libraries(test-serpent boost_regex)
-add_test(test-serpent ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test-serpent)
+target_link_libraries(test-serpent)
+add_test(NAME test-serpent COMMAND test-serpent WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
 
 add_executable(test-twofish test/twofish.cpp twofish.c)
-target_link_libraries(test-twofish boost_regex)
-add_test(test-twofish ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test-twofish)
+target_link_libraries(test-twofish)
+add_test(NAME test-twofish COMMAND test-twofish WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
 
 add_executable(test-tiger test/tiger.cpp tiger.c)
-add_test(test-tiger ${CMAKE_CURRENT_BINARY_DIR}/test-tiger)
 target_link_libraries(test-tiger boost_system)
+add_test(NAME test-tiger COMMAND test-tiger)
 
 add_executable(test-whirlpool test/whirlpool.cpp whirlpool.c)
-add_test(test-whirlpool ${CMAKE_CURRENT_BINARY_DIR}/test-whirlpool)
 target_link_libraries(test-whirlpool boost_system)
+add_test(NAME test-whirlpool COMMAND test-whirlpool)

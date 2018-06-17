@@ -26,7 +26,6 @@
 #include "cipher_spec.hpp"
 #include "errors.hpp"
 #include "os.hpp"
-#include "sys_fstream.hpp"
 
 namespace fluks {
 
@@ -72,7 +71,7 @@ struct key {
  */
 struct phdr1 {
 // annotated with hex offsets
-/*00*/	uint8_t		magic[sizeof(MAGIC)];
+/*00*/	uint8_t		magic[sizeof MAGIC];
 /*06*/	uint16_t	version;
 /*08*/	char		cipher_name[SZ_CIPHER_NAME];
 /*28*/	char		cipher_mode[SZ_CIPHER_MODE];
@@ -136,8 +135,7 @@ public:
 	 */
 	Luks_header(int device, int32_t sz_key,
 	    const std::string &cipher_spec, const std::string &hash_spec,
-	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES)
-	    noexcept(false);
+	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES);
 
 	/** Read a header from the disk
 	 *
@@ -148,7 +146,7 @@ public:
 	 * \throw Unsupported_version
 	 * \throw boost::system::system_error
 	 */
-	Luks_header(int device) noexcept(false);
+	Luks_header(int device);
 
 	~Luks_header() {}
 
@@ -156,8 +154,7 @@ public:
 	 *
 	 * \return  The cipher spec, for use by dm-crypt.
 	 */
-	const std::string cipher_spec() const
-	{
+	const std::string cipher_spec() const {
 		std::string res = _hdr->cipher_name;
 		if (*_hdr->cipher_mode) {
 			res += '-';
@@ -171,8 +168,7 @@ public:
 	 * \return	A pair containing the master key and its size. If the
 	 *	master key hasn't been decrypted yet, the key will be nullptr.
 	 */
-	std::pair<const uint8_t *, size_t> master_key() const
-	{
+	std::pair<const uint8_t *, size_t> master_key() const {
 		const_cast<Luks_header *>(this)->set_mach_end(true);
 		return std::make_pair(_master_key.get(), _hdr->sz_key);
 	}
@@ -183,8 +179,7 @@ public:
 	 *
 	 * \return The size in sectors
 	 */
-	uint32_t sectors() const
-	{
+	uint32_t sectors() const {
 		const_cast<Luks_header *>(this)->set_mach_end(true);
 		return _hdr->off_payload;
 	}
@@ -193,8 +188,9 @@ public:
 	 *
 	 * \return  The UUID.
 	 */
-	std::string uuid() const
-	{	return std::string(_hdr->uuid); }
+	std::string uuid() const {
+		return std::string(_hdr->uuid);
+	}
 
 	/** Decrypt the private key
 	 *
@@ -205,8 +201,7 @@ public:
 	 *			to decrypt.
 	 * \throw Disk_error	A device open/seek/read error occurred.
 	 */
-	bool read_key(const std::string &passwd, int8_t hint=-1)
-	    noexcept(false);
+	bool read_key(const std::string &passwd, int8_t hint=-1);
 
 	/** Add a password for the private key
 	 *
@@ -218,8 +213,8 @@ public:
 	 *	yet.
 	 * \throw Slots_full	All slots are enabled already.
 	 */
-	void add_passwd(const std::string &passwd, uint32_t check_time=500000)
-	    throw (No_private_key, Slots_full);
+	void add_passwd(const std::string &passwd,
+	    uint32_t check_time=500000);
 
 	/** Check whether the cipher and hash specs are supported in LUKS.
 	 *
@@ -244,7 +239,7 @@ public:
 	 * \throw Safety	Either the private key hasn't been decrypted
 	 *	yet or it was decrypted with the same password being deleted.
 	 */
-	void revoke_slot(uint8_t which) noexcept(false);
+	void revoke_slot(uint8_t which);
 
 	/** Disable a password
 	 *
@@ -254,9 +249,7 @@ public:
 	 * \throw Safety	Either the private key hasn't been decrypted
 	 *	yet or it was decrypted with the same password being deleted.
 	 */
-	bool revoke_passwd(const std::string &passwd)
-	    throw (Disk_error, Safety)
-	{
+	bool revoke_passwd(const std::string &passwd) {
 		int8_t which = locate_passwd(passwd);
 		if (which == -1) return false;
 		revoke_slot(which);
@@ -268,26 +261,24 @@ public:
 	 * \throw Disk_error	Some write/seek failure.
 	 * \throw Safety	The private key hasn't been decrypted yet.
 	 */
-	void wipe() throw (Disk_error, Safety);
+	void wipe();
 
 	/** Commit the header and/or new key material to the disk.
 	 *
 	 * \throw Disk_error	Some write/seek failure.
 	 */
-	void save() noexcept(false);
+	void save();
 
 private:
-	void set_mach_end(bool which)
-	{
+	void set_mach_end(bool which) {
 		if (_mach_end != which) {
 			endian_switch(_hdr.get(), true);
 			_mach_end = which;
 		}
 	}
-	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key)
-	    noexcept(false);
+	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key);
 
-	int8_t locate_passwd(const std::string &passwd) noexcept(false);
+	int8_t locate_passwd(const std::string &passwd);
 
 	void decrypt_key(const std::string &passwd, uint8_t slot,
 	    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key);

@@ -19,7 +19,6 @@
 #include <boost/system/system_error.hpp>
 
 #include "errors.hpp"
-#include "sys_fstream.hpp"
 
 namespace fluks {
 
@@ -31,8 +30,7 @@ namespace fluks {
  * \throw No_header	LUKS header couldn't be found
  * \throw Unsupported_version	The version in the LUKS header is unrecognized
  */
-void	make_backup(int device, const std::string &backup_path)
-	    noexcept(false);
+void	make_backup(int device, const std::string &backup_path);
 
 }
 

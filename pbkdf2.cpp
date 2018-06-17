@@ -13,6 +13,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include <algorithm>
+#include <memory>
 
 #include "hmac.hpp"
 #include "pbkdf2.hpp"
@@ -27,8 +28,7 @@ inline void
 pbkdf2_f(Hmac_function *hmacfn,
     const uint8_t *passwd, uint32_t sz_passwd,
     const uint8_t *salt, size_t sz_salt,
-    uint32_t iterations, uint32_t index, uint8_t *result)
-{
+    uint32_t iterations, uint32_t index, uint8_t *result) {
 	// 3.
 	// As defined:
 	//
@@ -47,26 +47,27 @@ pbkdf2_f(Hmac_function *hmacfn,
 	//
 	// I instead use 0-indexing (index: [0,l), j: [0,c)).
 
-	uint8_t u[hmacfn->traits()->digest_size];
+	size_t sz_u = hmacfn->traits()->digest_size;
+	std::unique_ptr<uint8_t[]> u{new uint8_t[sz_u]};
 
 	// '+ 1': switch from 0-indexing to 1-indexing
-	index = htobe32(index + 1);
+	index = fluks_htobe32(index + 1);
 
 	// compute U_0
 	hmacfn->init(passwd, sz_passwd);
 	hmacfn->add(salt, sz_salt);
 	hmacfn->add(reinterpret_cast<uint8_t *>(&index), 4);
-	hmacfn->end(u);
+	hmacfn->end(u.get());
 
-	std::copy(u, u + sizeof(u), result);
+	std::copy(u.get(), u.get() + sz_u, result);
 
 	for (uint32_t i = 1; i < iterations; i++) {
 		// compute U_i
 		hmacfn->init(passwd, sz_passwd);
-		hmacfn->add(u, sizeof(u));
-		hmacfn->end(u);
+		hmacfn->add(u.get(), sz_u);
+		hmacfn->end(u.get());
 
-		xor_bufs(u, result, sizeof(u), result);
+		xor_bufs(u.get(), result, sz_u, result);
 	}
 }
 
@@ -78,9 +79,7 @@ fluks::pbkdf2(hash_type type,
     const uint8_t *in, uint32_t sz_in,
     const uint8_t *salt, size_t sz_salt,
     uint32_t iterations,
-    uint8_t *derived_key, uint32_t sz_key)
-    noexcept(false)
-{
+    uint8_t *derived_key, uint32_t sz_key) {
 	if (type == hash_type::UNDEFINED)
 		throw Bad_spec("PBKDF2 needs a hash function");
 	uint32_t sz_hash = Hash_traits::traits(type)->digest_size;
@@ -117,10 +116,10 @@ fluks::pbkdf2(hash_type type,
 		    i, derived_key + i * sz_hash);
 
 	if (partial) {
-		uint8_t buf_partial[sz_hash];
+		std::unique_ptr<uint8_t[]> buf_partial{new uint8_t[sz_hash]};
 		pbkdf2_f(hmacfn.get(), in, sz_in, salt, sz_salt, iterations,
-		    blocks, buf_partial);
-		std::copy(buf_partial, buf_partial + partial,
+		    blocks, buf_partial.get());
+		std::copy(buf_partial.get(), buf_partial.get() + partial,
 		    derived_key + blocks * sz_hash);
 	}
 }
