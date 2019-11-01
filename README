@@ -16,8 +16,7 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
-	gcc-4.5 (it's stable in Gentoo now, so I will now depend on it for
-	    some C++11 features)
+	gcc-4.9 or clang-3.3
 	CMake
 	libdevmapper from Device-mapper (sourceware.org/dm)
 	boost (boost.org), at least version 1.35.0
@@ -35,8 +34,10 @@ BUILDING
     something.
 
     Now build:
-	$ ./build.sh -j4  (or whatever arguments you like to send to make)
+        % mkdir build && cd build
+	% cmake -DCMAKE_BUILD_TYPE=Release ..
+	% make -j9
 
 INSTALLING
 
-	# ./build.sh install
+	# cp fluks /usr/local/sbin/
