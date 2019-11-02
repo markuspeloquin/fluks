@@ -33,6 +33,7 @@ protected:
 	Crypter(const uint8_t *key, size_t sz_key, const Cipher_spec &spec);
 	Crypter(const Crypter &rhs);
 	Crypter &operator=(const Crypter &rhs);
+	virtual ~Crypter() {}
 
 	void swap(Crypter &rhs) {
 		std::swap(_key, rhs._key);
