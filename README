@@ -16,17 +16,16 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
-	gcc-4.9 or clang-3.3
-	CMake
-	libdevmapper from Device-mapper (sourceware.org/dm)
-	boost (boost.org), at least version 1.35.0
-	OpenSSL (openssl.org)
+	GCC 5 or Clang 3.4
+	CMake 2.8
+	libdevmapper (Device-mapper)
+	Boost 1.35
+	OpenSSL/LibreSSL
 	Linux headers (/usr/include/linux)
 
     In Ubuntu (ugh), it's at least:
 	- libboost-dev libboost-filesystem-dev libboost-program-options-dev
-	  libboost-regex-dev libboost-system-dev libdevmapper-dev libssl-dev
-	  libudev-dev'
+	  libboost-system-dev libdevmapper-dev libssl-dev libudev-dev
 
     If you would like a dynamically-linked binary, edit the 'static_linking'
     variable in CMakeLists.txt. By default, an entirely statically-linked
