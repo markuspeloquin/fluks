@@ -1,54 +1,48 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 enable_testing()
 
-
-# START OF USER CONFIG
-
-# remember to do a `make clean` and `rm CMakeCache.txt` after changing this
-set(static_linking false) #true)
-
-set(CMAKE_BUILD_TYPE release)
-
-# END OF USER CONFIG (glad that's over)
+set(static_linking FALSE)
+#set(static_linking TRUE)
 
 include (TestBigEndian)
 
 project(fluks LANGUAGES CXX C)
-enable_testing()
 
-set(Boost_FIND_QUIETLY false)
-set(Boost_FIND_REQUIRED true)
+set(Boost_FIND_QUIETLY FALSE)
+set(Boost_FIND_REQUIRED TRUE)
 set(Boost_USE_STATIC_LIBS ${static_linking})
-set(Boost_USE_MULTITHREADED true)
-#set(Boost_USE_STATIC_RUNTIME true)
-
+set(Boost_USE_MULTITHREADED TRUE)
+if(static_linking)
+	set(Boost_USE_STATIC_RUNTIME TRUE)
+endif()
 find_package(Boost 1.35 COMPONENTS filesystem program_options system)
+
+if (static_linking)
+	set(OPENSSL_USE_STATIC_LIBS TRUE)
+endif()
 find_package(OpenSSL)
 
-set(ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 if(static_linking)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 endif()
 
-
-find_library(DEVICE_MAPPER_libdevmapper devmapper
-    DOC "Device Mapper (libdevmapper)")
-if(${DEVICE_MAPPER_libdevmapper} STREQUAL
-    "DEVICE_MAPPER_libdevmapper-NOTFOUND")
-	message(FATAL_ERROR "Device Mapper libdevmapper not found")
+find_library(DEVICE_MAPPER_libdevmapper devmapper DOC "libdevmapper (Device Mapper)")
+if(${DEVICE_MAPPER_libdevmapper} STREQUAL "DEVICE_MAPPER_libdevmapper-NOTFOUND")
+	message(FATAL_ERROR "libdevmapper not found")
 endif()
 message(STATUS "Device Mapper libdevmapper found")
 
 # Ubuntu needs these I think?
 find_library(SE_libselinux selinux DOC "SE libselinux")
-find_library(SE_libsepol sepol DOC "SE libsepol")
 if (${SE_libselinux} STREQUAL "SE_libselinux-NOTFOUND")
 	message(STATUS "libselinux not found")
 	set(SE_libselinux "")
 else()
 	message(STATUS "libselinux found")
 endif()
+
+find_library(SE_libsepol sepol DOC "SE libsepol")
 if (${SE_libsepol} STREQUAL "SE_libsepol-NOTFOUND")
 	message(STATUS "libsepol not found")
 	set(SE_libsepol "")
@@ -106,9 +100,9 @@ set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG")
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_C_EXTENSIONS FALSE)
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS FALSE)
 
 add_executable(fluks
 	af.cpp
@@ -155,11 +149,11 @@ target_link_libraries(fluks
 	${LIBC_libpthread}
 
 	# must be at the end
-	${static_link_footer}
+	#${static_link_footer}
 	)
 
 install(TARGETS fluks
-	RUNTIME DESTINATION bin
+	RUNTIME DESTINATION sbin
 	)
 
 # recompile cast6.c with -DCAST6_TEST
