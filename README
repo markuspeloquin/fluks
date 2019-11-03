@@ -17,7 +17,7 @@ BUILDING
 
     Dependencies:
 	GCC 5 or Clang 3.4
-	CMake 2.8
+	CMake 3
 	libdevmapper (Device-mapper)
 	Boost 1.35
 	OpenSSL/LibreSSL
