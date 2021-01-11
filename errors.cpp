@@ -34,13 +34,16 @@ ssl_load_errors() {
 
 }
 
-fluks::Ssl_error::Ssl_error() {
-	// '120' comes from ERR_error_string(3); seems like an
-	// oversight on their part
-	char ssl_err_buf[120];
+fluks::Ssl_error::Ssl_error(const std::string &msg) {
 	ssl_load_errors();
-	_msg = "OpenSSL error: ";
-	_msg += ERR_error_string(ERR_get_error(), ssl_err_buf);
+
+	// '120' used to appear in ERR_error_string(3)
+	char ssl_err_buf[120];
+	ERR_error_string_n(ERR_get_error(), ssl_err_buf, sizeof ssl_err_buf);
+
+	std::ostringstream out;
+	out << msg << ": " << ssl_err_buf;
+	_msg = out.str();
 }
 
 /** \throw boost::system::system_error */

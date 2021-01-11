@@ -143,32 +143,34 @@ public:
 		_md(EVP_hashfn()),
 		_valid(false)
 	{
-		HMAC_CTX_init(&_ctx);
+		_ctx = HMAC_CTX_new();
+		if (!_ctx)
+			throw Ssl_error("HMAC_CTX_new() failed");
 	}
 
 	~Hmac_ssl() noexcept {
-		HMAC_CTX_cleanup(&_ctx);
+		HMAC_CTX_free(_ctx);
 	}
 
 	void init(const uint8_t *key, size_t sz) noexcept {
-		HMAC_Init_ex(&_ctx, key, sz, _md, 0);
+		HMAC_Init_ex(_ctx, key, sz, _md, 0);
 		_valid = true;
 	}
 
 	void add(const uint8_t *data, size_t sz) noexcept {
 		if (!_valid) return;
-		HMAC_Update(&_ctx, data, sz);
+		HMAC_Update(_ctx, data, sz);
 	}
 
 	void end(uint8_t *out) noexcept {
 		if (!_valid) return;
 		unsigned sz = traits()->digest_size;
-		HMAC_Final(&_ctx, out, &sz);
+		HMAC_Final(_ctx, out, &sz);
 		_valid = false;
 	}
 
 private:
-	HMAC_CTX	_ctx;
+	HMAC_CTX	*_ctx;
 	const EVP_MD	*_md;
 	bool		_valid;
 };

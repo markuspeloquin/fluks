@@ -173,7 +173,8 @@ struct Slots_full : std::exception {
 
 /** An SSL error wrapping exception type. */
 struct Ssl_error : virtual std::exception {
-	Ssl_error();
+	Ssl_error() : Ssl_error("OpenSSL error") {}
+	Ssl_error(const std::string &msg);
 	virtual ~Ssl_error() noexcept {}
 
 	const char *what() const noexcept override {
