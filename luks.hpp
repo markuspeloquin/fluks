@@ -283,8 +283,8 @@ private:
 	void decrypt_key(const std::string &passwd, uint8_t slot,
 	    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key);
 
-	Luks_header(const Luks_header &l) {}
-	void operator=(const Luks_header &l) {}
+	Luks_header(const Luks_header &) {}
+	void operator=(const Luks_header &) {}
 
 	int				_device;
 	std::unique_ptr<struct phdr1>	_hdr;

@@ -20,8 +20,10 @@
 #include <cerrno>
 #include <cstring>
 #include <ctime>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
-#include <boost/filesystem.hpp>
+#include <string>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -180,7 +182,7 @@ prompt_passwd(const std::string &msg, bool repeat)
 std::string
 read_passfile(const std::string &pathname)
 {
-	std::ifstream file(pathname.c_str());
+	std::ifstream file(pathname);
 	if (!file) {
 		std::cerr << prog << ": failed to open passphrase file `"
 		    << pathname << "'\n";
@@ -223,7 +225,7 @@ main(int argc, char **argv)
 {
 	using namespace fluks;
 
-	namespace fs = boost::filesystem;
+	namespace fs = std::filesystem;
 	namespace po = boost::program_options;
 
 	prog = *argv;

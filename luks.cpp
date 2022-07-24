@@ -20,7 +20,6 @@
 #include <iostream>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
-#include <boost/timer.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -251,8 +250,9 @@ fluks::Luks_header::read_key(const std::string &passwd, int8_t hint) {
 }
 
 void
-fluks::Luks_header::add_passwd(const std::string &passwd,
-    uint32_t check_time) {
+fluks::Luks_header::add_passwd(
+	const std::string &passwd, uint32_t check_time
+) {
 	struct key	*avail = 0;
 	uint8_t		avail_idx = 0;
 
@@ -285,14 +285,19 @@ fluks::Luks_header::add_passwd(const std::string &passwd,
 	std::unique_ptr<uint8_t[]> pw_digest{new uint8_t[_hdr->sz_key]};
 
 	// benchmark the PBKDF2 function
-	boost::timer timer;
+	auto timer_start = std::chrono::high_resolution_clock::now();
 	pbkdf2(_hash_type,
 	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
 	    avail->salt, SZ_SALT, PBKDF2_BENCH_ITER,
 	    pw_digest.get(), _hdr->sz_key);
-	// timer.elapsed() gives seconds
+	auto timer_end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<uint64_t, std::nano> elapsed =
+	    timer_end - timer_start;
+
+	// This would only overload uint64_t at ~512.4 hours.
 	avail->iterations = static_cast<uint32_t>(
-	    PBKDF2_BENCH_ITER * check_time / (timer.elapsed() * 1000000));
+	    static_cast<uint64_t>(PBKDF2_BENCH_ITER) * check_time * 1000 /
+	    elapsed.count());
 
 	// compute digest for realsies
 	pbkdf2(_hash_type,
@@ -432,7 +437,7 @@ fluks::Luks_header::save() {
 
 		if (_key_crypt[i]) {
 			if (::lseek(_device, _hdr->keys[i].off_km * _sz_sect,
-			    SEEK_SET)) {
+			    SEEK_SET) == -1) {
 				// "writing key material: seek error"
 				throw_errno(errno);
 			}
@@ -450,7 +455,7 @@ fluks::Luks_header::save() {
 		// ensure big-endian
 		set_mach_end(false);
 
-		if (::lseek(_device, 0, SEEK_SET)) {
+		if (::lseek(_device, 0, SEEK_SET) == -1) {
 			// "writing header: seek error"
 			throw_errno(errno);
 		}

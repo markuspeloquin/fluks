@@ -124,8 +124,8 @@ public:
 	void end(uint8_t *out) noexcept;
 
 private:
-	Hmac_impl(const Hmac_impl &h) : Hmac_function(0) {}
-	void operator=(const Hmac_impl &h) {}
+	Hmac_impl(const Hmac_impl &) : Hmac_function(0) {}
+	void operator=(const Hmac_impl &) {}
 
 	std::shared_ptr<Hash_function>	_hashfn;
 	std::unique_ptr<uint8_t>	_key;

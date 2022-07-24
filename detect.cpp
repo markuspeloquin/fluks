@@ -45,8 +45,8 @@ private:
 	Crypto_detect();
 	~Crypto_detect() {}
 
-	Crypto_detect(const Crypto_detect &c) {}
-	void operator=(const Crypto_detect &c) {}
+	Crypto_detect(const Crypto_detect &) {}
+	void operator=(const Crypto_detect &) {}
 
 	static Crypto_detect _instance;
 
