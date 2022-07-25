@@ -47,7 +47,7 @@ read_all(int fd, void *buf, size_t count) {
 }
 
 /**
- * \throws boost::system::system_error
+ * \throws std::system_error
  * \throws Disk_error
  * \throws No_header
  * \throws Unsupported_version

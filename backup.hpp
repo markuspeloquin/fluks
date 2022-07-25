@@ -16,16 +16,13 @@
 #define FLUKS_BACKUP_HPP
 
 #include <string>
-#include <boost/system/system_error.hpp>
-
-#include "errors.hpp"
 
 namespace fluks {
 
 /** Back up the header and key material.
  * \param device	The hard disk's device
  * \param backup_path	A path to the output file
- * \throws boost::system::system_error
+ * \throws std::system_error
  * \throws Disk_error
  * \throw No_header	LUKS header couldn't be found
  * \throw Unsupported_version	The version in the LUKS header is unrecognized

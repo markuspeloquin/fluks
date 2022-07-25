@@ -17,7 +17,7 @@ public:
 		} catch (...) {}
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	File_descriptor &operator=(File_descriptor &&rhs) {
 		close();
 		_fd = rhs._fd;
@@ -25,7 +25,7 @@ public:
 		return *this;
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	void close() {
 		if (_fd == -1) return;
 		if (::close(_fd) == -1)
@@ -33,7 +33,7 @@ public:
 		_fd = -1;
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	size_t read(void *buf, size_t bytes) {
 		if (_fd == -1)
 			throw std::runtime_exception("illegal state");
@@ -43,7 +43,7 @@ public:
 		return static_cast<size_t>(rbytes);
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	size_t read_all(void *buf, size_t bytes) {
 		uint8_t *pos = buf;
 		size_t remaining = bytes;
@@ -57,7 +57,7 @@ public:
 		return bytes;
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	void seek(off_t pos, int whence) {
 		if (_fd == -1)
 			throw std::runtime_exception("illegal state");
@@ -65,7 +65,7 @@ public:
 			throw_errno(errno);
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	size_t write(const void *buf, size_t bytes) {
 		if (_fd == -1)
 			throw std::runtime_exception("illegal state");
@@ -75,7 +75,7 @@ public:
 		return static_cast<size_t>(wbytes);
 	}
 
-	/** \throw boost::system::system_error */
+	/** \throw std::system_error */
 	size_t write_all(const void *buf, size_t bytes) {
 		uint8_t *pos = buf;
 		size_t remaining = bytes;

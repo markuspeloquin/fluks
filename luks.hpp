@@ -21,10 +21,8 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <boost/system/system_error.hpp>
 
 #include "cipher_spec.hpp"
-#include "errors.hpp"
 #include "os.hpp"
 
 namespace fluks {
@@ -130,7 +128,7 @@ public:
 	 * \param stripes	Dramatically increases the length and entropy
 	 *	of the master key before the digest is computed.
 	 * \throw Bad_spec	One of the cipher/hash specs is invalid.
-	 * \throw boost::system::system_error	Error encountered determining
+	 * \throw std::system_error	Error encountered determining
 	 *	the sector size.
 	 */
 	Luks_header(int device, int32_t sz_key,
@@ -144,7 +142,7 @@ public:
 	 * \throw Disk_error
 	 * \throw No_header
 	 * \throw Unsupported_version
-	 * \throw boost::system::system_error
+	 * \throw std::system_error
 	 */
 	Luks_header(int device);
 

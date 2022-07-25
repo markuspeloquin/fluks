@@ -16,6 +16,7 @@
 #include <cstring>
 #include <mutex>
 #include <sstream>
+#include <system_error>
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -46,11 +47,8 @@ fluks::Ssl_error::Ssl_error(const std::string &msg) {
 	_msg = out.str();
 }
 
-/** \throw boost::system::system_error */
+/** \throw std::system_error */
 void
 fluks::throw_errno(int e) {
-	// wow
-	throw boost::system::system_error(
-	    boost::system::linux_error::make_error_code(
-	    static_cast<boost::system::linux_error::linux_errno>(e)));
+	throw std::system_error(e, std::generic_category());
 }

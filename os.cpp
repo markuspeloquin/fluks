@@ -22,12 +22,11 @@
 #include <unistd.h>
 
 #include <cerrno>
-#include <boost/system/linux_error.hpp>
-#include <boost/system/system_error.hpp>
 
+#include "errors.hpp"
 #include "os.hpp"
 
-/** \throw boost::system::system_error */
+/** \throw std::system_error */
 uint32_t
 fluks::num_sectors(int fd) {
 	uint64_t sz;
@@ -37,7 +36,7 @@ fluks::num_sectors(int fd) {
 	return static_cast<uint32_t>(sz / sz_sect);
 }
 
-/** \throw boost::system::system_error */
+/** \throw std::system_error */
 int
 fluks::sector_size(int fd) {
 	int sz_sect;
@@ -46,7 +45,7 @@ fluks::sector_size(int fd) {
 	return sz_sect;
 }
 
-/** \throw boost::system::system_error */
+/** \throw std::system_error */
 bool
 fluks::term_echo() {
 	struct termios term;
@@ -55,7 +54,7 @@ fluks::term_echo() {
 	return term.c_lflag & ECHO;
 }
 
-/** \throw boost::system::system_error */
+/** \throw std::system_error */
 bool
 fluks::term_echo(bool enable) {
 	struct termios term;

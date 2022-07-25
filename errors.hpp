@@ -17,8 +17,6 @@
 
 #include <exception>
 #include <string>
-#include <boost/system/linux_error.hpp>
-#include <boost/system/system_error.hpp>
 
 namespace fluks {
 
@@ -212,7 +210,7 @@ struct Unsupported_version : std::exception {
 	}
 };
 
-/** \throw boost::system::system_error */
+/** \throw std::system_error */
 void	throw_errno(int e);
 
 }
