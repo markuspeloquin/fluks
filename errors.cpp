@@ -29,21 +29,25 @@ inline void
 ssl_load_errors() {
 	static std::once_flag flag;
 	std::call_once(flag, []() {
-		SSL_load_error_strings();
+		ERR_load_crypto_strings();
 	});
 }
 
 }
 
-fluks::Ssl_error::Ssl_error(const std::string &msg) {
-	ssl_load_errors();
+fluks::Ssl_error::Ssl_error() :
+	Ssl_error(ERR_peek_last_error())
+{}
 
-	// '120' used to appear in ERR_error_string(3)
-	char ssl_err_buf[120];
-	ERR_error_string_n(ERR_get_error(), ssl_err_buf, sizeof ssl_err_buf);
+fluks::Ssl_error::Ssl_error(unsigned long code) :
+        code(code)
+{
+	ssl_load_errors();
+        lib = ERR_lib_error_string(code);
+        reason = ERR_reason_error_string(code);
 
 	std::ostringstream out;
-	out << msg << ": " << ssl_err_buf;
+	out << "error:" << code << ':' << lib << ':' << reason;
 	_msg = out.str();
 }
 

@@ -22,14 +22,8 @@
 #include <string>
 #include <vector>
 
-#include <openssl/aes.h>
-#include <openssl/blowfish.h>
-#include <openssl/cast.h>
-
+#include <openssl/evp.h>
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_CAMELLIA
-#	include <openssl/camellia.h>
-#endif
 
 #include "cast6.h"
 #include "errors.hpp"
@@ -149,20 +143,46 @@ private:
 	const Cipher_traits *_traits;
 };
 
-/** The Rijndael cipher. Published in 1998. AES winner, with CRYPTREC, NESSIE,
- * NSA certifications. OpenSSL implementation. */
-class Cipher_aes : public Cipher {
+/** Generic OpenSSL implementation. */
+template<
+    int cipher_nid,
+    cipher_type type,
+    int cipher_nid_192 = -1,
+    int cipher_nid_256 = -1
+>
+class Cipher_evp : public Cipher {
 public:
-	Cipher_aes() : Cipher(cipher_type::AES), _init(false) {}
-	~Cipher_aes() noexcept {}
+	Cipher_evp() : Cipher(type), _init(false) {}
 
-	void init(const uint8_t *key, size_t sz) noexcept {
-		// Rijndael keys are set up differently depending if they're
-		// being used for encryption or decryption; the two choices
-		// are (1) store two AES contexts or (2) store one context
-		// and a copy of the key; (1) uses more memory than (2), and
-		// (1) uses less CPU than (2) if the Cipher_aes object
-		// doesn't get repurposed more than once
+	~Cipher_evp() noexcept {
+		if (_ctx)
+			EVP_CIPHER_CTX_free(_ctx);
+	}
+
+	Cipher_evp(const Cipher_evp &) = delete;
+	void operator=(const Cipher_evp &) = delete;
+
+	void init(const uint8_t *key, size_t sz) {
+		int nid = cipher_nid_192 > 0 && sz == 192/8 ? cipher_nid_192 :
+		    cipher_nid_256 > 0 && sz == 256/8 ? cipher_nid_256 :
+		    cipher_nid;
+
+		if (_ctx) {
+			if (!EVP_CIPHER_CTX_reset(_ctx))
+				throw Ssl_error();
+		} else {
+			if (!(_ctx = EVP_CIPHER_CTX_new()))
+				throw Ssl_error();
+		}
+
+		_cipher = nullptr;
+		_key_data.reset(nullptr);
+
+		const EVP_CIPHER *cipher = EVP_get_cipherbynid(nid);
+		if (cipher == nullptr)
+			throw Ssl_error();
+		_cipher = cipher;
+
 		_key_data.reset(new uint8_t[sz]);
 		std::copy(key, key + sz, _key_data.get());
 		_sz = sz;
@@ -174,136 +194,74 @@ public:
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
 		if (_dir != crypt_direction::ENCRYPT) {
-			if (AES_set_encrypt_key(_key_data.get(), _sz * 8,
-			    &_key) < 0)
-				throw Ssl_crypt_error();
+			if (EVP_EncryptInit_ex(
+			      _ctx, _cipher, nullptr, _key_data.get(), nullptr
+			)) {
+				throw Ssl_error();
+			}
 			_dir = crypt_direction::ENCRYPT;
 		}
-		AES_encrypt(in, out, &_key);
+		int inl = traits()->block_size;
+		int outl = 0;
+		if (!EVP_EncryptUpdate(_ctx, out, &outl, in, inl))
+			throw Ssl_error();
+		else if (outl != inl)
+			throw Crypt_error("ciphertext length is wrong");
 	}
 
 	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no en/decryption key set");
 		if (_dir != crypt_direction::DECRYPT) {
-			if (AES_set_decrypt_key(_key_data.get(), _sz * 8,
-			    &_key) < 0)
-				throw Ssl_crypt_error();
-			_dir = crypt_direction::DECRYPT;
+			if (EVP_DecryptInit_ex(
+			      _ctx, _cipher, nullptr, _key_data.get(), nullptr
+			)) {
+				throw Ssl_error();
+			}
 		}
-		AES_decrypt(in, out, &_key);
+		int inl = traits()->block_size;
+		int outl = 0;
+		if (!EVP_DecryptUpdate(_ctx, out, &outl, in, inl))
+			throw Ssl_error();
+		else if (outl != inl)
+			throw Crypt_error("plaintext length is wrong");
 	}
 
 private:
-	AES_KEY		_key;
+	const EVP_CIPHER	*_cipher;
+	EVP_CIPHER_CTX		*_ctx;
 	std::unique_ptr<uint8_t> _key_data;
-	size_t		_sz;
-	crypt_direction	_dir;
-	bool		_init;
+	size_t			_sz;
+	crypt_direction		_dir;
+	bool			_init;
 };
+
+
+/** The Rijndael cipher. Published in 1998. AES winner, with CRYPTREC, NESSIE,
+ * NSA certifications. OpenSSL implementation. */
+using Cipher_aes = Cipher_evp<
+    NID_aes_128_ecb, cipher_type::AES, NID_aes_192_ecb, NID_aes_256_ecb
+>;
+
 
 /** The Blowfish cipher. Published in 1993. OpenSSL implementation. */
-class Cipher_blowfish : public Cipher {
-public:
-	Cipher_blowfish() : Cipher(cipher_type::BLOWFISH), _init(false) {}
-	~Cipher_blowfish() noexcept {}
+using Cipher_blowfish = Cipher_evp<NID_bf_ecb, cipher_type::BLOWFISH>;
 
-	void init(const uint8_t *key, size_t sz) {
-		// BF_set_key() doesn't check its input size (or silently
-		// fixes it)
-		const std::vector<uint16_t> &sizes =
-		    Cipher_traits::traits(cipher_type::BLOWFISH)->key_sizes;
-		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
-			throw Crypt_error("bad key size");
 
-		_init = true;
-		BF_set_key(&_key, sz, key);
-	}
-
-	void encrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no encryption key set");
-		BF_ecb_encrypt(in, out, &_key, BF_ENCRYPT);
-	}
-
-	void decrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no decryption key set");
-		BF_ecb_encrypt(in, out, &_key, BF_DECRYPT);
-	}
-
-private:
-	BF_KEY			_key;
-	bool			_init;
-};
-
-#ifndef OPENSSL_NO_CAMELLIA
 /** The Camellia cipher. Published in 2000. CRYPTREC, NESSIE certification.
  * OpenSSL implementation. */
-class Cipher_camellia : public Cipher {
-public:
-	Cipher_camellia() : Cipher(cipher_type::CAMELLIA), _init(false) {}
-	~Cipher_camellia() noexcept {}
+using Cipher_camellia = Cipher_evp<
+    NID_camellia_128_ecb,
+    cipher_type::CAMELLIA,
+    NID_camellia_192_ecb,
+    NID_camellia_256_ecb
+>;
 
-	void init(const uint8_t *key, size_t sz) {
-		if (Camellia_set_key(key, sz*8, &_ctx) < 0)
-			throw Crypt_error("bad key size");
-		_init = true;
-	}
-
-	void encrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no encryption key set");
-		Camellia_encrypt(in, out, &_ctx);
-	}
-
-	void decrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no decryption key set");
-		Camellia_decrypt(in, out, &_ctx);
-	}
-
-private:
-	CAMELLIA_KEY		_ctx;
-	bool			_init;
-};
-#endif
 
 /** The CAST-128 cipher. Published in 1996 and in RFC 2144. OpenSSL
  * implementation. */
-class Cipher_cast5 : public Cipher {
-public:
-	Cipher_cast5() : Cipher(cipher_type::CAST5), _init(false) {}
-	~Cipher_cast5() noexcept {}
+using Cipher_cast5 = Cipher_evp<NID_cast5_ecb, cipher_type::CAST5>;
 
-	void init(const uint8_t *key, size_t sz) {
-		// CAST_set_key() doesn't check its input size (or silently
-		// fixes it)
-		const std::vector<uint16_t> &sizes =
-		    Cipher_traits::traits(cipher_type::CAST5)->key_sizes;
-		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
-			throw Crypt_error("bad key size");
-
-		_init = true;
-		CAST_set_key(&_key, sz, key);
-	}
-
-	void encrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no encryption key set");
-		CAST_ecb_encrypt(in, out, &_key, CAST_ENCRYPT);
-	}
-
-	void decrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no decryption key set");
-		CAST_ecb_encrypt(in, out, &_key, CAST_DECRYPT);
-	}
-
-private:
-	CAST_KEY		_key;
-	bool			_init;
-};
 
 /** The CAST-256 cipher. Published in 1998 and in RFC 2612. Submitted to AES
  * but not among the finalists. Independent implementation. */

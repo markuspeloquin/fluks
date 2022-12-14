@@ -169,37 +169,22 @@ struct Slots_full : std::exception {
 	}
 };
 
-/** An SSL error wrapping exception type. */
+/** An SSL error. */
 struct Ssl_error : virtual std::exception {
-	Ssl_error() : Ssl_error("OpenSSL error") {}
-	Ssl_error(const std::string &msg);
+	Ssl_error();
+	Ssl_error(unsigned long code);
 	virtual ~Ssl_error() noexcept {}
 
 	const char *what() const noexcept override {
 		return _msg.c_str();
 	}
 
+	unsigned long code;
+	std::string lib;
+	std::string reason;
+
+private:
 	std::string _msg;
-};
-
-/** An SSL crypto error. */
-struct Ssl_crypt_error : Crypt_error, Ssl_error {
-	Ssl_crypt_error() {}
-	virtual ~Ssl_crypt_error() noexcept {}
-
-	const char *what() const noexcept override {
-		return Ssl_error::what();
-	}
-};
-
-/** An SSL hashing error. */
-struct Ssl_hash_error : Hash_error, Ssl_error {
-	Ssl_hash_error() {}
-	virtual ~Ssl_hash_error() noexcept {}
-
-	const char *what() const noexcept override {
-		return Ssl_error::what();
-	}
 };
 
 struct Unsupported_version : std::exception {

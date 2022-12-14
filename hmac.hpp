@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include <openssl/hmac.h>
+#include <openssl/evp.h>
 
 #include "hash.hpp"
 #include "luks.hpp"
@@ -72,21 +72,21 @@ public:
 	 * \param key	The HMAC %key.
 	 * \param sz	The size of <code>%key</code> in bytes.
 	 */
-	virtual void init(const uint8_t *key, size_t sz) noexcept = 0;
+	virtual void init(const uint8_t *key, size_t sz) = 0;
 
 	/** Pipe data into the HMAC computation.
 	 *
 	 * \param buf	Bytes to add.
 	 * \param sz	Number of bytes in <code>buf</code>.
 	 */
-	virtual void add(const uint8_t *buf, size_t sz) noexcept = 0;
+	virtual void add(const uint8_t *buf, size_t sz) = 0;
 
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer. At least
 	 *	<code>traits()->digest_size</code> bytes.
 	 */
-	virtual void end(uint8_t *buf) noexcept = 0;
+	virtual void end(uint8_t *buf) = 0;
 
 	/** Get the traits of the underlying hash function.
 	 *
@@ -136,53 +136,62 @@ private:
 template <
     const EVP_MD *(*EVP_hashfn)(),
     hash_type type>
-class Hmac_ssl : public Hmac_function {
+class Hmac_evp : public Hmac_function {
 public:
-	Hmac_ssl() :
+	Hmac_evp() :
 		Hmac_function(type),
 		_md(EVP_hashfn()),
 		_valid(false)
 	{
-		_ctx = HMAC_CTX_new();
+		_ctx = EVP_MD_CTX_new();
 		if (!_ctx)
-			throw Ssl_error("HMAC_CTX_new() failed");
+			throw Ssl_error();
 	}
 
-	~Hmac_ssl() noexcept {
-		HMAC_CTX_free(_ctx);
+	~Hmac_evp() noexcept {
+		EVP_MD_CTX_free(_ctx);
 	}
 
-	void init(const uint8_t *key, size_t sz) noexcept {
-		HMAC_Init_ex(_ctx, key, sz, _md, 0);
+	void init(const uint8_t *key, size_t sz) {
+		EVP_PKEY *pkey = EVP_PKEY_new_mac_key(
+		    NID_hmac, nullptr, key, sz
+		);
+		if (!EVP_DigestSignInit(_ctx, nullptr, _md, nullptr, pkey)) {
+			EVP_PKEY_free(pkey);
+			throw Ssl_error();
+		}
+		EVP_PKEY_free(pkey);
 		_valid = true;
 	}
 
-	void add(const uint8_t *data, size_t sz) noexcept {
+	void add(const uint8_t *data, size_t sz) {
 		if (!_valid) return;
-		HMAC_Update(_ctx, data, sz);
+		if (!EVP_DigestSignUpdate(_ctx, data, sz))
+			throw Ssl_error();
 	}
 
-	void end(uint8_t *out) noexcept {
+	void end(uint8_t *out) {
 		if (!_valid) return;
-		unsigned sz = traits()->digest_size;
-		HMAC_Final(_ctx, out, &sz);
+		size_t sz = traits()->digest_size;
+		if (!EVP_DigestSignFinal(_ctx, out, &sz))
+			throw Ssl_error();
 		_valid = false;
 	}
 
 private:
-	HMAC_CTX	*_ctx;
+	EVP_MD_CTX	*_ctx;
 	const EVP_MD	*_md;
 	bool		_valid;
 };
 
 
-typedef Hmac_ssl<EVP_md5, hash_type::MD5>		Hmac_md5;
-typedef Hmac_ssl<EVP_ripemd160, hash_type::RMD160>	Hmac_rmd160;
-typedef Hmac_ssl<EVP_sha1, hash_type::SHA1>		Hmac_sha1;
-typedef Hmac_ssl<EVP_sha224, hash_type::SHA224>		Hmac_sha224;
-typedef Hmac_ssl<EVP_sha256, hash_type::SHA256>		Hmac_sha256;
-typedef Hmac_ssl<EVP_sha384, hash_type::SHA384>		Hmac_sha384;
-typedef Hmac_ssl<EVP_sha512, hash_type::SHA512>		Hmac_sha512;
+using Hmac_md5 = Hmac_evp<EVP_md5, hash_type::MD5>;
+using Hmac_rmd160 = Hmac_evp<EVP_ripemd160, hash_type::RMD160>;
+using Hmac_sha1 = Hmac_evp<EVP_sha1, hash_type::SHA1>;
+using Hmac_sha224 = Hmac_evp<EVP_sha224, hash_type::SHA224>;
+using Hmac_sha256 = Hmac_evp<EVP_sha256, hash_type::SHA256>;
+using Hmac_sha384 = Hmac_evp<EVP_sha384, hash_type::SHA384>;
+using Hmac_sha512 = Hmac_evp<EVP_sha512, hash_type::SHA512>;
 
 
 }
