@@ -16,7 +16,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <algorithm>
 #include <cerrno>
 #include <cstring>
 #include <ctime>
@@ -36,9 +35,10 @@
 
 #include "backup.hpp"
 #include "cipher.hpp"
-#include "detect.hpp"
 #include "dm.hpp"
 #include "hash.hpp"
+#include "luks.hpp"
+#include "os.hpp"
 #include "support.hpp"
 #include "version.hpp"
 

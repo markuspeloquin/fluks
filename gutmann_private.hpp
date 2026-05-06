@@ -12,12 +12,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#pragma once
+
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <memory>
 
 #include <openssl/rand.h>
+
+#include "errors.hpp"
+#include "gutmann.hpp"
 
 namespace fluks {
 namespace {

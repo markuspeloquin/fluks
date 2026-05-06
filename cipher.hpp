@@ -32,8 +32,8 @@
 #endif
 
 #include "cast6.h"
+#include "cipher_spec.hpp"
 #include "errors.hpp"
-#include "luks.hpp"
 #include "serpent.h"
 #include "twofish.h"
 

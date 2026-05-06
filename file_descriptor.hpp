@@ -1,6 +1,15 @@
 #ifndef FLUKS_FILE_DESCRIPTOR_HPP
 #define FLUKS_FILE_DESCRIPTOR_HPP
 
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+
+#include "errors.hpp"
+
 namespace fluks {
 
 class File_descriptor {
@@ -36,7 +45,7 @@ public:
 	/** \throw std::system_error */
 	size_t read(void *buf, size_t bytes) {
 		if (_fd == -1)
-			throw std::runtime_exception("illegal state");
+			throw std::runtime_error("illegal state");
 		ssize_t rbytes = ::read(_fd, buf, bytes);
 		if (rbytes < 0)
 			throw_errno(errno);

@@ -18,8 +18,6 @@
 #include <set>
 #include <string>
 
-#include "errors.hpp"
-
 namespace fluks {
 
 const std::set<std::string> &system_ciphers();

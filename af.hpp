@@ -15,9 +15,10 @@
 #ifndef FLUKS_AF_HPP
 #define FLUKS_AF_HPP
 
+#include <cstddef>
 #include <cstdint>
 
-#include "luks.hpp"
+#include "cipher_spec.hpp"
 
 namespace fluks {
 

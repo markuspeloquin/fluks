@@ -21,8 +21,6 @@
 
 #include <boost/uuid/uuid.hpp>
 
-#include "errors.hpp"
-
 namespace fluks {
 
 /** Remove the mapping for a DM device

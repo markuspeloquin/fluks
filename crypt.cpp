@@ -15,13 +15,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
-#include <set>
 #include <sstream>
 
 #include "cipher.hpp"
 #include "cipher_spec.hpp"
 #include "crypt.hpp"
-#include "detect.hpp"
+#include "endian.h"
 #include "errors.hpp"
 #include "hash.hpp"
 #include "util.hpp"

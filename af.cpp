@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 
 #include "af.hpp"
+#include "endian.h"
 #include "errors.hpp"
 #include "hash.hpp"
 #include "util.hpp"

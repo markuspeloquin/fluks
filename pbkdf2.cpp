@@ -14,10 +14,11 @@
 
 #include <algorithm>
 #include <memory>
+#include <stdexcept>
 
+#include "endian.h"
 #include "hmac.hpp"
 #include "pbkdf2.hpp"
-#include "support.hpp"
 #include "util.hpp"
 
 namespace fluks {

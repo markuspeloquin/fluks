@@ -20,7 +20,7 @@
 #include <memory>
 #include <boost/shared_array.hpp>
 
-#include "luks.hpp"
+#include "cipher_spec.hpp"
 
 namespace fluks {
 

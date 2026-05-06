@@ -18,17 +18,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <stdexcept>
-#include <streambuf>
 #include <string>
+#include <vector>
 
 #include <openssl/md5.h>
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>
 
+#include "cipher_spec.hpp"
 #include "errors.hpp"
-#include "luks.hpp"
-#include "support.hpp"
 #include "tiger.h"
 #include "whirlpool.h"
 

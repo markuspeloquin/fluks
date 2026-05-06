@@ -17,8 +17,6 @@
 
 #include <string>
 
-#include "errors.hpp"
-
 namespace fluks {
 
 /** Ciphers supported by <em>fluks</em> */

@@ -23,8 +23,6 @@
 #include <openssl/hmac.h>
 
 #include "hash.hpp"
-#include "luks.hpp"
-#include "support.hpp"
 
 namespace fluks {
 

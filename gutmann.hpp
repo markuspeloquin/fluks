@@ -17,10 +17,6 @@
 
 #include <sys/types.h>
 
-#include <fstream>
-
-#include "errors.hpp"
-
 namespace fluks {
 
 /** Securely erase data from a location on the hard disk.

@@ -7,7 +7,6 @@
 #include "crypt.hpp"
 #include "hash.hpp"
 #include "hmac.hpp"
-#include "luks.hpp"
 
 char *prog;
 

@@ -29,7 +29,6 @@
 #include "af.hpp"
 #include "cipher.hpp"
 #include "crypt.hpp"
-#include "detect.hpp"
 #include "gutmann.hpp"
 #include "hash.hpp"
 #include "luks.hpp"

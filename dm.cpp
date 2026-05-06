@@ -22,6 +22,7 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "dm.hpp"
+#include "errors.hpp"
 #include "libdevmapper.h"
 
 namespace fluks {

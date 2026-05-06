@@ -1,7 +1,6 @@
 #ifndef FLUKS_VERSION_HPP
 #define FLUKS_VERSION_HPP
 
-#include <algorithm>
 #include <sstream>
 #include <vector>
 

@@ -16,11 +16,8 @@
 #define FLUKS_PBKDF2_HPP
 
 #include <cstdint>
-#include <stdexcept>
-#include <string>
 
-#include "errors.hpp"
-#include "luks.hpp"
+#include "cipher_spec.hpp"
 
 namespace fluks {
 

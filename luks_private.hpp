@@ -12,7 +12,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#pragma once
+
 #include "endian.h"
+#include "luks.hpp"
 
 inline void
 fluks::endian_switch(struct phdr1 *h, bool process_keys) {

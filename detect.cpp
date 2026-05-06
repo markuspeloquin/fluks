@@ -16,10 +16,8 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
-#include <sstream>
 
 #include "detect.hpp"
-#include "hash.hpp"
 
 namespace fluks {
 namespace {

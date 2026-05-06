@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "cipher_spec.hpp"
-#include "os.hpp"
 
 namespace fluks {
 

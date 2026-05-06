@@ -15,10 +15,11 @@
 #ifndef FLUKS_SUPPORT_HPP
 #define FLUKS_SUPPORT_HPP
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
-#include "luks.hpp"
+#include "cipher_spec.hpp"
 
 namespace fluks {
 namespace block_mode_info {

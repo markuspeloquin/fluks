@@ -35,7 +35,6 @@
 	const size_t CAST6_KEY_STEP = 4;
 #else
 #	include <stdbool.h>
-#	include <stddef.h>
 #	include <stdint.h>
 
 #	define CAST6_BLOCK 16

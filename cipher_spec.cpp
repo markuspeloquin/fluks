@@ -22,11 +22,6 @@
 #include "hash.hpp"
 #include "support.hpp"
 
-namespace fluks {
-namespace {
-} // end anon
-}
-
 void
 fluks::Cipher_spec::check_spec_support(const Cipher_traits *cipher_traits,
     const Hash_traits *hash_traits) {
