@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "common.hpp"
-#include "../errors.hpp"
 #include "../whirlpool.h"
 
 char *prog;

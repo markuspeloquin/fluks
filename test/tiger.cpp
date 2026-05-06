@@ -3,7 +3,6 @@
 #include <boost/scoped_array.hpp>
 
 #include "common.hpp"
-#include "../errors.hpp"
 #include "../tiger.h"
 
 char *prog;

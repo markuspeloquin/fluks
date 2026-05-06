@@ -174,7 +174,7 @@ main(int argc, char **argv) {
 		perror(prog);
 		return 1;
 	}
-	
+
 	bool verbose = false;
 	char *base = basename(prog);
 	bool all_good = true;

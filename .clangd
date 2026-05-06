@@ -1,2 +1,10 @@
 CompileFlags:
   Add: [-Ilibcuefile/include, -std=c++17]
+
+---
+
+If:
+  PathMatch: .*\.c
+CompileFlags:
+  Remove: [-std=c++17]
+  Add: [-std=c17]

@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "serpent_bits.h"
 #include "thread_list.h"
