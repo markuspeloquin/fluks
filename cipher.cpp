@@ -75,8 +75,8 @@ Lookup::Lookup() {
 	_map_type["serpent"] = cipher_type::SERPENT;
 	_map_type["twofish"] = cipher_type::TWOFISH;
 
-	for (auto &pair : _map_traits)
-		_types.push_back(pair.first);
+	for (auto &[cipher_type, _] : _map_traits)
+		_types.push_back(cipher_type);
 }
 
 Lookup Lookup::inst;

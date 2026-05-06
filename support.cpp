@@ -56,8 +56,8 @@ private:
 
 	template <class Map, typename Vec>
 	void types(Map &map, Vec &types) {
-		for (auto pair : map)
-			types.push_back(pair.first);
+		for (auto &[type, _] : map)
+			types.push_back(type);
 	}
 
 public:

@@ -95,8 +95,8 @@ Lookup::Lookup() {
 	_map_type["whirlpool"] = hash_type::WHIRLPOOL512;
 	_map_type["wp"] = hash_type::WHIRLPOOL512;
 
-	for (auto &pair : _map_traits)
-		_types.push_back(pair.first);
+	for (auto &[hash_type, _] : _map_traits)
+		_types.push_back(hash_type);
 }
 
 Lookup Lookup::inst;
