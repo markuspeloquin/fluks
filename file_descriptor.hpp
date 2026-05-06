@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 
 #include "errors.hpp"
 
@@ -69,7 +70,7 @@ public:
 	/** \throw std::system_error */
 	void seek(off_t pos, int whence) {
 		if (_fd == -1)
-			throw std::runtime_exception("illegal state");
+			throw std::runtime_error("illegal state");
 		if (::lseek(_fd, pos, whence) == static_cast<off_t>(-1))
 			throw_errno(errno);
 	}
@@ -77,7 +78,7 @@ public:
 	/** \throw std::system_error */
 	size_t write(const void *buf, size_t bytes) {
 		if (_fd == -1)
-			throw std::runtime_exception("illegal state");
+			throw std::runtime_error("illegal state");
 		ssize_t wbytes = ::write(_fd, buf, bytes);
 		if (wbytes < 0)
 			throw_errno(errno);
