@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <boost/shared_array.hpp>
 
 #include "cipher_spec.hpp"
 
@@ -131,7 +130,7 @@ protected:
 
 private:
 
-	boost::shared_array<uint8_t>	_key;
+	std::shared_ptr<uint8_t[]>	_key;
 	std::shared_ptr<Cipher>		_cipher;
 	std::shared_ptr<Hash_function>	_iv_hash;
 	Cipher_spec			_spec;
