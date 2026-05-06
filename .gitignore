@@ -3,10 +3,6 @@
 /Doxyfile
 /html
 
-# bjam
-/bin
-/debug
-/release
-
 # cmake
 /build/
+compile-commands.json
