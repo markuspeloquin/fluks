@@ -21,10 +21,10 @@
 #	include <cstddef>
 #	include <cstdint>
 
-	const size_t TIGER_SZ_BLOCK = 64;
-	const size_t TIGER128_SZ_DIGEST = 16;
-	const size_t TIGER160_SZ_DIGEST = 20;
-	const size_t TIGER_SZ_DIGEST = 24;
+	inline constexpr size_t TIGER_SZ_BLOCK = 64;
+	inline constexpr size_t TIGER128_SZ_DIGEST = 16;
+	inline constexpr size_t TIGER160_SZ_DIGEST = 20;
+	inline constexpr size_t TIGER_SZ_DIGEST = 24;
 #else
 #	include <stddef.h>
 #	include <stdint.h>

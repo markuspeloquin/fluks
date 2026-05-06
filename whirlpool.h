@@ -22,10 +22,10 @@
 #	include <cstddef>
 #	include <cstdint>
 
-	const size_t WHIRLPOOL256_SZ_DIGEST = 32;
-	const size_t WHIRLPOOL384_SZ_DIGEST = 48;
-	const size_t WHIRLPOOL_SZ_DIGEST = 64;
-	const size_t WHIRLPOOL_SZ_BLOCK = 64;
+	inline constexpr size_t WHIRLPOOL256_SZ_DIGEST = 32;
+	inline constexpr size_t WHIRLPOOL384_SZ_DIGEST = 48;
+	inline constexpr size_t WHIRLPOOL_SZ_DIGEST = 64;
+	inline constexpr size_t WHIRLPOOL_SZ_BLOCK = 64;
 #else
 /* C */
 #	include <stddef.h>

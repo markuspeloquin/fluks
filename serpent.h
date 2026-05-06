@@ -21,10 +21,10 @@
 #	include <cstddef>
 #	include <cstdint>
 
-	const size_t SERPENT_BLOCK = 16;
-	const size_t SERPENT_KEYMIN = 16;
-	const size_t SERPENT_KEYMAX = 32;
-	const size_t SERPENT_KEYSTEP = 8;
+	inline constexpr size_t SERPENT_BLOCK = 16;
+	inline constexpr size_t SERPENT_KEYMIN = 16;
+	inline constexpr size_t SERPENT_KEYMAX = 32;
+	inline constexpr size_t SERPENT_KEYSTEP = 8;
 #else
 #	include <stddef.h>
 #	include <stdint.h>

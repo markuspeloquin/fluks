@@ -22,17 +22,17 @@
 #	include <cstdint>
 
 	/** Size of a CAST-256 block (bytes) */
-	const size_t CAST6_BLOCK = 16;
+	inline constexpr size_t CAST6_BLOCK = 16;
 
 	/** Minimum size of a CAST-256 key (bytes) */
-	const size_t CAST6_KEY_MIN = 16;
+	inline constexpr size_t CAST6_KEY_MIN = 16;
 
 	/** Maximum size of a CAST-256 key (bytes) */
-	const size_t CAST6_KEY_MAX = 32;
+	inline constexpr size_t CAST6_KEY_MAX = 32;
 
 	/** CAST-256 keys are all
 	 * <code>CAST6_KEY_MIN + n * CAST6_KEY_STEP</code> bytes */
-	const size_t CAST6_KEY_STEP = 4;
+	inline constexpr size_t CAST6_KEY_STEP = 4;
 #else
 #	include <stdbool.h>
 #	include <stdint.h>
