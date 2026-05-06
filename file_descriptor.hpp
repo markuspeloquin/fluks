@@ -55,7 +55,7 @@ public:
 
 	/** \throw std::system_error */
 	size_t read_all(void *buf, size_t bytes) {
-		uint8_t *pos = buf;
+		uint8_t *pos = static_cast<uint8_t *>(buf);
 		size_t remaining = bytes;
 		while (remaining) {
 			size_t rbytes = read(pos, remaining);
@@ -87,7 +87,7 @@ public:
 
 	/** \throw std::system_error */
 	size_t write_all(const void *buf, size_t bytes) {
-		uint8_t *pos = buf;
+		const uint8_t *pos = static_cast<const uint8_t *>(buf);
 		size_t remaining = bytes;
 		while (remaining) {
 			size_t wbytes = write(pos, remaining);
@@ -97,7 +97,7 @@ public:
 		return bytes;
 	}
 
-	int operator() noexcept {
+	operator int() noexcept {
 		return _fd;
 	}
 
