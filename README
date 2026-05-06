@@ -16,16 +16,16 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
-	GCC 5 or Clang 3.4
-	CMake 3
-	libdevmapper (Device-mapper)
-	Boost 1.35
-	OpenSSL/LibreSSL
-	Linux headers (/usr/include/linux)
+        GCC 8 or Clang 5
+        CMake 3.30
+        libdevmapper (Device-mapper)
+        Boost 1.35
+        OpenSSL
+        Linux headers (/usr/include/linux)
 
     In Ubuntu (ugh), it's at least:
-	- libboost-dev libboost-filesystem-dev libboost-program-options-dev
-	  libboost-system-dev libdevmapper-dev libssl-dev libudev-dev
+        - libboost-dev libboost-program-options-dev libdevmapper-dev libssl-dev
+          libudev-dev
 
     If you would like a dynamically-linked binary, edit the 'static_linking'
     variable in CMakeLists.txt. By default, an entirely statically-linked
@@ -33,10 +33,9 @@ BUILDING
     something.
 
     Now build:
-        % mkdir build && cd build
-	% cmake -DCMAKE_BUILD_TYPE=Release ..
-	% make -j9
+        % cmake -DCMAKE_BUILD_TYPE=Release -B build -G Ninja .
+        % ninja -C build
 
 INSTALLING
 
-	# cp fluks /usr/local/sbin/
+        # cp fluks /usr/local/sbin/
