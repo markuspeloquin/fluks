@@ -12,7 +12,7 @@ namespace test {
 struct Test {
 	Test() : buf(0) {}
 
-	Test(const std::string &str, const uint8_t res[TIGER_SZ_DIGEST]) :
+	Test(std::string_view str, const uint8_t res[TIGER_SZ_DIGEST]) :
 		buf(new uint8_t[str.size()]),
 		sz(str.size())
 	{

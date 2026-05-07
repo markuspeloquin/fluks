@@ -27,7 +27,7 @@ dehex(char c) {
 }
 
 void
-dehex(const std::string &hex, uint8_t *buf) {
+dehex(std::string_view hex, uint8_t *buf) {
 	char byte[2];
 	for (size_t i = 0; i < hex.size(); i++) {
 		byte[i&1] = hex[i];

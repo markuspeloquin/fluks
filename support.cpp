@@ -48,7 +48,7 @@ private:
 	}
 
 	template <class Map, typename Enum>
-	Enum enum_lookup(Map &map, Enum def, const std::string &name) {
+	Enum enum_lookup(Map &map, Enum def, std::string_view name) {
 		auto i = map.find(name);
 		if (i == map.end()) return def;
 		return i->second;
@@ -71,12 +71,12 @@ public:
 		    iv_mode_stat_map, mode);
 	}
 
-	block_mode block_mode_lookup(const std::string &name) {
+	block_mode block_mode_lookup(std::string_view name) {
 		return enum_lookup(block_mode_name_map, block_mode::UNDEFINED,
 		    name);
 	}
 
-	iv_mode iv_mode_lookup(const std::string &name) {
+	iv_mode iv_mode_lookup(std::string_view name) {
 		return enum_lookup(iv_mode_name_map, iv_mode::UNDEFINED,
 		    name);
 	}
@@ -93,8 +93,8 @@ private:
 	std::map<block_mode, struct block_mode_stat> block_mode_stat_map;
 	std::map<iv_mode, struct iv_mode_stat> iv_mode_stat_map;
 
-	std::map<std::string, block_mode> block_mode_name_map;
-	std::map<std::string, iv_mode> iv_mode_name_map;
+	std::map<std::string, block_mode, std::less<>> block_mode_name_map;
+	std::map<std::string, iv_mode, std::less<>> iv_mode_name_map;
 
 	Lookup();
 
@@ -135,7 +135,7 @@ Lookup::Lookup() {
 }
 
 fluks::block_mode
-fluks::block_mode_info::type(const std::string &name) {
+fluks::block_mode_info::type(std::string_view name) {
 	return Lookup::instance()->block_mode_lookup(name);
 }
 
@@ -146,7 +146,7 @@ fluks::block_mode_info::types() {
 	return res;
 }
 
-const std::string &
+std::string
 fluks::block_mode_info::name(block_mode mode) {
 	struct block_mode_stat *st = Lookup::instance()->stat_lookup(mode);
 	return st ? st->kern_name : blank;
@@ -159,7 +159,7 @@ fluks::block_mode_info::version(block_mode mode) {
 }
 
 fluks::iv_mode
-fluks::iv_mode_info::type(const std::string &name) {
+fluks::iv_mode_info::type(std::string_view name) {
 	return Lookup::instance()->iv_mode_lookup(name);
 }
 
@@ -170,7 +170,7 @@ fluks::iv_mode_info::types() {
 	return res;
 }
 
-const std::string &
+std::string
 fluks::iv_mode_info::name(iv_mode mode) {
 	struct iv_mode_stat *st = Lookup::instance()->stat_lookup(mode);
 	return st ? st->kern_name : blank;

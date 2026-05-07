@@ -22,7 +22,7 @@ namespace {
 class Lookup {
 public:
 	static const Hash_traits *traits(hash_type type);
-	static hash_type type(const std::string &name);
+	static hash_type type(std::string_view name);
 
 	static const std::vector<hash_type> &types() {
 		return inst._types;
@@ -35,7 +35,7 @@ private:
 
 	static Lookup inst;
 	std::map<hash_type, Hash_traits> _map_traits;
-	std::map<std::string, hash_type> _map_type;
+	std::map<std::string, hash_type, std::less<>>_map_type;
 	std::vector<hash_type> _types;
 };
 
@@ -47,10 +47,10 @@ Lookup::traits(hash_type type) {
 }
 
 hash_type
-Lookup::type(const std::string &name) {
-	auto i = inst._map_type.find(name);
-	if (i == inst._map_type.end()) return hash_type::UNDEFINED;
-	return i->second;
+Lookup::type(std::string_view name) {
+	auto it = inst._map_type.find(name);
+	if (it == inst._map_type.end()) return hash_type::UNDEFINED;
+	return it->second;
 }
 
 Lookup::Lookup() {
@@ -142,7 +142,7 @@ fluks::Hash_traits::traits(hash_type type) {
 }
 
 fluks::hash_type
-fluks::Hash_traits::type(const std::string &name) {
+fluks::Hash_traits::type(std::string_view name) {
 	return Lookup::type(name);
 }
 

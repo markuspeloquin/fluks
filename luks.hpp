@@ -131,7 +131,7 @@ public:
 	 *	the sector size.
 	 */
 	Luks_header(int device, int32_t sz_key,
-	    const std::string &cipher_spec, const std::string &hash_spec,
+	    std::string_view cipher_spec, std::string_view hash_spec,
 	    uint32_t mk_iterations=NUM_MK_ITER, uint32_t stripes=NUM_STRIPES);
 
 	/** Read a header from the disk
@@ -198,7 +198,7 @@ public:
 	 *			to decrypt.
 	 * \throw Disk_error	A device open/seek/read error occurred.
 	 */
-	bool read_key(const std::string &passwd, int8_t hint=-1);
+	bool read_key(std::string_view passwd, int8_t hint=-1);
 
 	/** Add a password for the private key
 	 *
@@ -210,7 +210,7 @@ public:
 	 *	yet.
 	 * \throw Slots_full	All slots are enabled already.
 	 */
-	void add_passwd(const std::string &passwd,
+	void add_passwd(std::string_view passwd,
 	    uint32_t check_time=500000);
 
 	/** Check whether the cipher and hash specs are supported in LUKS.
@@ -246,7 +246,7 @@ public:
 	 * \throw Safety	Either the private key hasn't been decrypted
 	 *	yet or it was decrypted with the same password being deleted.
 	 */
-	bool revoke_passwd(const std::string &passwd) {
+	bool revoke_passwd(std::string_view passwd) {
 		int8_t which = locate_passwd(passwd);
 		if (which == -1) return false;
 		revoke_slot(which);
@@ -273,11 +273,11 @@ private:
 			_mach_end = which;
 		}
 	}
-	void init_cipher_spec(const std::string &cipher_spec, int32_t sz_key);
+	void init_cipher_spec(std::string_view cipher_spec, int32_t sz_key);
 
-	int8_t locate_passwd(const std::string &passwd);
+	int8_t locate_passwd(std::string_view passwd);
 
-	void decrypt_key(const std::string &passwd, uint8_t slot,
+	void decrypt_key(std::string_view passwd, uint8_t slot,
 	    uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key);
 
 	Luks_header(const Luks_header &) {}

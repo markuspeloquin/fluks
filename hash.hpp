@@ -44,7 +44,7 @@ public:
 	 * \param sz_dig    The digest size
 	 * \param version   The version of LUKS required, or 0 if not in LUKS
 	 */
-	Hash_traits(const std::string &name, uint16_t sz_blk, uint16_t sz_dig,
+	Hash_traits(std::string_view name, uint16_t sz_blk, uint16_t sz_dig,
 	    uint16_t version) :
 		name(name),
 		block_size(sz_blk),
@@ -62,7 +62,7 @@ public:
 	 * \param name	The name of the function
 	 * \return	The type
 	 */
-	static hash_type type(const std::string &name);
+	static hash_type type(std::string_view name);
 
 	/** Get the hash types supported by fluks
 	 * \return	The shit
@@ -90,7 +90,7 @@ public:
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
-	static std::shared_ptr<Hash_function> create(const std::string &name) {
+	static std::shared_ptr<Hash_function> create(std::string_view name) {
 		return create(Hash_traits::type(name));
 	}
 

@@ -24,7 +24,7 @@ dehex(char c) {
 }
 
 uint8_t *
-dehex(const std::string &hex, uint8_t *buf) {
+dehex(std::string_view hex, uint8_t *buf) {
 	char byte[2];
 	uint8_t *start = buf;
 	for (size_t i = 0; i < hex.size(); i++) {
@@ -50,7 +50,7 @@ hex(const uint8_t *buf, size_t sz) {
 struct Test {
 	Test() : buf(0) {}
 
-	Test(const std::string &str, const uint8_t res[WHIRLPOOL_SZ_DIGEST]) :
+	Test(std::string_view str, const uint8_t res[WHIRLPOOL_SZ_DIGEST]) :
 		buf(new uint8_t[str.size()]),
 		sz(str.size())
 	{

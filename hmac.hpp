@@ -18,7 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
+#include <string_view>
 
 #include <openssl/hmac.h>
 
@@ -49,7 +49,7 @@ public:
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
-	static std::shared_ptr<Hmac_function> create(const std::string &name) {
+	static std::shared_ptr<Hmac_function> create(std::string_view name) {
 		return create(Hash_traits::type(name));
 	}
 

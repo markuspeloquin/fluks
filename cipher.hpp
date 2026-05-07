@@ -55,7 +55,7 @@ public:
 	 * \param sz_blk	The block size
 	 * \param version	The version of LUKS required, or 0 if not LUKS.
 	 */
-	Cipher_traits(const std::string &name,
+	Cipher_traits(std::string_view name,
 	    uint16_t min_key, uint16_t max_key, uint16_t key_step,
 	    uint16_t sz_blk, uint16_t version);
 
@@ -66,7 +66,7 @@ public:
 	/** Get the type of a cipher
 	 * \return The enum of the cipher
 	 */
-	static cipher_type type(const std::string &name);
+	static cipher_type type(std::string_view name);
 	/** Get all types that fluks supports
 	 * \return The supported types
 	 */

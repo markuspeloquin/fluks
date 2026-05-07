@@ -87,7 +87,7 @@ class Hash_traits;
 
 class Cipher_spec {
 public:
-	Cipher_spec(ssize_t sz_key, const std::string &spec) {
+	Cipher_spec(ssize_t sz_key, std::string_view spec) {
 		reset(sz_key, spec);
 	}
 
@@ -98,7 +98,7 @@ public:
 		reset(sz_key, cipher, block_mode, iv_mode, iv_hash);
 	}
 
-	void reset(ssize_t sz_key, const std::string &spec);
+	void reset(ssize_t sz_key, std::string_view spec);
 	void reset(ssize_t sz_key, cipher_type cipher,
 	    block_mode block_mode=block_mode::UNDEFINED,
 	    iv_mode iv_mode=iv_mode::UNDEFINED,
@@ -120,19 +120,19 @@ public:
 		return _ty_iv_hash;
 	}
 
-	const std::string &name_cipher() const {
+	std::string name_cipher() const {
 		return _nm_cipher;
 	}
 
-	const std::string &name_block_mode() const {
+	std::string name_block_mode() const {
 		return _nm_block_mode;
 	}
 
-	const std::string &name_iv_mode() const {
+	std::string name_iv_mode() const {
 		return _nm_iv_mode;
 	}
 
-	const std::string &name_iv_hash() const {
+	std::string name_iv_hash() const {
 		return _nm_iv_hash;
 	}
 

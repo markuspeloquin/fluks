@@ -26,7 +26,7 @@ namespace fluks {
  * Assert() function.
  */
 struct Assertion : std::exception {
-	Assertion(const std::string &msg) : _msg(msg) {}
+	Assertion(std::string_view msg) : _msg(msg) {}
 	virtual ~Assertion() noexcept {}
 
 	const char *what() const noexcept override {
@@ -37,7 +37,7 @@ struct Assertion : std::exception {
 };
 
 #ifndef NASSERT
-inline void Assert(bool cond, const std::string &msg) {
+inline void Assert(bool cond, std::string_view msg) {
 	if (!cond) throw Assertion(msg);
 }
 /* macro version, which short-circuits evaluation of second argument, but
@@ -54,7 +54,7 @@ inline void Assert(bool cond, const std::string &msg) {
 
 /** Specified crypto/hash spec was bad */
 struct Bad_spec : std::exception {
-	Bad_spec(const std::string &msg) : _msg("Bad crypto spec: ") {
+	Bad_spec(std::string_view msg) : _msg("Bad crypto spec: ") {
 		_msg += msg;
 	}
 
@@ -68,7 +68,7 @@ struct Bad_spec : std::exception {
 };
 
 struct Bad_uuid : std::exception {
-	Bad_uuid(const std::string &uuid) : _msg("Bad UUID: ") {
+	Bad_uuid(std::string_view uuid) : _msg("Bad UUID: ") {
 		_msg += uuid;
 	}
 
@@ -82,7 +82,7 @@ struct Bad_uuid : std::exception {
 };
 
 struct Crypt_error : virtual std::exception {
-	Crypt_error(const std::string &msg) : _msg("Crypto error: ") {
+	Crypt_error(std::string_view msg) : _msg("Crypto error: ") {
 		_msg += msg;
 	}
 
@@ -99,7 +99,7 @@ protected:
 };
 
 struct Disk_error : std::exception {
-	Disk_error(const std::string &msg) : _msg("Disk error: ") {
+	Disk_error(std::string_view msg) : _msg("Disk error: ") {
 		_msg += msg;
 	}
 
@@ -114,7 +114,7 @@ struct Disk_error : std::exception {
 
 /** Device mapper error */
 struct Dm_error : std::exception {
-	Dm_error(const std::string &msg) : _msg("Device mapper error: ") {
+	Dm_error(std::string_view msg) : _msg("Device mapper error: ") {
 		_msg += msg;
 	}
 
@@ -148,7 +148,7 @@ struct No_private_key : std::exception {
 
 /** Thrown if something is probably a bad idea. There is no work-around. */
 struct Safety : std::exception {
-	Safety(const std::string &msg) : _msg("Safety error: ") {
+	Safety(std::string_view msg) : _msg("Safety error: ") {
 		_msg += msg;
 	}
 
@@ -172,7 +172,7 @@ struct Slots_full : std::exception {
 /** An SSL error wrapping exception type. */
 struct Ssl_error : virtual std::exception {
 	Ssl_error() : Ssl_error("OpenSSL error") {}
-	Ssl_error(const std::string &msg);
+	Ssl_error(std::string_view msg);
 	virtual ~Ssl_error() noexcept {}
 
 	const char *what() const noexcept override {

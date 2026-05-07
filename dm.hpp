@@ -45,10 +45,10 @@ void	dm_close(const std::string &name);
  */
 void	dm_open(const std::string &name,
 	    uint64_t start_sector, uint64_t num_sectors,
-	    const std::string &cipher_spec,
+	    std::string_view cipher_spec,
 	    const uint8_t *key, size_t sz_key,
 	    const boost::uuids::uuid &uuid,
-	    const std::string &device_path);
+	    std::string_view device_path);
 }
 
 #endif

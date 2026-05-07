@@ -105,9 +105,9 @@ public:
 
 	void add_crypt_target(
 	    uint64_t start_sector, uint64_t num_sectors,
-	    const std::string &cipher_spec,
+	    std::string_view cipher_spec,
 	    const uint8_t *key, size_t sz_key,
-	    const std::string &device_path);
+	    std::string_view device_path);
 
 private:
 	struct dm_task *_task;
@@ -116,9 +116,9 @@ private:
 void
 Device_mapper::add_crypt_target(
     uint64_t start_sector, uint64_t num_sectors,
-    const std::string &cipher_spec,
+    std::string_view cipher_spec,
     const uint8_t *key, size_t sz_key,
-    const std::string &device_path) {
+    std::string_view device_path) {
 	std::ostringstream param_out;
 
 	// format of param argument:
@@ -169,10 +169,10 @@ fluks::dm_close(const std::string &name) {
 void
 fluks::dm_open(const std::string &name,
     uint64_t start_sector, uint64_t num_sectors,
-    const std::string &cipher_spec,
+    std::string_view cipher_spec,
     const uint8_t *key, size_t sz_key,
     const boost::uuids::uuid &uuid,
-    const std::string &device_path) {
+    std::string_view device_path) {
 	Device_mapper task(DM_DEVICE_CREATE);
 	task.set_name(name);
 	task.set_uuid(uuid);

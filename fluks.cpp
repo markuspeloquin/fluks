@@ -126,7 +126,7 @@ list_modes() {
  * \return		The passphrase the user entered
  */
 std::string
-prompt_passwd(const std::string &msg, bool repeat) {
+prompt_passwd(std::string_view msg, bool repeat) {
 	bool echo;
 
 	// disable echo

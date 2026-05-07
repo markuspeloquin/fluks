@@ -86,7 +86,7 @@ fluks::check_version_1(const struct phdr1 *header) {
 }
 
 fluks::Luks_header::Luks_header(int device, int32_t sz_key,
-    const std::string &cipher_spec, const std::string &hash_spec,
+    std::string_view cipher_spec, std::string_view hash_spec,
     uint32_t mk_iterations, uint32_t stripes) :
 	_device(device),
 	_hdr(new struct phdr1),
@@ -210,7 +210,7 @@ fluks::Luks_header::Luks_header(int device) :
 }
 
 bool
-fluks::Luks_header::read_key(const std::string &passwd, int8_t hint) {
+fluks::Luks_header::read_key(std::string_view passwd, int8_t hint) {
 	if (_master_key)
 		return false;
 
@@ -251,7 +251,7 @@ fluks::Luks_header::read_key(const std::string &passwd, int8_t hint) {
 
 void
 fluks::Luks_header::add_passwd(
-	const std::string &passwd, uint32_t check_time
+	std::string_view passwd, uint32_t check_time
 ) {
 	struct key	*avail = 0;
 	uint8_t		avail_idx = 0;
@@ -287,7 +287,7 @@ fluks::Luks_header::add_passwd(
 	// benchmark the PBKDF2 function
 	auto timer_start = std::chrono::high_resolution_clock::now();
 	pbkdf2(_hash_type,
-	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
+	    reinterpret_cast<const uint8_t *>(passwd.data()), passwd.size(),
 	    avail->salt, SZ_SALT, PBKDF2_BENCH_ITER,
 	    pw_digest.get(), _hdr->sz_key);
 	auto timer_end = std::chrono::high_resolution_clock::now();
@@ -301,7 +301,7 @@ fluks::Luks_header::add_passwd(
 
 	// compute digest for realsies
 	pbkdf2(_hash_type,
-	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
+	    reinterpret_cast<const uint8_t *>(passwd.data()), passwd.size(),
 	    avail->salt, SZ_SALT, avail->iterations,
 	    pw_digest.get(), _hdr->sz_key);
 
@@ -479,7 +479,7 @@ fluks::Luks_header::save() {
 // strings in the LUKS header, and the sz_key value in the LUKS header,
 // throwing Bad_spec as necessary
 void
-fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
+fluks::Luks_header::init_cipher_spec(std::string_view cipher_spec,
     int32_t sz_key) {
 	set_mach_end(true);
 
@@ -507,7 +507,7 @@ fluks::Luks_header::init_cipher_spec(const std::string &cipher_spec,
 }
 
 int8_t
-fluks::Luks_header::locate_passwd(const std::string &passwd) {
+fluks::Luks_header::locate_passwd(std::string_view passwd) {
 	set_mach_end(true);
 
 	uint8_t key_digest[SZ_MK_DIGEST];
@@ -528,7 +528,7 @@ fluks::Luks_header::locate_passwd(const std::string &passwd) {
 // key_digest should be as large as the digest size of the hash
 // master_key should be as large as _hdr->sz_key
 void
-fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
+fluks::Luks_header::decrypt_key(std::string_view passwd, uint8_t slot,
     uint8_t key_digest[SZ_MK_DIGEST], uint8_t *master_key) {
 	set_mach_end(true);
 
@@ -540,7 +540,7 @@ fluks::Luks_header::decrypt_key(const std::string &passwd, uint8_t slot,
 
 	// password => pw_digest
 	pbkdf2(_hash_type,
-	    reinterpret_cast<const uint8_t *>(passwd.c_str()), passwd.size(),
+	    reinterpret_cast<const uint8_t *>(passwd.data()), passwd.size(),
 	    key->salt, SZ_SALT, key->iterations,
 	    pw_digest.get(), _hdr->sz_key);
 

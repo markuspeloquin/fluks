@@ -21,7 +21,7 @@ dehex(char c) {
 }
 
 inline uint8_t *
-dehex(const std::string &hex, uint8_t *buf) {
+dehex(std::string_view hex, uint8_t *buf) {
 	char byte[2];
 	uint8_t *start = buf;
 	for (size_t i = 0; i < hex.size(); i++) {

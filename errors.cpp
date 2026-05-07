@@ -33,7 +33,7 @@ ssl_load_errors() {
 
 }
 
-fluks::Ssl_error::Ssl_error(const std::string &msg) {
+fluks::Ssl_error::Ssl_error(std::string_view msg) {
 	ssl_load_errors();
 
 	// '120' used to appear in ERR_error_string(3)

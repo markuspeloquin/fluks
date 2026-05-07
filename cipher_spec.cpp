@@ -112,15 +112,15 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 }
 
 void
-fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec) {
+fluks::Cipher_spec::reset(ssize_t sz_key, std::string_view spec) {
 	// valid patterns:
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
 	// [^-]* - [^-*] - [^:]* : .*
 	std::regex expr(R"(([^-]+)-([^-]+)(?:-([^:]+))?(?::(.+))?)");
 
-	std::smatch matches;
-	if (!std::regex_match(spec, matches, expr))
+	std::cmatch matches;
+	if (!std::regex_match(spec.begin(), spec.end(), matches, expr))
 		throw Bad_spec("cannot be parsed");
 
 	_nm_cipher = matches[1];

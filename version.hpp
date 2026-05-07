@@ -34,14 +34,10 @@ public:
 	}
 
 	/** Get the version as a string. */
-	const std::string &str() const {
-		return _str;
-	}
+	std::string str() const { return _str; }
 
 	/** Get the version as a vector. */
-	const std::vector<unsigned> &vec() const {
-		return _version;
-	}
+	std::vector<unsigned> vec() const { return _version; }
 
 	bool operator<(const Version &rhs) const {
 		return cmp(rhs) < 0;

@@ -22,7 +22,7 @@ namespace {
 class Lookup {
 public:
 	static const Cipher_traits *traits(cipher_type type);
-	static cipher_type type(const std::string &name);
+	static cipher_type type(std::string_view name);
 
 	static const std::vector<cipher_type> &types() {
 		return inst._types;
@@ -34,8 +34,8 @@ private:
 	void operator=(const Lookup &) {}
 
 	static Lookup inst;
-	std::map<cipher_type, Cipher_traits> _map_traits;
-	std::map<std::string, cipher_type> _map_type;
+	std::map<cipher_type, Cipher_traits, std::less<>> _map_traits;
+	std::map<std::string, cipher_type, std::less<>> _map_type;
 	std::vector<cipher_type> _types;
 };
 
@@ -47,7 +47,7 @@ Lookup::traits(cipher_type type) {
 }
 
 cipher_type
-Lookup::type(const std::string &name) {
+Lookup::type(std::string_view name) {
 	auto it = inst._map_type.find(name);
 	if (it == inst._map_type.end()) return cipher_type::UNDEFINED;
 	return it->second;
@@ -84,7 +84,7 @@ Lookup Lookup::inst;
 } // end anon namespace
 }
 
-fluks::Cipher_traits::Cipher_traits(const std::string &name,
+fluks::Cipher_traits::Cipher_traits(std::string_view name,
     uint16_t min_key, uint16_t max_key, uint16_t key_step,
     uint16_t sz_blk, uint16_t version) :
 	name(name),
@@ -103,7 +103,7 @@ fluks::Cipher_traits::traits(cipher_type type) {
 }
 
 fluks::cipher_type
-fluks::Cipher_traits::type(const std::string &name) {
+fluks::Cipher_traits::type(std::string_view name) {
 	return Lookup::type(name);
 }
 

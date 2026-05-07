@@ -24,19 +24,19 @@
 namespace fluks {
 namespace block_mode_info {
 
-	block_mode		type(const std::string &mode);
+	block_mode	type(std::string_view mode);
 	std::vector<block_mode>	types();
-	const std::string	&name(block_mode mode);
-	uint16_t		version(block_mode mode);
+	std::string	name(block_mode mode);
+	uint16_t	version(block_mode mode);
 
 }
 
 namespace iv_mode_info {
 
-	iv_mode			type(const std::string &name);
+	iv_mode		type(std::string_view name);
 	std::vector<iv_mode>	types();
-	const std::string	&name(iv_mode mode);
-	uint16_t		version(iv_mode mode);
+	std::string	name(iv_mode mode);
+	uint16_t	version(iv_mode mode);
 
 }
 }
