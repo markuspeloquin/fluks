@@ -124,7 +124,7 @@ fluks::gutmann_erase(int fd, off_t pos, size_t bytes) {
 		std::swap(order[i], order[r]);
 	}
 
-#ifdef DEBUG
+#ifndef NDEBUG
 	// for valgrind
 	std::fill(buf.get(), buf.get() + bytes, 0);
 #endif

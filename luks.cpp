@@ -110,7 +110,7 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 
 	// initialize LUKS header
 
-#ifdef DEBUG
+#ifndef NDEBUG
 	// for valgrind
 	std::fill(_master_key.get(), _master_key.get() + _hdr->sz_key, 0);
 #endif
@@ -127,7 +127,7 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 		_hdr->hash_spec[hash.size()] = '\0';
 	}
 
-#ifdef DEBUG
+#ifndef NDEBUG
 	// for valgrind
 	std::fill(_hdr->mk_salt, _hdr->mk_salt + SZ_SALT, 0);
 #endif
@@ -273,7 +273,7 @@ fluks::Luks_header::add_passwd(
 	size_t sz_split_key = _hdr->sz_key * avail->stripes;
 	std::unique_ptr<uint8_t[]> split_key{new uint8_t[sz_split_key]};
 
-#ifdef DEBUG
+#ifndef NDEBUG
 	// for valgrind
 	std::fill(avail->salt, avail->salt + SZ_SALT, 0);
 #endif

@@ -119,7 +119,7 @@ fluks::af_split(const uint8_t *in, size_t sz, size_t stripes, hash_type type,
 	Assert(type != hash_type::UNDEFINED, "undefined hash in af_split()");
 
 	std::unique_ptr<uint8_t[]> d{new uint8_t[sz]};
-#ifdef DEBUG
+#ifndef NDEBUG
 	// for valgrind
 	std::fill(out, out + sz * (stripes - 1), 0);
 #endif
