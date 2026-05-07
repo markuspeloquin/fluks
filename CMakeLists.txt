@@ -101,7 +101,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG")
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_EXTENSIONS FALSE)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 
 add_executable(fluks
@@ -157,7 +157,7 @@ install(TARGETS fluks
 	)
 
 # recompile cast6.c with -DCAST6_TEST
-add_custom_command(OUTPUT cast6_t.o COMMAND ${CMAKE_C_COMPILER}	-std=c11 -Wall -pedantic -DCAST6_TEST -D_XOPEN_SOURCE=700 ${CMAKE_SOURCE_DIR}/cast6.c -c -o cast6_t.o)
+add_custom_command(OUTPUT cast6_t.o COMMAND ${CMAKE_C_COMPILER}	-std=c17 -Wall -pedantic -DCAST6_TEST -D_XOPEN_SOURCE=700 ${CMAKE_SOURCE_DIR}/cast6.c -c -o cast6_t.o)
 add_executable(test-cast6 test/cast6.cpp cast6_t.o)
 target_link_libraries(test-cast6)
 add_test(NAME test-cast6 COMMAND test-cast6 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
