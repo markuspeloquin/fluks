@@ -41,7 +41,7 @@ fluks::Hmac_function::create(hash_type type) {
 }
 
 void
-fluks::Hmac_impl::init(const uint8_t *key, size_t sz) noexcept {
+fluks::Hmac_impl::init(const uint8_t *key, size_t sz) {
 	size_t sz_block = traits()->block_size;
 	if (sz > sz_block) {
 		// key too long, so
@@ -71,7 +71,7 @@ fluks::Hmac_impl::init(const uint8_t *key, size_t sz) noexcept {
 }
 
 void
-fluks::Hmac_impl::end(uint8_t *out) noexcept {
+fluks::Hmac_impl::end(uint8_t *out) {
 	size_t sz_block = traits()->block_size;
 	std::unique_ptr<uint8_t[]> key_opad{new uint8_t[sz_block]};
 	std::unique_ptr<uint8_t[]> mid_digest{new uint8_t[traits()->digest_size]};

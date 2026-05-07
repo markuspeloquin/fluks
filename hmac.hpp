@@ -18,9 +18,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <openssl/params.h>
+#include <stdexcept>
 #include <string_view>
 
-#include <openssl/hmac.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 
 #include "hash.hpp"
 
@@ -73,21 +76,21 @@ public:
 	 * \param key	The HMAC %key.
 	 * \param sz	The size of <code>%key</code> in bytes.
 	 */
-	virtual void init(const uint8_t *key, size_t sz) noexcept = 0;
+	virtual void init(const uint8_t *key, size_t sz) = 0;
 
 	/** Pipe data into the HMAC computation.
 	 *
 	 * \param buf	Bytes to add.
 	 * \param sz	Number of bytes in <code>buf</code>.
 	 */
-	virtual void add(const uint8_t *buf, size_t sz) noexcept = 0;
+	virtual void add(const uint8_t *buf, size_t sz) = 0;
 
 	/** End the hashing sequence and return the result.
 	 *
 	 * \param[out] buf	Output buffer. At least
 	 *	<code>traits()->digest_size</code> bytes.
 	 */
-	virtual void end(uint8_t *buf) noexcept = 0;
+	virtual void end(uint8_t *buf) = 0;
 
 	/** Get the traits of the underlying hash function.
 	 *
@@ -120,11 +123,11 @@ public:
 
 	~Hmac_impl() noexcept {}
 
-	void init(const uint8_t *key, size_t sz) noexcept;
-	void add(const uint8_t *buf, size_t sz) noexcept {
+	void init(const uint8_t *key, size_t sz);
+	void add(const uint8_t *buf, size_t sz) {
 		_hashfn->add(buf, sz);
 	}
-	void end(uint8_t *out) noexcept;
+	void end(uint8_t *out);
 
 private:
 	Hmac_impl(const Hmac_impl &) : Hmac_function(0) {}
@@ -136,56 +139,78 @@ private:
 
 
 /** OpenSSL HMAC function template */
-template <
-    const EVP_MD *(*EVP_hashfn)(),
-    hash_type type>
-class Hmac_ssl : public Hmac_function {
+template <hash_type type>
+class Hmac_evp : public Hmac_function {
 public:
-	Hmac_ssl() :
+	Hmac_evp() :
 		Hmac_function(type),
-		_md(EVP_hashfn()),
 		_valid(false)
 	{
-		_ctx = HMAC_CTX_new();
+		EVP_MAC *mac = EVP_MAC_fetch(nullptr, "HMAC", nullptr);
+		if (!mac)
+			throw Ssl_error("EVP_MAC_fetch(\"HMAC\")) failed");
+		_ctx = EVP_MAC_CTX_new(mac);
 		if (!_ctx)
-			throw Ssl_error("HMAC_CTX_new() failed");
+			throw Ssl_error("EVP_MAC_CTX_new() failed");
 	}
 
-	~Hmac_ssl() noexcept {
-		HMAC_CTX_free(_ctx);
+	~Hmac_evp() noexcept {
+		EVP_MAC_CTX_free(_ctx);
 	}
 
-	void init(const uint8_t *key, size_t sz) noexcept {
-		HMAC_Init_ex(_ctx, key, sz, _md, 0);
+	void init(const uint8_t *key, size_t sz) {
+		OSSL_PARAM params[] = {
+			OSSL_PARAM_construct_utf8_string(
+			    "digest", const_cast<char *>(digest_name()), 0
+			),
+			OSSL_PARAM_END,
+		};
+		if (!EVP_MAC_init(_ctx, key, sz, params))
+			throw Ssl_error("EVP_MAC_init() failed");
 		_valid = true;
 	}
 
-	void add(const uint8_t *data, size_t sz) noexcept {
+	void add(const uint8_t *data, size_t sz) {
 		if (!_valid) return;
-		HMAC_Update(_ctx, data, sz);
+		if (!EVP_MAC_update(_ctx, data, sz))
+			throw Ssl_error("EVP_MAC_update() failed");
 	}
 
-	void end(uint8_t *out) noexcept {
+	void end(uint8_t *out) {
 		if (!_valid) return;
 		unsigned sz = traits()->digest_size;
-		HMAC_Final(_ctx, out, &sz);
+		if (!EVP_MAC_final(_ctx, out, nullptr, sz))
+			throw Ssl_error("EVP_MAC_final() failed");
 		_valid = false;
 	}
 
 private:
-	HMAC_CTX	*_ctx;
-	const EVP_MD	*_md;
+	constexpr const char *digest_name() {
+		switch (type) {
+		case hash_type::MD5:    return "MD5";
+		case hash_type::RMD160: return "RIPEMD160";
+		case hash_type::SHA1:   return "SHA1";
+		case hash_type::SHA224: return "SHA224";
+		case hash_type::SHA256: return "SHA256";
+		case hash_type::SHA384: return "SHA384";
+		case hash_type::SHA512: return "SHA512";
+		default:
+			static_assert(type == type, "unexpected type");
+		}
+	}
+
+	EVP_MAC_CTX	*_ctx;
 	bool		_valid;
 };
 
 
-typedef Hmac_ssl<EVP_md5, hash_type::MD5>		Hmac_md5;
-typedef Hmac_ssl<EVP_ripemd160, hash_type::RMD160>	Hmac_rmd160;
-typedef Hmac_ssl<EVP_sha1, hash_type::SHA1>		Hmac_sha1;
-typedef Hmac_ssl<EVP_sha224, hash_type::SHA224>		Hmac_sha224;
-typedef Hmac_ssl<EVP_sha256, hash_type::SHA256>		Hmac_sha256;
-typedef Hmac_ssl<EVP_sha384, hash_type::SHA384>		Hmac_sha384;
-typedef Hmac_ssl<EVP_sha512, hash_type::SHA512>		Hmac_sha512;
+typedef Hmac_evp<hash_type::MD5>	Hmac_md5;
+typedef Hmac_evp<hash_type::RMD160>	Hmac_rmd160;
+typedef Hmac_evp<hash_type::SHA1>	Hmac_sha1;
+typedef Hmac_evp<hash_type::SHA224>	Hmac_sha224;
+typedef Hmac_evp<hash_type::SHA256>	Hmac_sha256;
+typedef Hmac_evp<hash_type::SHA384>	Hmac_sha384;
+typedef Hmac_evp<hash_type::SHA512>	Hmac_sha512;
 
 
 }
