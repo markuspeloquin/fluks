@@ -105,6 +105,7 @@ public:
 	 * \return	An object to en/decrypt with. It's meant to be used
 	 *	with the *_encrypt() and *_decrypt() functions.
 	 */
+	[[nodiscard]]
 	static std::shared_ptr<Cipher> create(cipher_type type);
 
 	virtual ~Cipher() noexcept {}

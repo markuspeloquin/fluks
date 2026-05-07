@@ -49,6 +49,7 @@ public:
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
+	[[nodiscard]]
 	static std::shared_ptr<Hmac_function> create(std::string_view name) {
 		return create(Hash_traits::type(name));
 	}
@@ -59,6 +60,7 @@ public:
 	 * \param type	The hash algorithm.
 	 * \return	An HMAC function pointer.
 	 */
+	[[nodiscard]]
 	static std::shared_ptr<Hmac_function> create(hash_type type);
 
 	virtual ~Hmac_function() noexcept {}

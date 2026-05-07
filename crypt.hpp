@@ -43,6 +43,7 @@ protected:
 	}
 
 public:
+	[[nodiscard]]
 	static std::shared_ptr<Crypter> create(const uint8_t *key,
 	    size_t sz_key, const Cipher_spec &spec);
 
