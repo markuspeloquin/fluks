@@ -49,8 +49,9 @@ public:
 	 *	unrecognized specs.
 	 * \see create(type)
 	 */
-	static std::shared_ptr<Hmac_function> create(const std::string &name)
-	{	return create(Hash_traits::type(name)); }
+	static std::shared_ptr<Hmac_function> create(const std::string &name) {
+		return create(Hash_traits::type(name));
+	}
 
 	/**
 	 * Create an HMAC function, in an abstract sense, given a hash type.
@@ -90,8 +91,9 @@ public:
 	 *
 	 * \return	The hash function properties
 	 */
-	const Hash_traits *traits() const
-	{	return _traits; }
+	const Hash_traits *traits() const {
+		return _traits;
+	}
 
 private:
 	const Hash_traits *_traits;
@@ -117,8 +119,9 @@ public:
 	~Hmac_impl() noexcept {}
 
 	void init(const uint8_t *key, size_t sz) noexcept;
-	void add(const uint8_t *buf, size_t sz) noexcept
-	{	_hashfn->add(buf, sz); }
+	void add(const uint8_t *buf, size_t sz) noexcept {
+		_hashfn->add(buf, sz);
+	}
 	void end(uint8_t *out) noexcept;
 
 private:

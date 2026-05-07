@@ -133,7 +133,7 @@ fluks::Crypter::encrypt(uint32_t start_sector, size_t sz_sector,
 	std::unique_ptr<uint32_t[]> iv32{new uint32_t[sz_blk / 4]};
 
 	uint8_t		*iv = reinterpret_cast<uint8_t *>(iv32.get());
-	uint8_t		*pre_essiv = 0;
+	uint8_t		*pre_essiv = nullptr;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
 	switch (_spec.type_iv_mode()) {
@@ -190,7 +190,7 @@ fluks::Crypter::decrypt(uint32_t start_sector, size_t sz_sector,
 	std::unique_ptr<uint32_t[]> iv32{new uint32_t[sz_blk / 4]};
 
 	uint8_t		*iv = reinterpret_cast<uint8_t *>(iv32.get());
-	uint8_t		*pre_essiv = 0;
+	uint8_t		*pre_essiv = nullptr;
 	uint16_t	num_sect = (sz_data + sz_sector - 1) / sz_sector;
 
 	switch (_spec.type_iv_mode()) {

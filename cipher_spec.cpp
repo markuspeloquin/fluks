@@ -117,8 +117,7 @@ fluks::Cipher_spec::reset(ssize_t sz_key, const std::string &spec) {
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
 	// [^-]* - [^-*] - [^:]* : .*
-	std::regex expr(
-	    "([^-]+)-([^-]+)(?:-([^:]+))?(?::(.+))?");
+	std::regex expr(R"(([^-]+)-([^-]+)(?:-([^:]+))?(?::(.+))?)");
 
 	std::smatch matches;
 	if (!std::regex_match(spec, matches, expr))

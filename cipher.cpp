@@ -41,16 +41,16 @@ private:
 
 const Cipher_traits *
 Lookup::traits(cipher_type type) {
-	auto i = inst._map_traits.find(type);
-	if (i == inst._map_traits.end()) return 0;
-	return &i->second;
+	auto it = inst._map_traits.find(type);
+	if (it == inst._map_traits.end()) return nullptr;
+	return &it->second;
 }
 
 cipher_type
 Lookup::type(const std::string &name) {
-	auto i = inst._map_type.find(name);
-	if (i == inst._map_type.end()) return cipher_type::UNDEFINED;
-	return i->second;
+	auto it = inst._map_type.find(name);
+	if (it == inst._map_type.end()) return cipher_type::UNDEFINED;
+	return it->second;
 }
 
 Lookup::Lookup() {

@@ -75,8 +75,9 @@ run(uint16_t i, const uint8_t *key, uint16_t szkey,
 
 void
 reverse(uint8_t *buf, size_t sz) {
-	size_t i = 0;
-	size_t j = sz - 1;
+	ptrdiff_t i = 0;
+	ptrdiff_t j = sz;
+	j--;
 	while (i < j) {
 		uint8_t t = buf[j];
 		buf[j--] = buf[i];
@@ -181,7 +182,6 @@ run_script(const std::string &path, test_type type) {
 int
 main(int argc, char **argv) {
 	using namespace test;
-
 	prog = *argv;
 
 	if (argc > 1 && chdir(argv[1]) == -1) {

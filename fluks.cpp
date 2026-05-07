@@ -50,8 +50,7 @@ namespace {
 const unsigned NUM_TRIES = 3;
 
 void
-list_modes()
-{
+list_modes() {
 	const std::vector<cipher_type> &ciphers = Cipher_traits::types();
 	std::vector<hash_type> hashes = Hash_traits::types();
 	std::vector<block_mode> block_modes = block_mode_info::types();
@@ -127,8 +126,7 @@ list_modes()
  * \return		The passphrase the user entered
  */
 std::string
-prompt_passwd(const std::string &msg, bool repeat)
-{
+prompt_passwd(const std::string &msg, bool repeat) {
 	bool echo;
 
 	// disable echo
@@ -180,8 +178,7 @@ prompt_passwd(const std::string &msg, bool repeat)
  * \return	The passphrase the user entered.
  */
 std::string
-read_passfile(const std::string &pathname)
-{
+read_passfile(const std::string &pathname) {
 	std::ifstream file(pathname);
 	if (!file) {
 		std::cerr << prog << ": failed to open passphrase file `"
@@ -203,8 +200,7 @@ read_passfile(const std::string &pathname)
 }
 
 void
-usage(const boost::program_options::options_description &desc)
-{
+usage(const boost::program_options::options_description &desc) {
 	std::cout
 	    << "Usage: " << prog << " COMMAND [OPTION ...] [DEVICE]\n"
 	    "DEVICE is usually required, except for the --close and "
@@ -221,8 +217,7 @@ usage(const boost::program_options::options_description &desc)
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	using namespace fluks;
 
 	namespace fs = std::filesystem;

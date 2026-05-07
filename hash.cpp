@@ -41,9 +41,9 @@ private:
 
 const Hash_traits *
 Lookup::traits(hash_type type) {
-	auto i = inst._map_traits.find(type);
-	if (i == inst._map_traits.end()) return 0;
-	return &i->second;
+	auto it = inst._map_traits.find(type);
+	if (it == inst._map_traits.end()) return 0;
+	return &it->second;
 }
 
 hash_type

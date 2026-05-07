@@ -39,15 +39,13 @@ struct Test {
 		std::copy(t.res0, t.res0 + WHIRLPOOL_SZ_DIGEST, res0);
 	}
 
-	Test &operator=(const Test &t)
-	{
+	Test &operator=(const Test &t) {
 		Test c = t;
 		std::swap(*this, c);
 		return *this;
 	}
 
-	bool run()
-	{
+	bool run() {
 		whirlpool_ctx ctx;
 		whirlpool_init(&ctx);
 		whirlpool_update(&ctx, buf.get(), sz);
@@ -64,8 +62,7 @@ struct Test {
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	using namespace test;
 	prog = *argv;
 
@@ -108,7 +105,7 @@ main(int argc, char **argv)
 	    digestbuf)));
 
 	std::string text;
-	for (uint8_t i = 0; i < 8; i++) text += "1234567890";
+	for (int i = 0; i < 8; i++) text += "1234567890";
 	tests.push_back(Test(text, dehex(
 	    "466ef18babb0154d25b9d38a6414f5c08784372bccb204d6549c4afadb601429"
 	    "4d5bd8df2a6c44e538cd047b2681a51a2c60481e88c5a20b2c2a80cf3a9a083b",
@@ -121,21 +118,20 @@ main(int argc, char **argv)
 	    digestbuf)));
 
 	text.clear();
-	for (uint32_t i = 0; i < 1000000; i++) text += 'a';
+	for (int i = 0; i < 1000000; i++) text += 'a';
 	tests.push_back(Test(text, dehex(
 	    "0c99005beb57eff50a7cf005560ddf5d29057fd86b20bfd62deca0f1ccea4af5"
 	    "1fc15490eddc47af32bb2b66c34ff9ad8c6008ad677f77126953b226e4ed8b01",
 	    digestbuf)));
 
 	bool all_good = true;
-	for (std::vector<Test>::iterator i = tests.begin();
-	    i != tests.end(); ++i) {
-		if (!i->run()) {
+	for (auto it = tests.begin(); it != tests.end(); ++it) {
+		if (!it->run()) {
 			all_good = false;
-			std::cout << prog << ": test " << i - tests.begin()
+			std::cout << prog << ": test " << (it - tests.begin())
 			    << " failed\n";
-			std::cout << "  " << hex(i->res, WHIRLPOOL_SZ_DIGEST)
-			    << "\n  " << hex(i->res0, WHIRLPOOL_SZ_DIGEST)
+			std::cout << "  " << hex(it->res, WHIRLPOOL_SZ_DIGEST)
+			    << "\n  " << hex(it->res0, WHIRLPOOL_SZ_DIGEST)
 			    << '\n';
 		}
 	}

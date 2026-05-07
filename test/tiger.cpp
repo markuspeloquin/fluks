@@ -39,8 +39,7 @@ struct Test {
 		std::copy(t.res0, t.res0 + TIGER_SZ_DIGEST, res0);
 	}
 
-	Test &operator=(const Test &t)
-	{
+	Test &operator=(const Test &t) {
 		if (this == &t) return *this;
 		sz = t.sz;
 		buf.reset(new uint8_t[sz]);
@@ -50,8 +49,7 @@ struct Test {
 		return *this;
 	}
 
-	bool run()
-	{
+	bool run() {
 		tiger_ctx ctx;
 		tiger_init(&ctx, 1);
 		tiger_update(&ctx, buf.get(), sz);
@@ -68,8 +66,7 @@ struct Test {
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	using namespace test;
 	prog = *argv;
 
@@ -104,24 +101,23 @@ main(int argc, char **argv)
 	    "8dcea680a17583ee502ba38a3c368651890ffbccdc49a8cc", digestbuf)));
 
 	std::string text;
-	for (uint8_t i = 0; i < 8; i++) text += "1234567890";
+	for (int i = 0; i < 8; i++) text += "1234567890";
 	tests.push_back(Test(text, dehex(
 	    "1c14795529fd9f207a958f84c52f11e887fa0cabdfd91bfd", digestbuf)));
 
 	text.clear();
-	for (uint32_t i = 0; i < 1000000; i++) text += 'a';
+	for (int i = 0; i < 1000000; i++) text += 'a';
 	tests.push_back(Test(text, dehex(
 	    "6db0e2729cbead93d715c6a7d36302e9b3cee0d2bc314b41", digestbuf)));
 
 	bool all_good = true;
-	for (std::vector<Test>::iterator i = tests.begin();
-	    i != tests.end(); ++i) {
-		if (!i->run()) {
+	for (auto it = tests.begin(); it != tests.end(); ++it) {
+		if (!it->run()) {
 			all_good = false;
-			std::cout << prog << ": test " << i - tests.begin()
+			std::cout << prog << ": test " << (it - tests.begin())
 			    << " failed\n";
-			std::cout << "  " << hex(i->res, TIGER_SZ_DIGEST)
-			    << "\n  " << hex(i->res0, TIGER_SZ_DIGEST) << '\n';
+			std::cout << "  " << hex(it->res, TIGER_SZ_DIGEST)
+			    << "\n  " << hex(it->res0, TIGER_SZ_DIGEST) << '\n';
 		}
 	}
 

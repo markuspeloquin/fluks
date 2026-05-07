@@ -32,8 +32,9 @@ struct cipher_stats {
 /** Singleton to parse /proc/crypto for supported ciphers and hashes */
 class Crypto_detect {
 public:
-	static Crypto_detect *instance()
-	{	return &_instance; }
+	static Crypto_detect *instance() {
+		return &_instance;
+	}
 
 	// detected from /proc/crypto
 	std::set<std::string> ciphers;
@@ -50,8 +51,7 @@ private:
 
 };
 
-Crypto_detect::Crypto_detect()
-{
+Crypto_detect::Crypto_detect() {
 	std::ifstream file_in("/proc/crypto");
 	// can't throw an exception
 	if (!file_in) return;
@@ -94,13 +94,11 @@ Crypto_detect Crypto_detect::_instance;
 
 
 const std::set<std::string> &
-fluks::system_ciphers()
-{
+fluks::system_ciphers() {
 	return Crypto_detect::instance()->ciphers;
 }
 
 const std::set<std::string> &
-fluks::system_hashes()
-{
+fluks::system_hashes() {
 	return Crypto_detect::instance()->hashes;
 }

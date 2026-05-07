@@ -43,12 +43,14 @@ inline void	xor_buf_byte(const uint8_t *a, size_t sz, uint8_t b,
 		    uint8_t *c);
 
 inline void
-xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz, uint8_t *c)
-{	while (sz--) *c++ = *a++ ^ *b++; }
+xor_bufs(const uint8_t *a, const uint8_t *b, size_t sz, uint8_t *c) {
+	while (sz--) *c++ = *a++ ^ *b++;
+}
 
 inline void
-xor_buf_byte(const uint8_t *a, size_t sz, uint8_t b, uint8_t *c)
-{	while (sz--) *c++ = *a++ ^ b; }
+xor_buf_byte(const uint8_t *a, size_t sz, uint8_t b, uint8_t *c) {
+	while (sz--) *c++ = *a++ ^ b;
+}
 
 }
 

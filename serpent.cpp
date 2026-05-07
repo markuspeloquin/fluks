@@ -24,8 +24,7 @@ const uint32_t PHI = 0x9e3779b9UL;
 
 inline void
 transform(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
-    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
-{
+    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3) {
 	y0 = ROL(x0, 13);
 	y2 = ROL(x2, 3);
 	y1 = x1 ^ y0 ^ y2;
@@ -40,8 +39,7 @@ transform(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 
 inline void
 transform_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
-    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3)
-{
+    uint32_t &y0, uint32_t &y1, uint32_t &y2, uint32_t &y3) {
 	y2 = ROR(x2, 22);
 	y0 = ROR(x0, 5);
 	y2 ^= x3 ^ (x1 << 7);
@@ -56,8 +54,7 @@ transform_inv(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
 
 inline void
 keying(uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3,
-    const uint32_t subkey[4])
-{
+    const uint32_t subkey[4]) {
 	x0 ^= subkey[0];
 	x1 ^= subkey[1];
 	x2 ^= subkey[2];
@@ -65,8 +62,7 @@ keying(uint32_t &x0, uint32_t &x1, uint32_t &x2, uint32_t &x3,
 }
 
 extern "C" enum serpent_return
-serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
-{
+serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz) {
 	// w starts at offset 8, allowing w to have some negative indices
 	uint32_t	v[8 + 4 * 33];
 	uint32_t	*w = v + 8;
@@ -139,8 +135,7 @@ serpent_init(struct serpent_ctx *ctx, const uint8_t *keyin, size_t sz)
 
 extern "C" void
 serpent_encrypt(const struct serpent_ctx *ctx,
-    const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK])
-{
+    const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK]) {
 	uint32_t	buf[SERPENT_BLOCK/4];
 	uint32_t	x0, x1, x2, x3;
 	uint32_t	y0, y1, y2, y3;
@@ -291,8 +286,7 @@ serpent_encrypt(const struct serpent_ctx *ctx,
 
 extern "C" void
 serpent_decrypt(const struct serpent_ctx *ctx,
-    const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK])
-{
+    const uint8_t in[SERPENT_BLOCK], uint8_t out[SERPENT_BLOCK]) {
 	uint32_t	buf[SERPENT_BLOCK/4];
 	uint32_t	x0, x1, x2, x3;
 	uint32_t	y0, y1, y2, y3;

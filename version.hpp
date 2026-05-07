@@ -34,29 +34,36 @@ public:
 	}
 
 	/** Get the version as a string. */
-	const std::string &str() const
-	{	return _str; }
+	const std::string &str() const {
+		return _str;
+	}
 
 	/** Get the version as a vector. */
-	const std::vector<unsigned> &vec() const
-	{	return _version; }
+	const std::vector<unsigned> &vec() const {
+		return _version;
+	}
 
-	bool operator<(const Version &rhs) const
-	{	return cmp(rhs) < 0; }
-	bool operator>(const Version &rhs) const
-	{	return cmp(rhs) > 0; }
-	bool operator<=(const Version &rhs) const
-	{	return cmp(rhs) <= 0; }
-	bool operator>=(const Version &rhs) const
-	{	return cmp(rhs) >= 0; }
-	bool operator==(const Version &rhs) const
-	{	return cmp(rhs) == 0; }
-	bool operator!=(const Version &rhs) const
-	{	return cmp(rhs) != 0; }
+	bool operator<(const Version &rhs) const {
+		return cmp(rhs) < 0;
+	}
+	bool operator>(const Version &rhs) const {
+		return cmp(rhs) > 0;
+	}
+	bool operator<=(const Version &rhs) const {
+		return cmp(rhs) <= 0;
+	}
+	bool operator>=(const Version &rhs) const {
+		return cmp(rhs) >= 0;
+	}
+	bool operator==(const Version &rhs) const {
+		return cmp(rhs) == 0;
+	}
+	bool operator!=(const Version &rhs) const {
+		return cmp(rhs) != 0;
+	}
 
 private:
-	int cmp(const Version &rhs) const
-	{
+	int cmp(const Version &rhs) const {
 		size_t min = _version.size() < rhs._version.size() ?
 		    _version.size() : rhs._version.size();
 		for (size_t i = 0; i < min; i++) {
@@ -69,8 +76,7 @@ private:
 		return 0;
 	}
 
-	void init_str()
-	{
+	void init_str() {
 		std::ostringstream out;
 		bool first = true;
 		for (unsigned num : _version) {

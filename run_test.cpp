@@ -15,8 +15,7 @@ namespace test {
 using namespace fluks;
 
 uint8_t
-dehex(char c)
-{
+dehex(char c) {
 	if ('0' <= c && c <= '9')
 		return c - '0';
 	if ('A' <= c && c <= 'F')
@@ -28,20 +27,17 @@ dehex(char c)
 }
 
 void
-dehex(const std::string &hex, uint8_t *buf)
-{
+dehex(const std::string &hex, uint8_t *buf) {
 	char byte[2];
 	for (size_t i = 0; i < hex.size(); i++) {
 		byte[i&1] = hex[i];
-		if (i & 1) {
+		if (i & 1)
 			*buf++ = dehex(byte[0]) << 4 | dehex(byte[1]);
-		}
 	}
 }
 
 std::string
-hex(const uint8_t *buf, size_t sz)
-{
+hex(const uint8_t *buf, size_t sz) {
 	std::ostringstream out;
 	out << std::hex << std::setfill('0');
 	for (size_t i = 0; i < sz; i++) {
@@ -86,8 +82,7 @@ Cipher_test::Cipher_test(cipher_type type, const uint8_t *key, size_t sz_key,
 }
 
 void
-Cipher_test::run()
-{
+Cipher_test::run() {
 	std::shared_ptr<Cipher> cipher = Cipher::create(_type);
 	uint8_t buf[cipher->traits()->block_size];
 	cipher->init(_key.get(), _sz_key);
@@ -124,8 +119,7 @@ Hash_test::Hash_test(hash_type type, const uint8_t *data, size_t sz) :
 }
 
 void
-Hash_test::run()
-{
+Hash_test::run() {
 	std::shared_ptr<Hash_function> hash = Hash_function::create(_type);
 	uint8_t buf[hash->traits()->digest_size];
 	hash->init();
@@ -165,8 +159,7 @@ Hmac_test::Hmac_test(hash_type type, const uint8_t *key, size_t sz_key,
 }
 
 void
-Hmac_test::run()
-{
+Hmac_test::run() {
 	std::shared_ptr<Hmac_function> hmac = Hmac_function::create(_type);
 	uint8_t buf[hmac->traits()->digest_size];
 	hmac->init(_key.get(), _sz_key);
@@ -181,8 +174,7 @@ Hmac_test::run()
 } // end test namespace
 
 void
-usage()
-{
+usage() {
 	std::cout
 	    << "usage: " << prog
 		<< " cipher TYPE (encrypt | decrypt) KEY DATA\n"
@@ -197,8 +189,7 @@ usage()
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	using namespace fluks;
 	using namespace test;
 
