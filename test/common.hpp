@@ -32,7 +32,7 @@ dehex(std::string_view hex, uint8_t *buf) {
 	return start;
 }
 
-std::string
+inline std::string
 hex(const uint8_t *buf, size_t sz) {
 	std::ostringstream out;
 	out << std::hex << std::setfill('0');
