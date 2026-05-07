@@ -7,7 +7,7 @@ remember passphrases and (2) the ability to add, revoke, or change the allowed
 passphrases.
 
 A better place to find build/usage information:
-http://wiki.github.com/markuspeloquin/fluks
+https://github.com/markuspeloquin/fluks/wiki
 
 Markus Peloquin <markus@cs.wisc.edu>
 
@@ -16,24 +16,15 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
-        GCC 8 or Clang 5
+        GCC 10 or Clang 9
         CMake 3.30
         libdevmapper (Device-mapper)
-        Boost 1.35
+        Boost 1.70
         OpenSSL
         Linux headers (/usr/include/linux)
 
-    In Ubuntu (ugh), it's at least:
-        - libboost-dev libboost-program-options-dev libdevmapper-dev libssl-dev
-          libudev-dev
-
-    If you would like a dynamically-linked binary, edit the 'static_linking'
-    variable in CMakeLists.txt. By default, an entirely statically-linked
-    binary is produced to ensure you can't break it by updating boost or
-    something.
-
-    Now build:
-        % cmake -DCMAKE_BUILD_TYPE=Release -B build -G Ninja .
+    Now build (statically-linked release):
+        % cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=ON -B build -G Ninja .
         % ninja -C build
 
 INSTALLING
