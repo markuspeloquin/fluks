@@ -21,9 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <openssl/md5.h>
-#include <openssl/ripemd.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 #include "cipher_spec.hpp"
 #include "errors.hpp"
@@ -145,37 +143,39 @@ private:
 };
 
 
-/** OpenSSL hash function template */
-template <
-    typename CTX,
-    int (*Init)(CTX *),
-    int (*Update)(CTX *, const void *, size_t),
-    int (*Final)(uint8_t *, CTX *),
-    hash_type type>
-class Hash_ssl : public Hash_function {
+/** OpenSSL hash function template. */
+template <const EVP_MD *evp_type(), hash_type type>
+class Hash_evp : public Hash_function {
 public:
-	Hash_ssl() : Hash_function(type), _valid(false) {}
-	~Hash_ssl() noexcept {}
+	Hash_evp() : Hash_function(type), _valid(false) {
+		_ctx = EVP_MD_CTX_create();
+	}
+
+	~Hash_evp() noexcept {
+		EVP_MD_CTX_destroy(_ctx);
+	}
 
 	void init() {
 		_valid = false;
-		if (!Init(&_ctx)) throw Ssl_hash_error();
+		if (!EVP_DigestInit_ex(_ctx, evp_type(), nullptr))
+			throw Ssl_hash_error();
 		_valid = true;
 	}
 
 	void add(const uint8_t *buf, size_t sz) {
 		if (!_valid) return;
-		if (!Update(&_ctx, buf, sz)) throw Ssl_hash_error();
+		if (!EVP_DigestUpdate(_ctx, buf, sz))
+			throw Ssl_hash_error();
 	}
 
 	void end(uint8_t *buf) {
 		if (!_valid) return;
-		if (!Final(buf, &_ctx)) throw Ssl_hash_error();
+		if (!EVP_DigestFinal(_ctx, buf, nullptr)) throw Ssl_hash_error();
 		_valid = false;
 	}
 
 private:
-	CTX _ctx;
+	EVP_MD_CTX *_ctx;
 	bool _valid;
 };
 
@@ -269,27 +269,13 @@ private:
 	bool		_valid;
 };
 
-using Hash_md5 = Hash_ssl<MD5_CTX,
-    MD5_Init, MD5_Update, MD5_Final,
-    hash_type::MD5>;
-using Hash_rmd160 = Hash_ssl<RIPEMD160_CTX,
-    RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
-    hash_type::RMD160>;
-using Hash_sha1 = Hash_ssl<SHA_CTX,
-    SHA1_Init, SHA1_Update, SHA1_Final,
-    hash_type::SHA1>;
-using Hash_sha224 = Hash_ssl<SHA256_CTX,
-    SHA224_Init, SHA224_Update, SHA224_Final,
-    hash_type::SHA224>;
-using Hash_sha256 = Hash_ssl<SHA256_CTX,
-    SHA256_Init, SHA256_Update, SHA256_Final,
-    hash_type::SHA256>;
-using Hash_sha384 = Hash_ssl<SHA512_CTX,
-    SHA384_Init, SHA384_Update, SHA384_Final,
-    hash_type::SHA384>;
-using Hash_sha512 = Hash_ssl<SHA512_CTX,
-    SHA512_Init, SHA512_Update, SHA512_Final,
-    hash_type::SHA512>;
+using Hash_md5 = Hash_evp<EVP_md5, hash_type::MD5>;
+using Hash_rmd160 = Hash_evp<EVP_ripemd160, hash_type::RMD160>;
+using Hash_sha1 = Hash_evp<EVP_sha1, hash_type::SHA1>;
+using Hash_sha224 = Hash_evp<EVP_sha224, hash_type::SHA224>;
+using Hash_sha256 = Hash_evp<EVP_sha256, hash_type::SHA256>;
+using Hash_sha384 = Hash_evp<EVP_sha384, hash_type::SHA384>;
+using Hash_sha512 = Hash_evp<EVP_sha512, hash_type::SHA512>;
 
 }
 
