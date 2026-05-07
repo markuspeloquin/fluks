@@ -24,9 +24,7 @@ enum class cipher_type {
 	UNDEFINED = 0,
 	AES,
 	BLOWFISH,
-#ifndef OPENSSL_NO_CAMELLIA
 	CAMELLIA,
-#endif
 	CAST5,
 	CAST6,
 	TWOFISH,

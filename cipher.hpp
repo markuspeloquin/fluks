@@ -22,14 +22,7 @@
 #include <string>
 #include <vector>
 
-#include <openssl/aes.h>
-#include <openssl/blowfish.h>
-#include <openssl/cast.h>
-
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_CAMELLIA
-#	include <openssl/camellia.h>
-#endif
+#include <openssl/evp.h>
 
 #include "cast6.h"
 #include "cipher_spec.hpp"
@@ -154,16 +147,31 @@ private:
  * NSA certifications. OpenSSL implementation. */
 class Cipher_aes : public Cipher {
 public:
-	Cipher_aes() : Cipher(cipher_type::AES), _init(false) {}
-	~Cipher_aes() noexcept {}
+	Cipher_aes() : Cipher(cipher_type::AES), _init(false) {
+		_ctx = EVP_CIPHER_CTX_new();
+	}
 
-	void init(const uint8_t *key, size_t sz) noexcept {
-		// Rijndael keys are set up differently depending if they're
-		// being used for encryption or decryption; the two choices
-		// are (1) store two AES contexts or (2) store one context
-		// and a copy of the key; (1) uses more memory than (2), and
-		// (1) uses less CPU than (2) if the Cipher_aes object
-		// doesn't get repurposed more than once
+	~Cipher_aes() noexcept {
+		EVP_CIPHER_CTX_free(_ctx);
+	}
+
+	void init(const uint8_t *key, size_t sz) {
+		// I would have just used Cipher_evp if this wasn't variable.
+		// Perhaps this suggests I make a different API.
+		switch (sz) {
+		case 128/8:
+			_cipher = EVP_aes_128_ecb();
+			break;
+		case 192/8:
+			_cipher = EVP_aes_192_ecb();
+			break;
+		case 256/8:
+			_cipher = EVP_aes_256_ecb();
+			break;
+		default:
+			throw Crypt_error("bad key size");
+		}
+
 		_key_data.reset(new uint8_t[sz]);
 		std::copy(key, key + sz, _key_data.get());
 		_sz = sz;
@@ -173,138 +181,174 @@ public:
 
 	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
-			throw Crypt_error("no en/decryption key set");
+			throw Crypt_error("no encryption key set");
 		if (_dir != crypt_direction::ENCRYPT) {
-			if (AES_set_encrypt_key(_key_data.get(), _sz * 8,
-			    &_key) < 0)
-				throw Ssl_crypt_error();
+			if (!EVP_EncryptInit(_ctx, _cipher, _key_data.get(), nullptr))
+				throw Crypt_error("init failed");
 			_dir = crypt_direction::ENCRYPT;
 		}
-		AES_encrypt(in, out, &_key);
-	}
-
-	void decrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no en/decryption key set");
-		if (_dir != crypt_direction::DECRYPT) {
-			if (AES_set_decrypt_key(_key_data.get(), _sz * 8,
-			    &_key) < 0)
-				throw Ssl_crypt_error();
-			_dir = crypt_direction::DECRYPT;
-		}
-		AES_decrypt(in, out, &_key);
-	}
-
-private:
-	AES_KEY		_key;
-	std::unique_ptr<uint8_t> _key_data;
-	size_t		_sz;
-	crypt_direction	_dir;
-	bool		_init;
-};
-
-/** The Blowfish cipher. Published in 1993. OpenSSL implementation. */
-class Cipher_blowfish : public Cipher {
-public:
-	Cipher_blowfish() : Cipher(cipher_type::BLOWFISH), _init(false) {}
-	~Cipher_blowfish() noexcept {}
-
-	void init(const uint8_t *key, size_t sz) {
-		// BF_set_key() doesn't check its input size (or silently
-		// fixes it)
-		const std::vector<uint16_t> &sizes =
-		    Cipher_traits::traits(cipher_type::BLOWFISH)->key_sizes;
-		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
-			throw Crypt_error("bad key size");
-
-		_init = true;
-		BF_set_key(&_key, sz, key);
-	}
-
-	void encrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no encryption key set");
-		BF_ecb_encrypt(in, out, &_key, BF_ENCRYPT);
+		if (!EVP_EncryptUpdate(_ctx, out, nullptr, in, _blk_sz))
+			throw Crypt_error("decryption failed");
 	}
 
 	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		BF_ecb_encrypt(in, out, &_key, BF_DECRYPT);
+		if (_dir != crypt_direction::DECRYPT) {
+			if (!EVP_DecryptInit(_ctx, _cipher, _key_data.get(), nullptr))
+				throw Crypt_error("init failed");
+			_dir = crypt_direction::DECRYPT;
+		}
+		if (!EVP_DecryptUpdate(_ctx, out, nullptr, in, _blk_sz))
+			throw Crypt_error("decryption failed");
 	}
 
 private:
-	BF_KEY			_key;
+	const EVP_CIPHER	*_cipher;
+	EVP_CIPHER_CTX		*_ctx;
+	size_t			_blk_sz;
+	std::unique_ptr<uint8_t[]> _key_data;
+	size_t			_sz;
+	crypt_direction		_dir;
 	bool			_init;
 };
 
-#ifndef OPENSSL_NO_CAMELLIA
 /** The Camellia cipher. Published in 2000. CRYPTREC, NESSIE certification.
  * OpenSSL implementation. */
 class Cipher_camellia : public Cipher {
 public:
-	Cipher_camellia() : Cipher(cipher_type::CAMELLIA), _init(false) {}
-	~Cipher_camellia() noexcept {}
+	Cipher_camellia() : Cipher(cipher_type::CAMELLIA), _init(false) {
+		_ctx = EVP_CIPHER_CTX_new();
+	}
+
+	~Cipher_camellia() noexcept {
+		EVP_CIPHER_CTX_free(_ctx);
+	}
 
 	void init(const uint8_t *key, size_t sz) {
-		if (Camellia_set_key(key, sz*8, &_ctx) < 0)
+		// I would have just used Cipher_evp if this wasn't variable.
+		// Perhaps this suggests I make a different API.
+		switch (sz) {
+		case 128/8:
+			_cipher = EVP_camellia_128_ecb();
+			break;
+		case 192/8:
+			_cipher = EVP_camellia_192_ecb();
+			break;
+		case 256/8:
+			_cipher = EVP_camellia_256_ecb();
+			break;
+		default:
 			throw Crypt_error("bad key size");
+		}
+
+		_key_data.reset(new uint8_t[sz]);
+		std::copy(key, key + sz, _key_data.get());
+		_sz = sz;
+		_dir = crypt_direction::NONE;
 		_init = true;
 	}
 
 	void encrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no encryption key set");
-		Camellia_encrypt(in, out, &_ctx);
+		if (_dir != crypt_direction::ENCRYPT) {
+			if (!EVP_EncryptInit(_ctx, _cipher, _key_data.get(), nullptr))
+				throw Crypt_error("init failed");
+			_dir = crypt_direction::ENCRYPT;
+		}
+		if (!EVP_EncryptUpdate(_ctx, out, nullptr, in, _blk_sz))
+			throw Crypt_error("decryption failed");
 	}
 
 	void decrypt(const uint8_t *in, uint8_t *out) {
 		if (!_init)
 			throw Crypt_error("no decryption key set");
-		Camellia_decrypt(in, out, &_ctx);
+		if (_dir != crypt_direction::DECRYPT) {
+			if (!EVP_DecryptInit(_ctx, _cipher, _key_data.get(), nullptr))
+				throw Crypt_error("init failed");
+			_dir = crypt_direction::DECRYPT;
+		}
+		if (!EVP_DecryptUpdate(_ctx, out, nullptr, in, _blk_sz))
+			throw Crypt_error("decryption failed");
 	}
 
 private:
-	CAMELLIA_KEY		_ctx;
+	const EVP_CIPHER	*_cipher;
+	EVP_CIPHER_CTX		*_ctx;
+	size_t			_blk_sz;
+	std::unique_ptr<uint8_t[]> _key_data;
+	size_t			_sz;
+	crypt_direction		_dir;
 	bool			_init;
 };
-#endif
+
+/** OpenSSL cipher template. */
+template <const EVP_CIPHER *evp_type(), cipher_type type>
+class Cipher_evp : public Cipher {
+public:
+	Cipher_evp() : Cipher(type), _init(false) {
+		_ctx = EVP_CIPHER_CTX_new();
+	}
+
+	~Cipher_evp() noexcept {
+		EVP_CIPHER_CTX_free(_ctx);
+	}
+
+	void init(const uint8_t *key, size_t sz) {
+		// The deprecated CAST_set_key() didn't check its input size
+		// (or silently fixed it).
+		auto &sizes = traits()->key_sizes;
+		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
+			throw Crypt_error("bad key size");
+		_blk_sz = traits()->block_size;
+
+		_key_data.reset(new uint8_t[sz]);
+		std::copy(key, key + sz, _key_data.get());
+		_sz = sz;
+		_dir = crypt_direction::NONE;
+		_init = true;
+	}
+
+	void encrypt(const uint8_t *in, uint8_t *out) {
+		if (!_init)
+			throw Crypt_error("no encryption key set");
+		if (_dir != crypt_direction::ENCRYPT) {
+			if (!EVP_EncryptInit(_ctx, evp_type(), _key_data.get(), nullptr))
+				throw Crypt_error("init failed");
+			_dir = crypt_direction::ENCRYPT;
+		}
+		if (!EVP_EncryptUpdate(_ctx, out, nullptr, in, _blk_sz))
+			throw Crypt_error("decryption failed");
+	}
+
+	void decrypt(const uint8_t *in, uint8_t *out) {
+		if (!_init)
+			throw Crypt_error("no decryption key set");
+		if (_dir != crypt_direction::DECRYPT) {
+			if (!EVP_DecryptInit(_ctx, evp_type(), _key_data.get(), nullptr))
+				throw Crypt_error("init failed");
+			_dir = crypt_direction::DECRYPT;
+		}
+		if (!EVP_DecryptUpdate(_ctx, out, nullptr, in, _blk_sz))
+			throw Crypt_error("decryption failed");
+	}
+
+private:
+	EVP_CIPHER_CTX		*_ctx;
+	size_t			_blk_sz;
+	std::unique_ptr<uint8_t[]> _key_data;
+	size_t			_sz;
+	crypt_direction		_dir;
+	bool			_init;
+};
+
+/** The Blowfish cipher. Published in 1993. OpenSSL implementation. */
+using Cipher_blowfish = Cipher_evp<EVP_bf_ecb, cipher_type::BLOWFISH>;
 
 /** The CAST-128 cipher. Published in 1996 and in RFC 2144. OpenSSL
  * implementation. */
-class Cipher_cast5 : public Cipher {
-public:
-	Cipher_cast5() : Cipher(cipher_type::CAST5), _init(false) {}
-	~Cipher_cast5() noexcept {}
-
-	void init(const uint8_t *key, size_t sz) {
-		// CAST_set_key() doesn't check its input size (or silently
-		// fixes it)
-		const std::vector<uint16_t> &sizes =
-		    Cipher_traits::traits(cipher_type::CAST5)->key_sizes;
-		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
-			throw Crypt_error("bad key size");
-
-		_init = true;
-		CAST_set_key(&_key, sz, key);
-	}
-
-	void encrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no encryption key set");
-		CAST_ecb_encrypt(in, out, &_key, CAST_ENCRYPT);
-	}
-
-	void decrypt(const uint8_t *in, uint8_t *out) {
-		if (!_init)
-			throw Crypt_error("no decryption key set");
-		CAST_ecb_encrypt(in, out, &_key, CAST_DECRYPT);
-	}
-
-private:
-	CAST_KEY		_key;
-	bool			_init;
-};
+using Cipher_cast5 = Cipher_evp<EVP_cast5_ecb, cipher_type::CAST5>;
 
 /** The CAST-256 cipher. Published in 1998 and in RFC 2612. Submitted to AES
  * but not among the finalists. Independent implementation. */
