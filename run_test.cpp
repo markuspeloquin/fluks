@@ -86,16 +86,16 @@ Cipher_test::run() {
 	std::shared_ptr<Cipher> cipher = Cipher::create(_type);
 	uint8_t buf[cipher->traits()->block_size];
 	cipher->init(_key.get(), _sz_key);
-	if (_dir == DIR_ENCRYPT)
+	if (_dir == crypt_direction::ENCRYPT)
 		cipher->encrypt(_block.get(), buf);
 	else
 		cipher->decrypt(_block.get(), buf);
 
 	std::cout
 	//    << "KEY=" << hex(_key.get(), _sz_key) << '\n'
-	//    << (_dir == DIR_ENCRYPT ? 'P' : 'C') << "T="
+	//    << (_dir == crypt_direction::ENCRYPT ? 'P' : 'C') << "T="
 	//    << hex(_block.get(), cipher->traits()->block_size) << '\n'
-	//    << (_dir == DIR_ENCRYPT ? 'C' : 'P') << "T="
+	//    << (_dir == crypt_direction::ENCRYPT ? 'C' : 'P') << "T="
 	    << hex(buf, cipher->traits()->block_size) << '\n';
 }
 
@@ -213,7 +213,8 @@ main(int argc, char **argv) {
 		std::string data = argv[5];
 
 		cipher_type cipher_ = Cipher_traits::type(cipher);
-		Assert(cipher_ != CT_UNDEFINED, "undefined cipher: " + cipher);
+		Assert(cipher_ != cipher_type::UNDEFINED,
+		    "undefined cipher: " + cipher);
 		crypt_direction dir_;
 		if (dir == "encrypt")
 			dir_ = crypt_direction::ENCRYPT;
@@ -247,7 +248,8 @@ main(int argc, char **argv) {
 		std::string data = argv[3];
 
 		hash_type hash_type = Hash_traits::type(hash);
-		Assert(hash_type != HT_UNDEFINED, "undefined hash: " + hash);
+		Assert(hash_type != hash_type::UNDEFINED,
+		    "undefined hash: " + hash);
 		uint8_t databuf[data.size()];
 		size_t datasz;
 		if (data[0] == '-') {
@@ -270,7 +272,8 @@ main(int argc, char **argv) {
 		std::string data = argv[4];
 
 		hash_type hash_ = Hash_traits::type(hash);
-		Assert(hash_ != HT_UNDEFINED, "undefined hash: " + hash);
+		Assert(hash_ != hash_type::UNDEFINED,
+		    "undefined hash: " + hash);
 		uint8_t keybuf[key.size()/2];
 		dehex(key, keybuf);
 		uint8_t databuf[data.size()];
