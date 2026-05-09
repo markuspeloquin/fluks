@@ -20,22 +20,16 @@
 #ifdef __cplusplus
 #	include <cstddef>
 #	include <cstdint>
-
-	inline constexpr size_t TWOFISH_KEYMIN = 16;
-	inline constexpr size_t TWOFISH_KEYMAX = 32;
-	inline constexpr size_t TWOFISH_KEYSTEP = 8;
-	inline constexpr size_t TWOFISH_BLOCK = 16;
 #else
 #	include <stdbool.h>
 #	include <stddef.h>
 #	include <stdint.h>
-
-#	define TWOFISH_KEYMIN 16
-#	define TWOFISH_KEYMAX 32
-#	define TWOFISH_KEYSTEP 8
-#	define TWOFISH_BLOCK 16
 #endif
 
+constexpr size_t TWOFISH_KEYMIN = 16;
+constexpr size_t TWOFISH_KEYMAX = 32;
+constexpr size_t TWOFISH_KEYSTEP = 8;
+constexpr size_t TWOFISH_BLOCK = 16;
 
 struct twofish_ctx {
 	uint32_t K[40];

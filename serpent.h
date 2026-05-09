@@ -20,21 +20,15 @@
 #ifdef __cplusplus
 #	include <cstddef>
 #	include <cstdint>
-
-	inline constexpr size_t SERPENT_BLOCK = 16;
-	inline constexpr size_t SERPENT_KEYMIN = 16;
-	inline constexpr size_t SERPENT_KEYMAX = 32;
-	inline constexpr size_t SERPENT_KEYSTEP = 8;
 #else
 #	include <stddef.h>
 #	include <stdint.h>
-
-#	define SERPENT_BLOCK 16
-#	define SERPENT_KEYMIN 16
-#	define SERPENT_KEYMAX 32
-#	define SERPENT_KEYSTEP 8
 #endif
 
+constexpr size_t SERPENT_BLOCK = 16;
+constexpr size_t SERPENT_KEYMIN = 16;
+constexpr size_t SERPENT_KEYMAX = 32;
+constexpr size_t SERPENT_KEYSTEP = 8;
 
 enum serpent_return {
 	/** Key material not of correct length */

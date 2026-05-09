@@ -20,28 +20,24 @@
 #ifdef __cplusplus
 #	include <cstddef>
 #	include <cstdint>
-
-	/** Size of a CAST-256 block (bytes) */
-	inline constexpr size_t CAST6_BLOCK = 16;
-
-	/** Minimum size of a CAST-256 key (bytes) */
-	inline constexpr size_t CAST6_KEY_MIN = 16;
-
-	/** Maximum size of a CAST-256 key (bytes) */
-	inline constexpr size_t CAST6_KEY_MAX = 32;
-
-	/** CAST-256 keys are all
-	 * <code>CAST6_KEY_MIN + n * CAST6_KEY_STEP</code> bytes */
-	inline constexpr size_t CAST6_KEY_STEP = 4;
 #else
 #	include <stdbool.h>
+#	include <stddef.h>
 #	include <stdint.h>
-
-#	define CAST6_BLOCK 16
-#	define CAST6_KEY_MIN 16
-#	define CAST6_KEY_MAX 32
-#	define CAST6_KEY_STEP 4
 #endif
+
+/** Size of a CAST-256 block (bytes) */
+constexpr size_t CAST6_BLOCK = 16;
+
+/** Minimum size of a CAST-256 key (bytes) */
+constexpr size_t CAST6_KEY_MIN = 16;
+
+/** Maximum size of a CAST-256 key (bytes) */
+constexpr size_t CAST6_KEY_MAX = 32;
+
+/** CAST-256 keys are all
+ * <code>CAST6_KEY_MIN + n * CAST6_KEY_STEP</code> bytes */
+constexpr size_t CAST6_KEY_STEP = 4;
 
 struct cast6_ctx {
 	uint32_t	Km[12][4];

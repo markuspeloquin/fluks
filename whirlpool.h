@@ -18,24 +18,17 @@
 #include <features.h>
 
 #ifdef __cplusplus
-// C++
 #	include <cstddef>
 #	include <cstdint>
-
-	inline constexpr size_t WHIRLPOOL256_SZ_DIGEST = 32;
-	inline constexpr size_t WHIRLPOOL384_SZ_DIGEST = 48;
-	inline constexpr size_t WHIRLPOOL_SZ_DIGEST = 64;
-	inline constexpr size_t WHIRLPOOL_SZ_BLOCK = 64;
 #else
-/* C */
 #	include <stddef.h>
 #	include <stdint.h>
-
-#	define WHIRLPOOL256_SZ_DIGEST	32
-#	define WHIRLPOOL384_SZ_DIGEST	48
-#	define WHIRLPOOL_SZ_DIGEST	64
-#	define WHIRLPOOL_SZ_BLOCK	64
 #endif
+
+constexpr size_t WHIRLPOOL256_SZ_DIGEST = 32;
+constexpr size_t WHIRLPOOL384_SZ_DIGEST = 48;
+constexpr size_t WHIRLPOOL_SZ_DIGEST = 64;
+constexpr size_t WHIRLPOOL_SZ_BLOCK = 64;
 
 struct whirlpool_ctx {
 	/* the hashing state */

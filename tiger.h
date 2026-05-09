@@ -20,20 +20,15 @@
 #ifdef __cplusplus
 #	include <cstddef>
 #	include <cstdint>
-
-	inline constexpr size_t TIGER_SZ_BLOCK = 64;
-	inline constexpr size_t TIGER128_SZ_DIGEST = 16;
-	inline constexpr size_t TIGER160_SZ_DIGEST = 20;
-	inline constexpr size_t TIGER_SZ_DIGEST = 24;
 #else
 #	include <stddef.h>
 #	include <stdint.h>
-
-#	define TIGER_SZ_BLOCK 64
-#	define TIGER128_SZ_DIGEST 16
-#	define TIGER160_SZ_DIGEST 20
-#	define TIGER_SZ_DIGEST 24
 #endif
+
+constexpr size_t TIGER_SZ_BLOCK = 64;
+constexpr size_t TIGER128_SZ_DIGEST = 16;
+constexpr size_t TIGER160_SZ_DIGEST = 20;
+constexpr size_t TIGER_SZ_DIGEST = 24;
 
 /** Context structure for the Tiger hash function */
 struct tiger_ctx {
