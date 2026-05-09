@@ -19,7 +19,6 @@
 #include <cerrno>
 #include <chrono>
 #include <iostream>
-#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -371,28 +370,37 @@ fluks::Luks_header::check_supported(std::ostream *out, uint16_t max_version) {
 std::string
 fluks::Luks_header::info() const {
 	const_cast<Luks_header *>(this)->set_mach_end(true);
-	std::ostringstream out;
+	std::string out;
 
-	out <<   "version                             " << _hdr->version
-	    << "\ncipher                              " << _hdr->cipher_name
-	    << "\ncipher mode                         " << _hdr->cipher_mode
-	    << "\nhash spec                           " << _hdr->hash_spec
-	    << "\npayload start sector                " << _hdr->off_payload
-	    << "\nmaster key size                     " << _hdr->sz_key
-	    << "\nmaster key iterations               " << _hdr->mk_iterations
-	    << "\nuuid                                " << _hdr->uuid;
-	for (uint16_t i = 0; i < NUM_KEYS; i++) {
-		out << "\nkey " << i << " state                         "
-		    << (_hdr->keys[i].active == KEY_ENABLED ?
-		    "ENABLED" : "DISABLED")
-		    << "\nkey " << i << " iterations                    "
-		    << _hdr->keys[i].iterations
-		    << "\nkey " << i << " key material sector offset    "
-		    << _hdr->keys[i].off_km
-		    << "\nkey " << i << " stripes                       "
-		    << _hdr->keys[i].stripes;
+	out += std::format(
+	    "version                             {}\n"
+	    "cipher                              {}\n"
+	    "cipher mode                         {}\n"
+	    "hash spec                           {}\n"
+	    "payload start sector                {}\n"
+	    "master key size                     {}\n"
+	    "master key iterations               {}\n"
+	    "uuid                                {}\n",
+	    _hdr->version,
+	    _hdr->cipher_name,
+	    _hdr->cipher_mode,
+	    _hdr->hash_spec,
+	    _hdr->off_payload,
+	    _hdr->sz_key,
+	    _hdr->mk_iterations,
+	    _hdr->uuid);
+	for (unsigned i = 0; i < NUM_KEYS; i++) {
+		out += std::format(
+		    "\nkey {} state                         {}"
+		    "\nkey {} iterations                    {}"
+		    "\nkey {} key material sector offset    {}"
+		    "\nkey {} stripes                       {}",
+		    i, _hdr->keys[i].active == KEY_ENABLED ? "ENABLED" : "DISABLED",
+		    i, _hdr->keys[i].iterations,
+		    i, _hdr->keys[i].off_km,
+		    i, _hdr->keys[i].stripes);
 	}
-	return out.str();
+	return out;
 }
 
 void

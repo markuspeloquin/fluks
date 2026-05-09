@@ -1,7 +1,7 @@
 #ifndef FLUKS_VERSION_HPP
 #define FLUKS_VERSION_HPP
 
-#include <sstream>
+#include <format>
 #include <vector>
 
 namespace fluks {
@@ -73,14 +73,14 @@ private:
 	}
 
 	void init_str() {
-		std::ostringstream out;
+		std::string out;
 		bool first = true;
 		for (unsigned num : _version) {
-			if (!first) out << '.';
+			if (!first) out += '.';
 			first = false;
-			out << num;
+			out += std::format("{}", num);
 		}
-		_str = out.str();
+		_str = out;
 	}
 
 	std::string		_str;

@@ -12,8 +12,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <format>
 #include <mutex>
-#include <sstream>
 #include <system_error>
 
 #include <openssl/err.h>
@@ -40,9 +40,7 @@ fluks::Ssl_error::Ssl_error(std::string_view msg) {
 	char ssl_err_buf[120];
 	ERR_error_string_n(ERR_get_error(), ssl_err_buf, sizeof ssl_err_buf);
 
-	std::ostringstream out;
-	out << msg << ": " << ssl_err_buf;
-	_msg = out.str();
+	_msg = std::format("{}: {}", msg, ssl_err_buf);
 }
 
 /** \throw std::system_error */

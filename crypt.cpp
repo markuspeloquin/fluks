@@ -14,8 +14,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <format>
 #include <memory>
-#include <sstream>
 
 #include "cipher.hpp"
 #include "cipher_spec.hpp"
@@ -320,10 +320,9 @@ fluks::Crypter_cbc_cts::encrypt(Cipher *cipher, const uint8_t *iv,
 	uint32_t blocks = sz / sz_blk;
 
 	if (sz < sz_blk) {
-		std::ostringstream out;
-		out << "CBC-CTS requires at least one block of data ("
-		    << sz_blk << " bytes for this cipher)";
-		throw Crypt_error(out.str());
+		throw Crypt_error(std::format(
+		    "CBC-CTS requires at least one block of data ({} bytes for this cipher)",
+		    sz_blk));
 	}
 
 	// encrypt whole blocks
@@ -365,10 +364,9 @@ fluks::Crypter_cbc_cts::decrypt(Cipher *cipher, const uint8_t *iv,
 	uint32_t blocks = sz / sz_blk;
 
 	if (sz < sz_blk) {
-		std::ostringstream out;
-		out << "CBC-CTS requires at least one block of data ("
-		    << sz_blk << " bytes for this cipher)";
-		throw Crypt_error(out.str());
+		throw Crypt_error(std::format(
+		    "CBC-CTS requires at least one block of data ({} bytes for this cipher)",
+		    sz_blk));
 	}
 
 	// decrypt whole blocks

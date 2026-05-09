@@ -14,10 +14,9 @@
 
 #include <cstdarg>
 #include <cstdio>
-#include <iomanip>
+#include <format>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -39,9 +38,7 @@ dm_logger(int level, const char *file, int line, const char *f, ...) {
 	int sz = SZ;
 	va_list ap;
 
-	std::ostringstream out;
-	out << "\n\t";
-
+	std::string out = "\n\t";
 	for (;;) {
 		va_start(ap, f);
 		int n = vsnprintf(buf.get(), sz, f, ap);
@@ -50,7 +47,7 @@ dm_logger(int level, const char *file, int line, const char *f, ...) {
 		if (n >= 0) {
 			if (n < sz) {
 				// the string fit into the buffer
-				out << buf.get();
+				out += buf.get();
 				break;
 			}
 
@@ -59,12 +56,12 @@ dm_logger(int level, const char *file, int line, const char *f, ...) {
 			sz = n + 1;
 			buf.reset(new char[sz]);
 		} else {
-			out << "vsnprintf() failed; " << file << ": " << f;
+			out += std::format("vsnprintf() failed; {}: {}", file, f);
 			break;
 		}
 	}
 
-	log_output += out.str();
+	log_output += out;
 }
 
 void
@@ -119,31 +116,29 @@ Device_mapper::add_crypt_target(
     std::string_view cipher_spec,
     const uint8_t *key, size_t sz_key,
     std::string_view device_path) {
-	std::ostringstream param_out;
+	std::string param_out;
 
 	// format of param argument:
 	//	CIPHER KEY IV_OFFSET DEVICE_PATH OFFSET
 
 	// CIPHER (e.g. serpent-cbc-essiv:tgr192)
-	param_out << cipher_spec << ' ';
+	param_out += std::format("{} ", cipher_spec);
 
 	// KEY (hex-encoded master key)
-	param_out << std::hex << std::setfill('0');
 	for (size_t i = 0; i < sz_key; i++)
-		param_out << std::setw(2) << (short)key[i];
-	param_out << std::dec << std::setfill(' ');
+		param_out += std::format("{:02x}", key[i]);
 
 	// IV_OFFSET (number added to sector number for each IV)
 	// DEVICE_PATH (e.g. /dev/sda7)
 	// OFFSET (start sector number [header is at sector 0])
-	param_out << " 0 " << device_path << ' ' << start_sector;
+	param_out += std::format(" 0 {} {}", device_path, start_sector);
 
 	log_output = "";
 	if (!dm_task_add_target(_task,
 	    0, // logical start sector
 	    num_sectors,
 	    "crypt", // DM target
-	    param_out.str().c_str()))
+	    param_out.c_str()))
 		throw Dm_error(log_output);
 }
 

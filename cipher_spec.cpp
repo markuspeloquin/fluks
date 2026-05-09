@@ -12,9 +12,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include <format>
 #include <regex>
 #include <set>
-#include <sstream>
 
 #include "cipher.hpp"
 #include "cipher_spec.hpp"
@@ -63,17 +63,15 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 	if (sz_key != -1 &&
 	    !std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
 		// sz_key not compatible with the cipher
-		std::ostringstream out;
-		out << "cipher `" << _nm_cipher
-		    << "' only supports keys of sizes";
+		auto out = std::format("cipher `{}' only supports keys of sizes", _nm_cipher);
 		bool first = true;
 		for (uint16_t size : sizes) {
-			if (!first) out << ',';
+			if (!first) out += ',';
 			first = false;
-			out << ' ' << size * 8;
+			out += std::format(" {}", size * 8);
 		}
-		out << " (not " << sz_key << ')';
-		throw Bad_spec(out.str());
+		out += std::format(" (not {})", sz_key);
+		throw Bad_spec(out);
 	}
 
 	// are the specs compatible?
@@ -95,18 +93,17 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 		// cipher
 		uint16_t size = ivhash_traits->digest_size;
 		if (!std::binary_search(sizes.begin(), sizes.end(), size)) {
-			std::ostringstream out;
-			out << "cipher `" << _nm_cipher
-			    << "' only supports keys of sizes";
+			auto out = std::format(
+			    "cipher `{}' only supports keys of sizes",
+			    _nm_cipher);
 			bool first = true;
 			for (uint16_t size : sizes) {
-				if (!first) out << ',';
+				if (!first) out += ',';
 				first = false;
-				out << ' ' << size * 8;
+				out += std::format(" {}", size * 8);
 			}
-			out << "; incompatible with hash `" << _nm_iv_hash
-			    << '\'';
-			throw Bad_spec(out.str());
+			out += std::format("; incompatible with hash `{}'", _nm_iv_hash);
+			throw Bad_spec(out);
 		}
 	}
 }

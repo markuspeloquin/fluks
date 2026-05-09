@@ -1,7 +1,6 @@
-#include <iomanip>
+#include <format>
 #include <iostream>
 #include <memory>
-#include <sstream>
 
 #include "cipher.hpp"
 #include "crypt.hpp"
@@ -16,12 +15,9 @@ using namespace fluks;
 
 uint8_t
 dehex(char c) {
-	if ('0' <= c && c <= '9')
-		return c - '0';
-	if ('A' <= c && c <= 'F')
-		return 10 + c - 'A';
-	if ('a' <= c && c <= 'f')
-		return 10 + c - 'a';
+	if ('0' <= c && c <= '9') return c - '0';
+	if ('A' <= c && c <= 'F') return 10 + c - 'A';
+	if ('a' <= c && c <= 'f') return 10 + c - 'a';
 	Assert(0, std::string("bad hex character: ") + c);
 	return 0;
 }
@@ -38,14 +34,12 @@ dehex(std::string_view hex, uint8_t *buf) {
 
 std::string
 hex(const uint8_t *buf, size_t sz) {
-	std::ostringstream out;
-	out << std::hex << std::setfill('0');
+	std::string out;
 	for (size_t i = 0; i < sz; i++) {
-		if (i && i % 32 == 0)
-			out << '\n';
-		out << std::setw(2) << (short)buf[i];
+		if (i && i % 32 == 0) out += '\n';
+		out += std::format("{:2x}", buf[i]);
 	}
-	return out.str();
+	return out;
 }
 
 class Test {

@@ -4,18 +4,17 @@
 #include <cstdlib>
 #include <cstddef>
 #include <cstdint>
-#include <iomanip>
+#include <format>
 #include <iostream>
-#include <sstream>
 #include <string>
 
 namespace test {
 
 inline uint8_t
 dehex(char c) {
-	if ('0' <= c && c <= '9')	return c - '0';
-	if ('A' <= c && c <= 'F')	return 10 + c - 'A';
-	if ('a' <= c && c <= 'f')	return 10 + c - 'a';
+	if ('0' <= c && c <= '9') return c - '0';
+	if ('A' <= c && c <= 'F') return 10 + c - 'A';
+	if ('a' <= c && c <= 'f') return 10 + c - 'a';
 	std::cerr << "bad hex character: " << c << '\n';
 	exit(1);
 }
@@ -34,14 +33,12 @@ dehex(std::string_view hex, uint8_t *buf) {
 
 inline std::string
 hex(const uint8_t *buf, size_t sz) {
-	std::ostringstream out;
-	out << std::hex << std::setfill('0');
+	std::string out;
 	for (size_t i = 0; i < sz; i++) {
-		if (i && i % 32 == 0)
-			out << '\n';
-		out << std::setw(2) << static_cast<short>(buf[i]);
+		if (i && i % 32 == 0) out += '\n';
+		out += std::format("{:02x}", buf[i]);
 	}
-	return out.str();
+	return out;
 }
 
 }

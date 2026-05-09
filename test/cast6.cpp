@@ -1,5 +1,6 @@
 #include <unistd.h>
 
+#include <format>
 #include <fstream>
 #include <regex>
 
@@ -21,13 +22,12 @@ rotk_string(const uint8_t rotk[4]) {
 
 std::string
 mask_string(const uint32_t mask[4]) {
-	std::ostringstream out;
-	out << std::setfill('0') << std::hex;
+	std::string out;
 	for (uint8_t i = 0; i < 4; i++) {
-		if (i) out << ' ';
-		out << std::setw(8) << mask[i];
+		if (i) out += ' ';
+		out += std::format("{:08x}", mask[i]);
 	}
-	return out.str();
+	return out;
 }
 
 bool

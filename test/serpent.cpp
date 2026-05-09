@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include <fstream>
+#include <iomanip>
 #include <regex>
 
 #include "common.hpp"
