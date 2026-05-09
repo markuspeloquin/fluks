@@ -70,8 +70,7 @@ public:
 	 */
 	template <typename Out>
 	static void types(Out out) {
-		const std::vector<cipher_type> &t = types();
-		std::copy(t.begin(), t.end(), out);
+		std::ranges::copy(types(), out);
 	}
 
 	std::string name; /**< The cipher's name */
@@ -299,7 +298,7 @@ public:
 		// The deprecated CAST_set_key() didn't check its input size
 		// (or silently fixed it).
 		auto &sizes = traits()->key_sizes;
-		if (!std::binary_search(sizes.begin(), sizes.end(), sz))
+		if (!std::ranges::binary_search(sizes, sz))
 			throw Crypt_error("bad key size");
 		_blk_sz = traits()->block_size;
 

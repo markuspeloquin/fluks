@@ -16,8 +16,7 @@ struct Test {
 		buf(new uint8_t[str.size()]),
 		sz(str.size())
 	{
-		std::copy(str.begin(), str.end(),
-		    reinterpret_cast<char *>(this->buf.get()));
+		std::ranges::copy(str, reinterpret_cast<char *>(this->buf.get()));
 		std::copy(res, res + TIGER_SZ_DIGEST, this->res);
 	}
 

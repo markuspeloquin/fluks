@@ -116,13 +116,13 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 	if (!RAND_bytes(_master_key.get(), _hdr->sz_key))
 		throw Ssl_error();
 
-	std::copy(MAGIC, MAGIC + sizeof MAGIC, _hdr->magic);
+	std::ranges::copy(MAGIC, _hdr->magic);
 	_hdr->version = 1;
 
 	// write the canonized hash name into the header
 	{
 		std::string hash = Hash_traits::traits(_hash_type)->name;
-		std::copy(hash.begin(), hash.end(), _hdr->hash_spec);
+		std::ranges::copy(hash, _hdr->hash_spec);
 		_hdr->hash_spec[hash.size()] = '\0';
 	}
 

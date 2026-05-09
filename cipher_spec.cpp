@@ -60,8 +60,7 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 	// XXX only *after* dm-crypt attempts to use them.
 
 	const std::vector<uint16_t> &sizes = cipher_traits->key_sizes;
-	if (sz_key != -1 &&
-	    !std::binary_search(sizes.begin(), sizes.end(), sz_key)) {
+	if (sz_key != -1 && !std::ranges::binary_search(sizes, sz_key)) {
 		// sz_key not compatible with the cipher
 		auto out = std::format("cipher `{}' only supports keys of sizes", _nm_cipher);
 		bool first = true;
@@ -92,7 +91,7 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 		// check that ESSIV hash size is a possible key size of the
 		// cipher
 		uint16_t size = ivhash_traits->digest_size;
-		if (!std::binary_search(sizes.begin(), sizes.end(), size)) {
+		if (!std::ranges::binary_search(sizes, size)) {
 			auto out = std::format(
 			    "cipher `{}' only supports keys of sizes",
 			    _nm_cipher);
