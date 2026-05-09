@@ -51,7 +51,7 @@ extern "C" {
  * \param sz	The size of the key in bytes.
  * \retval SERPENT_BAD_KEY_MAT	The key size is invalid.
  */
-enum serpent_return
+[[nodiscard]] enum serpent_return
 	serpent_init(struct serpent_ctx *ctx,
 	    const uint8_t *key, size_t sz);
 

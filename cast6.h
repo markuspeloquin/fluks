@@ -55,7 +55,8 @@ extern "C" {
  *	16, 20, 24, 28, 32
  * \retval false	The key size is invalid
  */
-bool	cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz);
+[[nodiscard]] bool	cast6_init(struct cast6_ctx *ctx, const uint8_t *key,
+			    uint8_t sz);
 
 /** Encrypt a block of data
  *

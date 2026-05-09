@@ -46,8 +46,8 @@ extern "C" {
  * \param sz		The size in bytes of the %key
  * \retval true iff key size is fine
  */
-bool	twofish_init(struct twofish_ctx *key, const uint8_t *keydata,
-	    size_t sz);
+[[nodiscard]] bool	twofish_init(struct twofish_ctx *key,
+			    const uint8_t *keydata, size_t sz);
 
 /** Encrypt a block of plaintext
  *
