@@ -30,7 +30,7 @@ endif()
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_EXTENSIONS FALSE)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 
 add_executable(fluks
@@ -87,7 +87,7 @@ install(TARGETS fluks
 # recompile cast6.c with -DCAST6_TEST
 add_library(cast6_test_obj OBJECT cast6.c)
 target_compile_definitions(cast6_test_obj PRIVATE CAST6_TEST _XOPEN_SOURCE=700)
-target_compile_options(cast6_test_obj PRIVATE -Wall -pedantic)
+target_compile_options(cast6_test_obj PRIVATE -Wall -Wextra -pedantic)
 set_target_properties(cast6_test_obj PROPERTIES C_STANDARD 23)
 
 add_executable(test-cast6 test/cast6.cpp $<TARGET_OBJECTS:cast6_test_obj>)

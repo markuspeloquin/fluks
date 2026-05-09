@@ -16,7 +16,7 @@ Markus Peloquin <markus@cs.wisc.edu>
 BUILDING
 
     Dependencies:
-        GCC 10 or Clang 9
+        GCC 14 or Clang 18
         CMake 3.30
         libdevmapper (Device-mapper)
         Boost 1.70

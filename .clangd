@@ -1,10 +1,10 @@
 CompileFlags:
-  Add: [-Ilibcuefile/include, -std=c++20]
+  Add: [-Ilibcuefile/include, -std=c++23]
 
 ---
 
 If:
   PathMatch: .*\.[ch]
 CompileFlags:
-  Remove: [-std=c++20]
+  Remove: [-std=c++23]
   Add: [-std=c23, -xc]

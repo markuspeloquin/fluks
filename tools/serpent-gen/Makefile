@@ -1,4 +1,4 @@
-CFLAGS = -Wall -pipe -std=c23 -pedantic -pthread
+CFLAGS = -Wall -Wextra -pipe -std=c23 -pedantic -pthread
 CFLAGS += -O3
 #CFLAGS += -O0 -g
 LDFLAGS = -pthread
