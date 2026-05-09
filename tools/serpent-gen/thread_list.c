@@ -9,10 +9,10 @@ thread_list_join_destroy(struct thread_list *list)
 {
 	struct thread_list_node *current = list->head;
 	while (current) {
-		pthread_join(current->thread, 0);
+		pthread_join(current->thread, nullptr);
 		free(current->arg);
-		current->arg = 0;
-		current->thread = 0;
+		current->arg = nullptr;
+		current->thread = nullptr;
 		current = current->next;
 	}
 
@@ -23,7 +23,7 @@ thread_list_join_destroy(struct thread_list *list)
 
 		free(current);
 	}
-	list->tail = 0;
+	list->tail = nullptr;
 	pthread_mutex_destroy(&list->lock);
 }
 
@@ -51,8 +51,8 @@ thread_list_add(struct thread_list *list,
 	if (list->tail)
 		node->next = list->tail->next;
 	else
-		node->next = 0;
-	error = pthread_create(&node->thread, 0, fn, node->arg);
+		node->next = nullptr;
+	error = pthread_create(&node->thread, nullptr, fn, node->arg);
 	if (error) {
 		free(node->arg);
 		free(node);

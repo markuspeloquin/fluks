@@ -29,7 +29,7 @@ const uint16_t RS_MOD = 0x14D;
 static inline uint32_t
 poly_mult(uint32_t a, uint32_t b)
 {
-	uint32_t	t = 0;
+	uint32_t t = 0;
 	while (a) {
 		if (a & 1) t ^= b;
 		b <<= 1;

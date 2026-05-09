@@ -354,14 +354,14 @@ brute_thread(void *voidarg)
 				if (best[i] < seq.hold_vals[i]) {
 					printf("%u: old value beaten\n",
 					    threadnum);
-					return 0;
+					return nullptr;
 				}
 			if (best[found] < last_len) {
 				printf("%u: cannot attain best\n", threadnum);
-				return 0;
+				return nullptr;
 			} else if (found == 3 && best[3] == last_len) {
 				printf("%u: cannot beat best\n", threadnum);
-				return 0;
+				return nullptr;
 			}
 			old_generation = cur_generation;
 		}
@@ -414,13 +414,13 @@ brute_thread(void *voidarg)
 						    "(race)\n", threadnum);
 						pthread_mutex_unlock(
 						    best_lock);
-						return 0;
+						return nullptr;
 					}
 				if (best[found] < last_len) {
 					printf("%u: not best (race)\n",
 					    threadnum);
 					pthread_mutex_unlock(best_lock);
-					return 0;
+					return nullptr;
 				} else if (best[found] > last_len)
 					*best_seq = seq;
 				best[found] = last_len;
@@ -436,7 +436,7 @@ brute_thread(void *voidarg)
 					print_function(tmp, (uint8_t)sboxnum,
 					    inverse, &seq);
 					fclose(tmp);
-					return 0;
+					return nullptr;
 				} else {
 					/* create child thread */
 					child_args.thread_list =
@@ -465,7 +465,7 @@ brute_thread(void *voidarg)
 		op_chain_advance(&seq);
 	}
 
-	return 0;
+	return nullptr;
 }
 
 void
@@ -503,7 +503,7 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 	args.inverse = inverse;
 
 	thread_list_init(&thread_list);
-	pthread_mutex_init(&best_lock, 0);
+	pthread_mutex_init(&best_lock, nullptr);
 
 	thread_list_add(&thread_list, brute_thread, &args, sizeof(args));
 	thread_list_join_destroy(&thread_list);

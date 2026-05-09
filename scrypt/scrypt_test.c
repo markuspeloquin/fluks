@@ -22,8 +22,7 @@ void	hmac_sha256_init(struct hmac_sha256_ctx *, const uint8_t *,
 void
 pbkdf2_mine(const uint8_t *passwd, size_t passwd_len,
     const uint8_t *salt, size_t salt_len,
-    uint8_t *out, size_t out_len)
-{
+    uint8_t *out, size_t out_len) {
 	struct hmac_sha256_ctx	digest;
 
 	hmac_sha256_init(&digest,
@@ -36,8 +35,7 @@ pbkdf2_mine(const uint8_t *passwd, size_t passwd_len,
 void
 pbkdf2_openssl(const uint8_t *passwd, size_t passwd_len,
     const uint8_t *salt, size_t salt_len,
-    uint8_t *out, size_t out_len)
-{
+    uint8_t *out, size_t out_len) {
 	const EVP_MD	*digest;
 
 	digest = EVP_sha256();
@@ -51,12 +49,11 @@ pbkdf2_openssl(const uint8_t *passwd, size_t passwd_len,
 #define BITS_TO_SIZE(bits) ((1ULL<<(bits))-1)
 
 uint8_t *
-create_random_buffer(size_t size)
-{
+create_random_buffer(size_t size) {
 	uint8_t		*buf;
 	uint8_t		*end;
 
-	if (!(buf = malloc(size))) return 0;
+	if (!(buf = malloc(size))) return nullptr;
 	end = buf + size;
 	while (end-- != buf)
 		*end = rand() & 0xff;
@@ -64,8 +61,7 @@ create_random_buffer(size_t size)
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	srand(0);
 	int pass_size = 0;
 	int salt_size = 0;

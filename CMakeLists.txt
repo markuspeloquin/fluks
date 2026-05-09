@@ -28,7 +28,7 @@ if(STATIC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ${_orig_suffixes})
 endif()
 
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_EXTENSIONS FALSE)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS FALSE)
@@ -88,7 +88,7 @@ install(TARGETS fluks
 add_library(cast6_test_obj OBJECT cast6.c)
 target_compile_definitions(cast6_test_obj PRIVATE CAST6_TEST _XOPEN_SOURCE=700)
 target_compile_options(cast6_test_obj PRIVATE -Wall -pedantic)
-set_target_properties(cast6_test_obj PROPERTIES C_STANDARD 17)
+set_target_properties(cast6_test_obj PROPERTIES C_STANDARD 23)
 
 add_executable(test-cast6 test/cast6.cpp $<TARGET_OBJECTS:cast6_test_obj>)
 target_link_libraries(test-cast6)

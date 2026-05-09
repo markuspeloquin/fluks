@@ -36,8 +36,8 @@ unsigned	thread_list_num_of(struct thread_list *, pthread_t);
 static inline void
 thread_list_init(struct thread_list *list)
 {
-	pthread_mutex_init(&list->lock, 0);
-	list->head = list->tail = 0;
+	pthread_mutex_init(&list->lock, nullptr);
+	list->head = list->tail = nullptr;
 	list->lastnum = -1; /* actually UINT_MAX */
 }
 
