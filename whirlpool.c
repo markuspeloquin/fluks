@@ -618,8 +618,7 @@ static const uint64_t rc[ROUNDS] = {
 
 /* The core Whirlpool transform */
 static void
-process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
-{
+process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES]) {
 	uint64_t	K[8];		/* the round key */
 	uint64_t	block[8];	/* mu(buffer) */
 	uint64_t	state[8];	/* the cipher state */
@@ -817,16 +816,14 @@ process_buffer(uint64_t hash[DIGESTBYTES/8], uint8_t buf[WBLOCKBYTES])
 
 /* Initialize the hashing state */
 void
-whirlpool_init(struct whirlpool_ctx *ctx)
-{
+whirlpool_init(struct whirlpool_ctx *ctx) {
 	memset(ctx->hash, 0, sizeof ctx->hash);
 	memset(ctx->bit_count, 0, sizeof ctx->bit_count);
 	ctx->pos = 0;
 }
 
 static inline void
-increment_count(struct whirlpool_ctx *ctx, size_t sz)
-{
+increment_count(struct whirlpool_ctx *ctx, size_t sz) {
 	uint64_t value = (uint64_t)sz * 8;
 	uint64_t sum;
 	for (int8_t i = 7; i >= 0 && value; i--) {
@@ -840,8 +837,7 @@ increment_count(struct whirlpool_ctx *ctx, size_t sz)
 /* Delivers input data to the hashing algorithm.
  * This method maintains the invariant: pos < WBLOCKBYTES */
 void
-whirlpool_update(struct whirlpool_ctx *ctx, const uint8_t *buf, size_t sz)
-{
+whirlpool_update(struct whirlpool_ctx *ctx, const uint8_t *buf, size_t sz) {
 	/* tally the length of the added data */
 	increment_count(ctx, sz);
 
@@ -875,8 +871,7 @@ whirlpool_update(struct whirlpool_ctx *ctx, const uint8_t *buf, size_t sz)
 
 /* append bit length of hashed data */
 static inline void
-append_bit_count(struct whirlpool_ctx *ctx)
-{
+append_bit_count(struct whirlpool_ctx *ctx) {
 	uint8_t buf[LENGTHBYTES];
 	htobe32_buf(buf, ctx->bit_count, LENGTHBYTES);
 	memcpy(ctx->buf + ctx->pos, buf, LENGTHBYTES);
@@ -885,8 +880,7 @@ append_bit_count(struct whirlpool_ctx *ctx)
 /* Get the hash value from the hashing state.
  * This method uses the invariant: pos < WBLOCKBYTES */
 void
-whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf)
-{
+whirlpool_end(struct whirlpool_ctx *ctx, uint8_t *buf, size_t sz_buf) {
 	/* append a '1'-bit */
 	ctx->buf[ctx->pos++] = 0x80;
 

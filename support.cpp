@@ -26,8 +26,7 @@ public:
 
 private:
 	template <class Res, class Map, typename Enum>
-	Res *stat_lookup(Map &map, Enum type)
-	{
+	Res *stat_lookup(Map &map, Enum type) {
 		auto i = map.find(type);
 		if (i == map.end()) return 0;
 		return &i->second;

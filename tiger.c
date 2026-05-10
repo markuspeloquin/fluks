@@ -548,8 +548,7 @@ static inline uint8_t by7(uint64_t x) { return x >> 56; }
 }								while(0)
 
 static inline void
-compress(const uint64_t *str, uint64_t state[3])
-{
+compress(const uint64_t *str, uint64_t state[3]) {
 	uint64_t a, b, c, tmpa;
 	uint64_t aa, bb, cc;
 	uint64_t x0, x1, x2, x3, x4, x5, x6, x7;
@@ -622,8 +621,7 @@ compress(const uint64_t *str, uint64_t state[3])
 }
 
 void
-tiger_init(struct tiger_ctx *ctx, uint8_t version)
-{
+tiger_init(struct tiger_ctx *ctx, uint8_t version) {
 	ctx->res[0] = 0x0123456789ABCDEFLL;
 	ctx->res[1] = 0xFEDCBA9876543210LL;
 	ctx->res[2] = 0xF096A5B4C3B2E187LL;
@@ -634,8 +632,7 @@ tiger_init(struct tiger_ctx *ctx, uint8_t version)
 }
 
 void
-tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
-{
+tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz) {
 	uint64_t	temp[TIGER_SZ_BLOCK/8];
 	uint8_t		*ctxbuf8 = (uint8_t *)ctx->buf;
 
@@ -680,8 +677,7 @@ tiger_update(struct tiger_ctx *ctx, const uint8_t *buf, size_t sz)
 }
 
 void
-tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
-{
+tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res) {
 	uint64_t temp[TIGER_SZ_BLOCK/8];
 	uint8_t *temp8 = (uint8_t *)temp;
 	size_t i;
@@ -722,8 +718,7 @@ tiger_end(struct tiger_ctx *ctx, uint8_t *res, size_t sz_res)
  * style inflicted upon it */
 #if 0
 void
-tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3])
-{
+tiger_impl(const uint8_t *str8, uint64_t length, uint64_t res[3]) {
 	uint8_t		temp[TIGER_SZ_BLOCK];
 	uint64_t	i;
 	uint64_t	j;

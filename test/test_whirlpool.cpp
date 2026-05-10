@@ -73,15 +73,13 @@ struct Test {
 		std::copy(t.res0, t.res0 + WHIRLPOOL_SZ_DIGEST, res0);
 	}
 
-	Test &operator=(const Test &t)
-	{
+	Test &operator=(const Test &t) {
 		Test c = t;
 		std::swap(*this, c);
 		return *this;
 	}
 
-	bool run()
-	{
+	bool run() {
 		whirlpool_ctx ctx;
 		whirlpool_init(&ctx);
 		whirlpool_update(&ctx, buf.get(), sz);

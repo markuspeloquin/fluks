@@ -47,8 +47,7 @@ static void	smix(unsigned, const uint8_t *, unsigned, uint8_t *);
 // set up outerkey and innerkey for repeated reuse
 void
 hmac_sha256_init(struct hmac_sha256_ctx *ctx, const uint8_t *passwd,
-    size_t passwd_len)
-{
+    size_t passwd_len) {
 	if (passwd_len > SHA256_CBLOCK) {
 		SHA256_CTX pwctx;
 		SHA256_Init(&pwctx);
@@ -71,8 +70,7 @@ hmac_sha256_init(struct hmac_sha256_ctx *ctx, const uint8_t *passwd,
 
 static void
 hmac_sha256_pbkdf2init_start(const struct hmac_sha256_ctx *ctx,
-    SHA256_CTX *sha, const uint8_t *salt, size_t salt_len)
-{
+    SHA256_CTX *sha, const uint8_t *salt, size_t salt_len) {
 	SHA256_Init(sha);
 	SHA256_Update(sha, ctx->innerkey, SHA256_CBLOCK);
 	SHA256_Update(sha, salt, salt_len);
@@ -80,8 +78,7 @@ hmac_sha256_pbkdf2init_start(const struct hmac_sha256_ctx *ctx,
 
 static void
 hmac_sha256_pbkdf2init_finalize(const struct hmac_sha256_ctx *ctx,
-    const SHA256_CTX *sha_base, uint32_t iter, uint8_t *out)
-{
+    const SHA256_CTX *sha_base, uint32_t iter, uint8_t *out) {
 	SHA256_CTX sha;
 	memcpy(&sha, sha_base, sizeof(SHA256_CTX));
 	iter = htobe32(iter);
@@ -99,8 +96,7 @@ hmac_sha256_pbkdf2init_finalize(const struct hmac_sha256_ctx *ctx,
 // PBKDF2 with HMAC(SHA256) and one iteration
 void
 pbkdf2_hmac_sha256(const struct hmac_sha256_ctx *ctx,
-    const uint8_t *salt, size_t salt_len, uint8_t *out, uint64_t out_len)
-{
+    const uint8_t *salt, size_t salt_len, uint8_t *out, uint64_t out_len) {
 	const unsigned hlen = SHA256_DIGEST_LENGTH;
 
 	// "derived key too long"
@@ -137,8 +133,7 @@ pbkdf2_hmac_sha256(const struct hmac_sha256_ctx *ctx,
 
 #define R(a,b) (((a) << (b)) | ((a) >> (32 - (b))))
 static void
-salsa20_8_inplace(uint8_t block[SALSA_BLOCK])
-{
+salsa20_8_inplace(uint8_t block[SALSA_BLOCK]) {
 	uint32_t *block32 = (uint32_t *)block;
 
 	uint32_t x[SALSA_WORDS];
@@ -168,8 +163,7 @@ salsa20_8_inplace(uint8_t block[SALSA_BLOCK])
 #undef R
 
 static void
-block_mix_salsa208(unsigned r, const uint8_t *in, uint8_t *out)
-{
+block_mix_salsa208(unsigned r, const uint8_t *in, uint8_t *out) {
 	// unrolled loop operations:
 	// Y_0 <- H(B_0 ^ B_{2r-1})
 	// Y_1 <- H(B_1 ^ Y_0)
@@ -191,16 +185,14 @@ block_mix_salsa208(unsigned r, const uint8_t *in, uint8_t *out)
 }
 
 static inline unsigned
-integerify(const uint8_t *block, unsigned r, unsigned mod)
-{
+integerify(const uint8_t *block, unsigned r, unsigned mod) {
 	const uint32_t *block32 = (const uint32_t *)block;
 	uint32_t last = htole32(block32[(2 * r - 1) * SALSA_WORDS]);
 	return last & (mod-1);
 }
 
 static void
-smix(unsigned r, const uint8_t *in, unsigned work_metric, uint8_t *out)
-{
+smix(unsigned r, const uint8_t *in, unsigned work_metric, uint8_t *out) {
 	const size_t BLOCK = 2 * r * SALSA_BLOCK;
 
 	// extra block is V_N, which is just storage for the final X value
@@ -257,8 +249,7 @@ void
 scrypt(const uint8_t *passwd, size_t passwd_len,
     const uint8_t *salt, size_t salt_len,
     unsigned cpu_mem_cost, unsigned r, unsigned parallelization,
-    uint8_t *dk, size_t dk_len)
-{
+    uint8_t *dk, size_t dk_len) {
 	// cpu_mem_cost must be a power of two and at most 32 bits
 	assert(((cpu_mem_cost - 1) & cpu_mem_cost) == 0);
 	assert(cpu_mem_cost < (uint32_t)-1);

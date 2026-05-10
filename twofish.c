@@ -27,8 +27,7 @@ const uint16_t RS_MOD = 0x14D;
  * uint8_t'S, but since I'm not really going to too much work to optimize key
  * setup (since raw encryption speed is what I'm after), big deal. */
 static inline uint32_t
-poly_mult(uint32_t a, uint32_t b)
-{
+poly_mult(uint32_t a, uint32_t b) {
 	uint32_t t = 0;
 	while (a) {
 		if (a & 1) t ^= b;
@@ -40,8 +39,7 @@ poly_mult(uint32_t a, uint32_t b)
 
 /* take the polynomial t and return the t % modulus in GF(256) */
 static inline uint32_t
-gf_mod(uint32_t t, uint32_t modulus)
-{
+gf_mod(uint32_t t, uint32_t modulus) {
 	modulus <<= 7;
 	for (uint8_t i = 0; i < 8; i++) {
 		uint32_t tt = t ^ modulus;
@@ -53,16 +51,14 @@ gf_mod(uint32_t t, uint32_t modulus)
 
 /* multiply a and b and return the modulus */
 static inline uint32_t
-gf_mult(uint32_t a, uint32_t b, uint32_t modulus)
-{
+gf_mult(uint32_t a, uint32_t b, uint32_t modulus) {
 	return gf_mod(poly_mult(a, b), modulus);
 }
 
 /* return a uint32_t containing the result of multiplying the RS Code matrix
  * by the sd matrix */
 static uint32_t
-rs_mat_mult(uint8_t sd[8])
-{
+rs_mat_mult(uint8_t sd[8]) {
 	union {
 		uint8_t		buf[4];
 		uint32_t	word;
@@ -79,8 +75,7 @@ rs_mat_mult(uint8_t sd[8])
 
 /* the Zero-keyed h function (used by the key setup routine) */
 static uint32_t
-tf_h(uint32_t X, uint32_t L[4], uint8_t k)
-{
+tf_h(uint32_t X, uint32_t L[4], uint8_t k) {
 	uint8_t		y0,y1,y2,y3;
 	uint8_t		z0,z1,z2,z3;
 	y0 = b0(X);
@@ -117,8 +112,7 @@ tf_h(uint32_t X, uint32_t L[4], uint8_t k)
 
 /* given the Sbox keys, create the fully keyed QF */
 static void
-full_key(uint32_t L[4], uint8_t word_pairs, uint32_t QF[4][256])
-{
+full_key(uint32_t L[4], uint8_t word_pairs, uint32_t QF[4][256]) {
 	uint8_t		y0,y1,y2,y3;
 	uint8_t		i = 0;
 
@@ -170,8 +164,7 @@ full_key(uint32_t L[4], uint8_t word_pairs, uint32_t QF[4][256])
 
 /* g() (4.2) */
 static inline uint32_t
-tf_g(uint32_t x, uint32_t S[4][0x100])
-{
+tf_g(uint32_t x, uint32_t S[4][0x100]) {
 	return S[0][b0(x)] ^ S[1][b1(x)] ^ S[2][b2(x)] ^ S[3][b3(x)];
 }
 
@@ -217,8 +210,7 @@ tf_g(uint32_t x, uint32_t S[4][0x100])
 
 static inline void
 encrypt(uint32_t K[40], uint32_t S[4][0x100], const uint8_t plaintext[16],
-    uint8_t ciphertext[16])
-{
+    uint8_t ciphertext[16]) {
 	uint32_t	r0,r1,r2,r3;
 
 	/* load/byteswap/whiten input */
@@ -253,8 +245,7 @@ encrypt(uint32_t K[40], uint32_t S[4][0x100], const uint8_t plaintext[16],
 
 static inline void
 decrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t ciphertext[16],
-    uint8_t plaintext[16])
-{
+    uint8_t plaintext[16]) {
 	uint32_t r0,r1,r2,r3;
 
 	/* load/byteswap/whiten input */
@@ -289,8 +280,7 @@ decrypt(uint32_t K[40], uint32_t S[4][256], const uint8_t ciphertext[16],
 
 /* the key schedule routine */
 static void
-key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40])
-{
+key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40]) {
 	uint32_t	Me[4];
 	uint32_t	Mo[4];
 	uint8_t		full_key_buf[TWOFISH_KEYMAX];
@@ -332,8 +322,7 @@ key_sched(const uint8_t user_key[], uint8_t sz, uint32_t *S, uint32_t K[40])
 }
 
 bool
-twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz)
-{
+twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz) {
 	uint32_t	S[4];
 	uint8_t		word_pairs = (sz + 7) / 8;
 
@@ -346,14 +335,12 @@ twofish_init(struct twofish_ctx *ctx, const uint8_t *keydata, size_t sz)
 
 void
 twofish_encrypt(struct twofish_ctx *ctx, const uint8_t in[TWOFISH_BLOCK],
-    uint8_t out[TWOFISH_BLOCK])
-{
+    uint8_t out[TWOFISH_BLOCK]) {
 	encrypt(ctx->K, ctx->QF, in, out);
 }
 
 void
 twofish_decrypt(struct twofish_ctx *ctx, const uint8_t in[TWOFISH_BLOCK],
-    uint8_t out[TWOFISH_BLOCK])
-{
+    uint8_t out[TWOFISH_BLOCK]) {
 	decrypt(ctx->K, ctx->QF, in, out);
 }

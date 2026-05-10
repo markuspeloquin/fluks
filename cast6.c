@@ -19,8 +19,7 @@ uint8_t cast6_iv_idx;
 
 void add_intermediate_values(uint8_t i,
     const uint8_t rotk[4], const uint32_t mask[4],
-    uint32_t b0, uint32_t b1, uint32_t b2, uint32_t b3)
-{
+    uint32_t b0, uint32_t b1, uint32_t b2, uint32_t b3) {
 	uint32_t block[] = { b0, b1, b2, b3 };
 	htobe32_buf(cast6_iv_out[i], block, CAST6_BLOCK);
 	memcpy(cast6_iv_rotk[i], rotk, 4);
@@ -367,8 +366,7 @@ const uint8_t Tr[4][8] = {
 };
 
 static inline uint32_t
-f1(uint32_t d, uint8_t kr, uint32_t km)
-{
+f1(uint32_t d, uint8_t kr, uint32_t km) {
 	uint32_t i = ROL(km + d, kr);
 	return ((
 	    sbox1[         (i >> 24)]  ^
@@ -378,8 +376,7 @@ f1(uint32_t d, uint8_t kr, uint32_t km)
 }
 
 static inline uint32_t
-f2(uint32_t d, uint8_t kr, uint32_t km)
-{
+f2(uint32_t d, uint8_t kr, uint32_t km) {
 	uint32_t i = ROL(km ^ d, kr);
 	return ((
 	    sbox1[         (i >> 24)]  -
@@ -389,8 +386,7 @@ f2(uint32_t d, uint8_t kr, uint32_t km)
 }
 
 static inline uint32_t
-f3(uint32_t d, uint8_t kr, uint32_t km)
-{
+f3(uint32_t d, uint8_t kr, uint32_t km) {
 	uint32_t i = ROL(km - d, kr);
 	return ((
 	    sbox1[         (i >> 24)]  +
@@ -430,8 +426,7 @@ f3(uint32_t d, uint8_t kr, uint32_t km)
 
 /* KAPPA <- Wi(KAPPA) 'forward octave' */
 static inline void
-kappa_w(uint32_t kappa[8], uint8_t i)
-{
+kappa_w(uint32_t kappa[8], uint8_t i) {
 	assert(i < 24);
 	uint8_t ir = i & 0x3;
 	kappa[6] ^= f1(kappa[7], Tr[ir][0], Tm[i][0]);
@@ -446,8 +441,7 @@ kappa_w(uint32_t kappa[8], uint8_t i)
 
 /* Kr_(i) <- KAPPA; (k)ey (r)otation */
 static inline void
-kappa_kr(uint8_t kr[4], const uint32_t kappa[8])
-{
+kappa_kr(uint8_t kr[4], const uint32_t kappa[8]) {
 	kr[0] = kappa[0] & 0x1f;
 	kr[1] = kappa[2] & 0x1f;
 	kr[2] = kappa[4] & 0x1f;
@@ -456,8 +450,7 @@ kappa_kr(uint8_t kr[4], const uint32_t kappa[8])
 
 /* Km_(i) <- KAPPA; (k)ey (m)aterial */
 static inline void
-kappa_km(uint32_t km[4], const uint32_t kappa[8])
-{
+kappa_km(uint32_t km[4], const uint32_t kappa[8]) {
 	km[0] = kappa[7];
 	km[1] = kappa[5];
 	km[2] = kappa[3];
@@ -466,8 +459,7 @@ kappa_km(uint32_t km[4], const uint32_t kappa[8])
 
 void
 cast6_encrypt(const struct cast6_ctx *ctx,
-    const uint8_t plaintext[16], uint8_t ciphertext[16])
-{
+    const uint8_t plaintext[16], uint8_t ciphertext[16]) {
 	uint32_t block[4];
 	uint32_t b0, b1, b2, b3;
 
@@ -502,8 +494,7 @@ cast6_encrypt(const struct cast6_ctx *ctx,
 
 void
 cast6_decrypt(const struct cast6_ctx *ctx,
-    const uint8_t ciphertext[16], uint8_t plaintext[16])
-{
+    const uint8_t ciphertext[16], uint8_t plaintext[16]) {
 	uint32_t block[4];
 	uint32_t b0, b1, b2, b3;
 
@@ -541,8 +532,7 @@ cast6_decrypt(const struct cast6_ctx *ctx,
  * (RFC 2612, 2.4, Initialization); the resulting values were copied into
  * this file above; to regenerate, use 'make cast6_tables.h' */
 void
-gen_tables()
-{
+gen_tables() {
 	/* 2^30 sqrt(2) */
 	uint32_t Cm = 0x5a827999;
 	/* 2^30 sqrt(3) */
@@ -601,16 +591,14 @@ gen_tables()
 	printf("\n};\n");
 }
 
-int main()
-{
+int main() {
 	gen_tables();
 	return 0;
 }
 #endif
 
 bool
-cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz)
-{
+cast6_init(struct cast6_ctx *ctx, const uint8_t *key, uint8_t sz) {
 	uint32_t kappa[8];
 
 	if (sz & 0x3 || sz < 16 || sz > 32)
