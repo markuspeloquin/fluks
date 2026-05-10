@@ -162,8 +162,7 @@ const uint8_t Sboxinv[8][16] = {
 };
 
 void
-perm(const uint32_t in[4], uint32_t out[4])
-{
+perm(const uint32_t in[4], uint32_t out[4]) {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < 128; i++) {
 		uint8_t j = i / 32 + i % 32 * 4;
@@ -173,8 +172,7 @@ perm(const uint32_t in[4], uint32_t out[4])
 }
 
 void
-perm_inv(const uint32_t in[4], uint32_t out[4])
-{
+perm_inv(const uint32_t in[4], uint32_t out[4]) {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < 128; i++) {
 		uint8_t j = i / 4 + i % 4 * 32;
@@ -184,8 +182,7 @@ perm_inv(const uint32_t in[4], uint32_t out[4])
 }
 
 void _t_hat(const int8_t matrix[TRANS_ROWS][TRANS_COLS],
-    const uint32_t in[4], uint32_t out[4])
-{
+    const uint32_t in[4], uint32_t out[4]) {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < TRANS_ROWS; i++) {
 		uint8_t b = 0;
@@ -200,18 +197,15 @@ void _t_hat(const int8_t matrix[TRANS_ROWS][TRANS_COLS],
 	}
 }
 
-void t_hat(const uint32_t in[4], uint32_t out[4])
-{
+void t_hat(const uint32_t in[4], uint32_t out[4]) {
 	_t_hat(TRANS, in, out);
 }
 
-void t_hat_inv(const uint32_t in[4], uint32_t out[4])
-{
+void t_hat_inv(const uint32_t in[4], uint32_t out[4]) {
 	_t_hat(INVTRANS, in, out);
 }
 
-void _s_hat(const uint8_t perm[16], const uint32_t in[4], uint32_t out[4])
-{
+void _s_hat(const uint8_t perm[16], const uint32_t in[4], uint32_t out[4]) {
 	for (uint8_t i = 0; i < 4; i++) out[i] = 0;
 	for (uint8_t i = 0; i < 32; i++) {
 		uint8_t x = in[i/8] >> i%8 * 4 & 0xf;
@@ -219,18 +213,15 @@ void _s_hat(const uint8_t perm[16], const uint32_t in[4], uint32_t out[4])
 	}
 }
 
-void s_hat(uint8_t which, const uint32_t in[4], uint32_t out[4])
-{
+void s_hat(uint8_t which, const uint32_t in[4], uint32_t out[4]) {
 	_s_hat(Sbox[which], in, out);
 }
 
-void s_hat_inv(uint8_t which, const uint32_t in[4], uint32_t out[4])
-{
+void s_hat_inv(uint8_t which, const uint32_t in[4], uint32_t out[4]) {
 	_s_hat(Sboxinv[which], in, out);
 }
 
-void trans(const uint32_t in[4], uint32_t out[4])
-{
+void trans(const uint32_t in[4], uint32_t out[4]) {
 	uint32_t t0, t1, t2, t3;
 	t0 = ROL(in[0], 13);
 	t2 = ROL(in[2], 3);
@@ -248,8 +239,7 @@ void trans(const uint32_t in[4], uint32_t out[4])
 	out[3] = t3;
 }
 
-void trans_inv(const uint32_t in[4], uint32_t out[4])
-{
+void trans_inv(const uint32_t in[4], uint32_t out[4]) {
 	uint32_t t0, t1, t2, t3;
 	t2 = ROR(in[2], 22);
 	t0 = ROR(in[0], 5);
@@ -267,15 +257,13 @@ void trans_inv(const uint32_t in[4], uint32_t out[4])
 	out[3] = t3;
 }
 
-void dump32(const uint32_t *b, size_t count)
-{
+void dump32(const uint32_t *b, size_t count) {
 	for (size_t i = 0; i < count; i++)
 		printf("%08x ", b[i]);
 	printf("\n");
 }
 
-void sbox(uint8_t which, const uint32_t in[4], uint32_t out[4])
-{
+void sbox(uint8_t which, const uint32_t in[4], uint32_t out[4]) {
 	uint32_t a[4];
 	uint32_t b[4];
 	uint32_t c[4];
@@ -288,8 +276,7 @@ void sbox(uint8_t which, const uint32_t in[4], uint32_t out[4])
 	trans_inv(d, out);
 }
 
-void sbox_inv(uint8_t which, const uint32_t in[4], uint32_t out[4])
-{
+void sbox_inv(uint8_t which, const uint32_t in[4], uint32_t out[4]) {
 	uint32_t a[4];
 	uint32_t b[4];
 	uint32_t c[4];

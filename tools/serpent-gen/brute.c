@@ -45,9 +45,8 @@ struct op_chain {
 };
 
 static void
-op_chain_init(struct op_chain *seq)
-{
-	uint8_t	i;
+op_chain_init(struct op_chain *seq) {
+	uint8_t i;
 
 	/* 'zero' out */
 	for (i = 0; i < MAX_OPS; i++) {
@@ -74,8 +73,7 @@ op_chain_init(struct op_chain *seq)
 }
 
 static bool
-op_ordered(const struct op *a, const struct op *b)
-{
+op_ordered(const struct op *a, const struct op *b) {
 	/* 0: smallest, 1: largest */
 	uint8_t a0 = a->i;
 	uint8_t a1 = OP_ARGS[a->type] == 1 ? a0 : a->j;
@@ -93,8 +91,7 @@ op_ordered(const struct op *a, const struct op *b)
 
 /* advance if possible; if cannot, return false, leave i=0, j=1, type=XOR */
 static bool
-op_advance(struct op_chain *seq, uint8_t which_instr)
-{
+op_advance(struct op_chain *seq, uint8_t which_instr) {
 	struct op	*op = seq->ops + which_instr;
 	bool		push_type = false;
 
@@ -136,9 +133,8 @@ op_advance(struct op_chain *seq, uint8_t which_instr)
 }
 
 static void
-op_chain_advance(struct op_chain *seq)
-{
-	uint8_t	i = seq->sz;
+op_chain_advance(struct op_chain *seq) {
+	uint8_t i = seq->sz;
 
 	while (i > seq->hold) {
 		/* advance last op */
@@ -164,8 +160,7 @@ op_chain_advance(struct op_chain *seq)
 }
 
 static inline void
-run_chain(struct op_chain *seq)
-{
+run_chain(struct op_chain *seq) {
 	/* for each operation */
 	for (uint8_t i = 0; i < seq->sz; i++) {
 		if (!seq->dirty[i+4]) continue;
@@ -200,8 +195,7 @@ run_chain(struct op_chain *seq)
 }
 
 static void
-print_var(FILE *out, bool in, uint8_t i)
-{
+print_var(FILE *out, bool in, uint8_t i) {
 	if (i < 4)
 		fprintf(out, "%c%hhu", in?'x':'y', i);
 	else
@@ -209,8 +203,7 @@ print_var(FILE *out, bool in, uint8_t i)
 }
 
 void
-print_chain(FILE *out, const struct op_chain *seq)
-{
+print_chain(FILE *out, const struct op_chain *seq) {
 	fprintf(out, "\tuint32_t ");
 	for (uint8_t i = 0; i < seq->sz; i++) {
 		fprintf(out, "%st%hhu", i ? ", " : "", i);
@@ -262,8 +255,7 @@ print_chain(FILE *out, const struct op_chain *seq)
 
 void
 print_function(FILE *out, uint8_t sbox, bool inverse,
-    const struct op_chain *seq)
-{
+    const struct op_chain *seq) {
 	fprintf(out,
 "inline void\n"
 "sbox_%hhu%s(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,\n"
@@ -281,7 +273,7 @@ print_function(FILE *out, uint8_t sbox, bool inverse,
 struct brute_thread_args {
 	struct thread_list	*thread_list;
 
-	pthread_mutex_t		*best_lock;
+	mtx_t			*best_lock;
 	unsigned		*best;
 	struct op_chain		*best_seq;
 	unsigned		*best_generation;
@@ -292,12 +284,11 @@ struct brute_thread_args {
 	unsigned		sboxnum;
 	bool			inverse;
 };
-void *
-brute_thread(void *voidarg)
-{
+int
+brute_thread(void *voidarg) {
 	struct brute_thread_args *args = (struct brute_thread_args *)voidarg;
 
-	pthread_mutex_t		*best_lock = args->best_lock;
+	mtx_t			*best_lock = args->best_lock;
 	unsigned		*best = args->best;
 	struct op_chain		*best_seq = args->best_seq;
 	unsigned		*best_generation = args->best_generation;
@@ -309,7 +300,7 @@ brute_thread(void *voidarg)
 	bool			inverse = args->inverse;
 
 	unsigned		threadnum =
-	    thread_list_num_of(args->thread_list, pthread_self());
+	    thread_list_num_of(args->thread_list, thrd_current());
 	unsigned		old_generation;
 
 	/* each thread computes to make it easier to do lookups */
@@ -353,14 +344,14 @@ brute_thread(void *voidarg)
 				if (best[i] < seq.hold_vals[i]) {
 					printf("%u: old value beaten\n",
 					    threadnum);
-					return nullptr;
+					return 0;
 				}
 			if (best[found] < last_len) {
 				printf("%u: cannot attain best\n", threadnum);
-				return nullptr;
+				return 0;
 			} else if (found == 3 && best[3] == last_len) {
 				printf("%u: cannot beat best\n", threadnum);
-				return nullptr;
+				return 0;
 			}
 			old_generation = cur_generation;
 		}
@@ -404,29 +395,28 @@ brute_thread(void *voidarg)
 				print_chain(stdout, &seq);
 
 				/* update best array */
-				pthread_mutex_lock(best_lock);
+				mtx_lock(best_lock);
 				/* first check if a better solution existed
 				 * because of a race */
 				for (unsigned i = 0; i < found; i++)
 					if (best[i] < seq.hold_vals[i]) {
 						printf("%u: old value beaten "
 						    "(race)\n", threadnum);
-						pthread_mutex_unlock(
-						    best_lock);
-						return nullptr;
+						mtx_unlock(best_lock);
+						return 0;
 					}
 				if (best[found] < last_len) {
 					printf("%u: not best (race)\n",
 					    threadnum);
-					pthread_mutex_unlock(best_lock);
-					return nullptr;
+					mtx_unlock(best_lock);
+					return 0;
 				} else if (best[found] > last_len)
 					*best_seq = seq;
 				best[found] = last_len;
 				/* this is sloppy and so may not work on
 				 * certain architectures like PowerPC */
 				++*best_generation;
-				pthread_mutex_unlock(best_lock);
+				mtx_unlock(best_lock);
 
 				found++;
 
@@ -435,7 +425,7 @@ brute_thread(void *voidarg)
 					print_function(tmp, (uint8_t)sboxnum,
 					    inverse, &seq);
 					fclose(tmp);
-					return nullptr;
+					return 0;
 				} else {
 					/* create child thread */
 					child_args.thread_list =
@@ -464,16 +454,15 @@ brute_thread(void *voidarg)
 		op_chain_advance(&seq);
 	}
 
-	return nullptr;
+	return 0;
 }
 
 void
-brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
-{
+brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq) {
 	/*
 	struct thread_list	*thread_list;
 
-	pthread_mutex_t		*best_lock;
+	mtx_t			*best_lock;
 	unsigned		*best;
 	struct op_chain		*best_seq;
 
@@ -485,7 +474,7 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 	*/
 	struct brute_thread_args	args;
 	struct thread_list		thread_list;
-	pthread_mutex_t			best_lock;
+	mtx_t				best_lock;
 
 	unsigned	best[4] = { MAX_OPS, MAX_OPS, MAX_OPS, MAX_OPS };
 	unsigned	best_generation = 1;
@@ -502,15 +491,14 @@ brute_sbox(uint8_t sboxnum, bool inverse, struct op_chain *out_seq)
 	args.inverse = inverse;
 
 	thread_list_init(&thread_list);
-	pthread_mutex_init(&best_lock, nullptr);
+	mtx_init(&best_lock, mtx_plain);
 
 	thread_list_add(&thread_list, brute_thread, &args, sizeof(args));
 	thread_list_join_destroy(&thread_list);
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	struct	op_chain	seq;
 	char			path[80];
 	long			tlong;

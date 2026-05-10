@@ -5,11 +5,10 @@
 #include "thread_list.h"
 
 void
-thread_list_join_destroy(struct thread_list *list)
-{
+thread_list_join_destroy(struct thread_list *list) {
 	struct thread_list_node *current = list->head;
 	while (current) {
-		pthread_join(current->thread, nullptr);
+		thrd_join(current->thread, nullptr);
 		free(current->arg);
 		current->arg = nullptr;
 		current->thread = nullptr;
@@ -24,13 +23,12 @@ thread_list_join_destroy(struct thread_list *list)
 		free(current);
 	}
 	list->tail = nullptr;
-	pthread_mutex_destroy(&list->lock);
+	mtx_destroy(&list->lock);
 }
 
 int
 thread_list_add(struct thread_list *list,
-    void *(*fn)(void *), void *arg, size_t arg_sz)
-{
+    int (*fn)(void *), void *arg, size_t arg_sz) {
 	struct thread_list_node *node;
 	int error;
 	
@@ -45,18 +43,18 @@ thread_list_add(struct thread_list *list,
 	memcpy(node->arg, arg, arg_sz);
 	node->arg_sz = arg_sz;
 
-	pthread_mutex_lock(&list->lock);
+	mtx_lock(&list->lock);
 
 	node->threadnum = list->lastnum + 1;
 	if (list->tail)
 		node->next = list->tail->next;
 	else
 		node->next = nullptr;
-	error = pthread_create(&node->thread, nullptr, fn, node->arg);
+	error = thrd_create(&node->thread, fn, node->arg);
 	if (error) {
 		free(node->arg);
 		free(node);
-		pthread_mutex_unlock(&list->lock);
+		mtx_unlock(&list->lock);
 		return error;
 	}
 	if (list->tail)	list->tail->next = node;
@@ -64,24 +62,23 @@ thread_list_add(struct thread_list *list,
 	list->tail = node;
 	list->lastnum++;
 
-	pthread_mutex_unlock(&list->lock);
+	mtx_unlock(&list->lock);
 
 	return 0;
 }
 
 unsigned
-thread_list_num_of(struct thread_list *list, pthread_t thread)
-{
+thread_list_num_of(struct thread_list *list, thrd_t thread) {
 	struct thread_list_node	*current;
 	unsigned		threadnum = -1;
 
-	pthread_mutex_lock(&list->lock);
+	mtx_lock(&list->lock);
 	current = list->head;
 	while (current) {
 		if (current->thread == thread)
 			threadnum = current->threadnum;
 		current = current->next;
 	}
-	pthread_mutex_unlock(&list->lock);
+	mtx_unlock(&list->lock);
 	return threadnum;
 }
