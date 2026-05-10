@@ -17,14 +17,15 @@ namespace {
 
 void
 read_all(int fd, void *buf, size_t count) {
+	ssize_t remaining = count;
 	uint8_t *pos = static_cast<uint8_t *>(buf);
-	while (count) {
-		ssize_t by = read(fd, pos, count);
+	while (remaining > 0) {
+		ssize_t by = ::read(fd, pos, remaining);
 		if (by < 0)
 			throw_errno(errno);
 		if (!by)
 			throw Disk_error("premature EOF");
-		count -= by;
+		remaining -= by;
 		pos += by;
 	}
 }

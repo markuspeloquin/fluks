@@ -24,7 +24,7 @@ fluks::Cipher_spec::check_spec_support(const Cipher_traits *cipher_traits,
 }
 
 void
-fluks::Cipher_spec::check_spec(ssize_t sz_key) {
+fluks::Cipher_spec::check_spec(ptrdiff_t sz_key) {
 	if (_ty_cipher == cipher_type::UNDEFINED)
 		throw Bad_spec("unrecognized cipher: " + _nm_cipher);
 	if (_ty_block_mode == block_mode::UNDEFINED)
@@ -94,7 +94,7 @@ fluks::Cipher_spec::check_spec(ssize_t sz_key) {
 }
 
 void
-fluks::Cipher_spec::reset(ssize_t sz_key, std::string_view spec) {
+fluks::Cipher_spec::reset(ptrdiff_t sz_key, std::string_view spec) {
 	// valid patterns:
 	// [^-]* - [^-*]
 	// [^-]* - [^-*] - [^:]*
@@ -119,7 +119,7 @@ fluks::Cipher_spec::reset(ssize_t sz_key, std::string_view spec) {
 }
 
 void
-fluks::Cipher_spec::reset(ssize_t sz_key, cipher_type cipher,
+fluks::Cipher_spec::reset(ptrdiff_t sz_key, cipher_type cipher,
     block_mode block_mode, iv_mode iv_mode, hash_type iv_hash) {
 	const Cipher_traits *ctraits = Cipher_traits::traits(_ty_cipher);
 	_nm_cipher = ctraits->name;

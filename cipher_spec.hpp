@@ -71,19 +71,19 @@ class Hash_traits;
 
 class Cipher_spec {
 public:
-	Cipher_spec(ssize_t sz_key, std::string_view spec) {
+	Cipher_spec(ptrdiff_t sz_key, std::string_view spec) {
 		reset(sz_key, spec);
 	}
 
-	Cipher_spec(ssize_t sz_key, cipher_type cipher,
+	Cipher_spec(ptrdiff_t sz_key, cipher_type cipher,
 	    block_mode block_mode=block_mode::UNDEFINED,
 	    iv_mode iv_mode=iv_mode::UNDEFINED,
 	    hash_type iv_hash=hash_type::UNDEFINED) {
 		reset(sz_key, cipher, block_mode, iv_mode, iv_hash);
 	}
 
-	void reset(ssize_t sz_key, std::string_view spec);
-	void reset(ssize_t sz_key, cipher_type cipher,
+	void reset(ptrdiff_t sz_key, std::string_view spec);
+	void reset(ptrdiff_t sz_key, cipher_type cipher,
 	    block_mode block_mode=block_mode::UNDEFINED,
 	    iv_mode iv_mode=iv_mode::UNDEFINED,
 	    hash_type iv_hash=hash_type::UNDEFINED);
@@ -127,7 +127,7 @@ public:
 private:
 	void check_spec_support(const Cipher_traits *cipher_traits,
 	    const Hash_traits *hash_traits);
-	void check_spec(ssize_t sz_key);
+	void check_spec(ptrdiff_t sz_key);
 
 	std::string	_nm_cipher;
 	std::string	_nm_block_mode;

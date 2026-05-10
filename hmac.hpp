@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <memory>
 #include <openssl/params.h>
-#include <stdexcept>
 #include <string_view>
 
 #include <openssl/evp.h>
