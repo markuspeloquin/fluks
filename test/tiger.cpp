@@ -1,6 +1,6 @@
 #include <algorithm>
+#include <memory>
 #include <vector>
-#include <boost/scoped_array.hpp>
 
 #include "common.hpp"
 #include "../tiger.h"
@@ -56,7 +56,7 @@ struct Test {
 		return std::equal(res, res + TIGER_SZ_DIGEST, res0);
 	}
 
-	boost::scoped_array<uint8_t> buf;
+	std::unique_ptr<uint8_t[]> buf;
 	size_t sz;
 	uint8_t res[TIGER_SZ_DIGEST]; // target hash
 	uint8_t res0[TIGER_SZ_DIGEST]; // computed hash

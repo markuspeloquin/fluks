@@ -3,7 +3,6 @@
 #include <format>
 #include <memory>
 #include <mutex>
-#include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
 #include "dm.hpp"
@@ -130,7 +129,7 @@ Device_mapper::add_crypt_target(
 
 void
 Device_mapper::set_uuid(const boost::uuids::uuid &uuid) {
-	std::string uuid_hex = boost::lexical_cast<std::string>(uuid);
+	auto uuid_hex = boost::uuids::to_string(uuid);
 
 	log_output = "";
 	if (!dm_task_set_uuid(_task, uuid_hex.c_str()))

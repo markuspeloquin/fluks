@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <format>
 #include <iostream>
+#include <memory>
 #include <vector>
-#include <boost/scoped_array.hpp>
 
 #include "../errors.hpp"
 #include "../whirlpool.h"
@@ -87,7 +87,7 @@ struct Test {
 		return std::equal(res, res + WHIRLPOOL_SZ_DIGEST, res0);
 	}
 
-	boost::scoped_array<uint8_t> buf;
+	std::unique_ptr<uint8_t[]> buf;
 	size_t sz;
 	uint8_t res[WHIRLPOOL_SZ_DIGEST];
 	uint8_t res0[WHIRLPOOL_SZ_DIGEST];

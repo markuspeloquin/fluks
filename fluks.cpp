@@ -9,12 +9,11 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <boost/lexical_cast.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include <boost/program_options/variables_map.hpp>
-#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
 #include <openssl/rand.h>
@@ -546,8 +545,7 @@ main(int argc, char **argv) {
 
 		if (!pretend) {
 			std::string uuid_str = header->uuid();
-			boost::uuids::uuid uuid =
-			    boost::lexical_cast<boost::uuids::uuid>(uuid_str);
+			auto uuid = boost::uuids::string_generator{}(uuid_str);
 			if (uuid.is_nil())
 				throw Bad_uuid(uuid_str);
 

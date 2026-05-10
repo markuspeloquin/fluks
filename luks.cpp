@@ -5,7 +5,6 @@
 #include <cerrno>
 #include <chrono>
 #include <iostream>
-#include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -146,8 +145,8 @@ fluks::Luks_header::Luks_header(int device, int32_t sz_key,
 	_hdr->off_payload = off_base;
 
 	// generates a warning with >=gcc-4.6 and <boost-1.49
-	boost::uuids::uuid uuid = boost::uuids::random_generator()();
-	std::string uuid_str = boost::lexical_cast<std::string>(uuid);
+	auto uuid = boost::uuids::random_generator()();
+	auto uuid_str = boost::uuids::to_string(uuid);
 	std::copy(uuid_str.begin(), uuid_str.end(), _hdr->uuid);
 }
 
