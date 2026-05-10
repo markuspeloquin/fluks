@@ -7,7 +7,7 @@ option(STATIC "Enable static linking" OFF)
 project(fluks LANGUAGES CXX C)
 
 set(Boost_USE_STATIC_LIBS ${STATIC})
-set(Boost_USE_MULTITHREADED TRUE)
+set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.35 REQUIRED COMPONENTS program_options)
 
 set(OPENSSL_USE_STATIC_LIBS ${STATIC})
@@ -29,9 +29,9 @@ if(STATIC)
 endif()
 
 set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_EXTENSIONS FALSE)
+set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_EXTENSIONS FALSE)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(fluks
 	af.cpp
